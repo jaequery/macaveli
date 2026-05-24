@@ -21,8 +21,20 @@ The Makefile is the canonical way to build outside of Xcode (Xcode signing is fi
 
 - `make build` — `xcodebuild -scheme Macaveli build SYMROOT=$PWD/build`, drops the app at `./build/Debug/Macaveli.app`.
 - `make run` — build + open the debug app.
+- `make dmg` — runs `scripts/build-dmg.sh`: archives Release, exports a Developer-ID-signed `.app`, re-signs the bundled `ffmpeg` (Xcode misses it because it's a plain Resource, not an "Embed & Sign" build-phase output), builds a DMG with a `/Applications` symlink, signs it, then notarizes + staples via `notarytool`. Outputs `build/Macaveli-<version>.dmg` plus a stable-named `build/Macaveli.dmg` for the website.
+- `make publish-web` — copies `build/Macaveli.dmg` into `../web/public/Macaveli.dmg`. The landing-page Download CTAs link to `/Macaveli.dmg`, so this is the bridge from build artifact to live site.
+- `make release` — `dmg` + `publish-web`.
 - `make appcast <export-folder>` — runs `scripts/generate-appcast.sh`: zips the exported `.app`, runs Sparkle's `generate_appcast` (found under `~/Library/Developer/Xcode/DerivedData/Macaveli*`), signs the zip, and rewrites the appcast URL to the GitHub releases download. Copies the updated `appcast.xml` back into the repo.
 - `make generate-keys` — wraps `scripts/generate-keys.sh` (Sparkle EdDSA keypair).
+
+### One-time setup for `make dmg`
+
+`build-dmg.sh` pre-flights both of these and fails loudly with instructions if missing.
+
+1. Install a **Developer ID Application** cert from <https://developer.apple.com/account/resources/certificates/list> into the login keychain. The Xcode-managed "Apple Development" cert is dev-only — Gatekeeper won't accept it.
+2. Create a `notarytool` keychain profile (one time): `xcrun notarytool store-credentials macaveli-notary --apple-id <email> --team-id 7BWUZV469T --password <app-specific password from appleid.apple.com>`.
+
+Local-test escape hatch: `SKIP_NOTARIZE=1 make dmg` builds a signed-but-not-notarized DMG (Gatekeeper warns users) without needing the notary profile.
 
 There is no test target.
 

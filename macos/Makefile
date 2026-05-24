@@ -1,4 +1,4 @@
-.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon
+.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon dmg publish-web release
 
 fetch-ffmpeg:
 	@bash scripts/fetch-ffmpeg.sh
@@ -31,6 +31,22 @@ run: build run-app
 appcast:
 	@$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
 	./scripts/generate-appcast.sh $(ARGS)
+
+# Build a signed + notarized + stapled DMG for distribution.
+# See scripts/build-dmg.sh for the one-time signing / notarytool setup.
+dmg:
+	./scripts/build-dmg.sh
+
+# Copy the latest DMG into web/public/ so the marketing site serves it
+# at /Macaveli.dmg. Run after `make dmg`.
+publish-web: build/Macaveli.dmg
+	@mkdir -p ../web/public
+	cp build/Macaveli.dmg ../web/public/Macaveli.dmg
+	@echo "✓ Copied to web/public/Macaveli.dmg"
+	@echo "  Commit it (or deploy it) for the website Download button to work."
+
+# Full release: build the DMG and drop it into the web app.
+release: dmg publish-web
 
 generate-keys:
 	@$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))

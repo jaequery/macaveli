@@ -1,3 +1,4 @@
+const DOWNLOAD_URL = "/Macaveli.dmg";
 const RELEASES_URL = "https://github.com/jaequery/macaveli/releases/latest";
 const REPO_URL = "https://github.com/jaequery/macaveli";
 
@@ -71,7 +72,7 @@ function Nav() {
       </div>
 
       <a
-        href={RELEASES_URL}
+        href={DOWNLOAD_URL}
         className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-zinc-700"
       >
         Download
@@ -113,7 +114,7 @@ function Hero() {
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <a
-            href={RELEASES_URL}
+            href={DOWNLOAD_URL}
             className="rounded-full bg-zinc-900 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-zinc-700"
           >
             Download for Mac
@@ -386,7 +387,7 @@ function CallToAction() {
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <a
-            href={RELEASES_URL}
+            href={DOWNLOAD_URL}
             className="rounded-full bg-zinc-900 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-zinc-700"
           >
             Download for Mac
