@@ -11,13 +11,13 @@ private let mLog = Logger(subsystem: "com.jaequery.Macaveli", category: "recorde
 /// - Main thread (or `@MainActor` Tasks): `lifecycleState`, `isRecording`,
 ///   `isConverting`, `outputMP4URL`, `gifAutoStopItem`.
 /// - `writerQueue` (serial): `assetWriter`, `videoInput`, `systemAudioInput`,
-///   `micAudioInput`, `sessionStarted`, `sessionStartPTS`, `micStartPTS`.
-/// - SCStream/AVCaptureSession callback queue (always `writerQueue` here):
-///   reads `assetWriter`, `*Input`, `sessionStarted*` / `micStartPTS`.
+///   `sessionStarted`.
+/// - SCStream callback queue (always `writerQueue` here): reads `assetWriter`,
+///   `*Input`, `sessionStarted`.
 ///
 /// New mutable state MUST be classified into one of these partitions and
 /// `teardown()` MUST clear it.
-final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStreamDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, @unchecked Sendable {
+final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStreamDelegate, @unchecked Sendable {
     static let shared = ScreenRecorder()
 
     // P2: Lifecycle state replaces raw boolean to prevent re-entry during async teardown.
@@ -44,16 +44,8 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
     private var systemAudioInput: AVAssetWriterInput?
-    private var micAudioInput: AVAssetWriterInput?
     private var sessionStarted = false
     private var outputMP4URL: URL?
-
-    // P1: Timestamps for mic clock remapping.
-    private var sessionStartPTS: CMTime?
-    private var micStartPTS: CMTime?
-
-    private var micSession: AVCaptureSession?
-    private var micOutput: AVCaptureAudioDataOutput?
 
     // P3: Work item for GIF max-duration auto-stop.
     private var gifAutoStopItem: DispatchWorkItem?
@@ -252,7 +244,6 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             self.outputMP4URL = mp4URL
 
             try self.setupAssetWriter(outputURL: mp4URL, width: setup.width, height: setup.height, fps: fps)
-            self.setupMicCapture()
 
             let stream = SCStream(filter: setup.filter, configuration: config, delegate: self)
             try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: self.writerQueue)
@@ -324,11 +315,6 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         gifAutoStopItem?.cancel()
         gifAutoStopItem = nil
 
-        // Stop the mic capture session.
-        micSession?.stopRunning()
-        micSession = nil
-        micOutput = nil
-
         // Capture and nil out the stream reference so no more frames arrive.
         let capturedStream = self.stream
         self.stream = nil
@@ -346,7 +332,6 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
                 let sessionRan = self.sessionStarted
                 self.videoInput?.markAsFinished()
                 self.systemAudioInput?.markAsFinished()
-                self.micAudioInput?.markAsFinished()
                 // F10: No session ever started → cancel; AVAssetWriter deletes
                 // the 0-byte placeholder for us.
                 guard sessionRan else {
@@ -370,10 +355,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             self.assetWriter = nil
             self.videoInput = nil
             self.systemAudioInput = nil
-            self.micAudioInput = nil
             self.sessionStarted = false
-            self.sessionStartPTS = nil
-            self.micStartPTS = nil
         }
 
         // Decide whether to KEEP the output file.
@@ -644,48 +626,19 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         let sysAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioSettings)
         sysAudioInput.expectsMediaDataInRealTime = true
 
-        let micAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioSettings)
-        micAudioInput.expectsMediaDataInRealTime = true
-
         guard writer.canAdd(vInput),
-              writer.canAdd(sysAudioInput),
-              writer.canAdd(micAudioInput) else {
+              writer.canAdd(sysAudioInput) else {
             throw RecorderError.cannotAddInputs
         }
 
         writer.add(vInput)
         writer.add(sysAudioInput)
-        writer.add(micAudioInput)
         writer.startWriting()
 
         self.assetWriter = writer
         self.videoInput = vInput
         self.systemAudioInput = sysAudioInput
-        self.micAudioInput = micAudioInput
         self.sessionStarted = false
-    }
-
-    private func setupMicCapture() {
-        // F3: Best-effort mic — bail silently if not authorized.
-        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else { return }
-        guard let micDevice = AVCaptureDevice.default(for: .audio) else { return }
-        let session = AVCaptureSession()
-        do {
-            let input = try AVCaptureDeviceInput(device: micDevice)
-            guard session.canAddInput(input) else { return }
-            session.addInput(input)
-
-            let output = AVCaptureAudioDataOutput()
-            output.setSampleBufferDelegate(self, queue: writerQueue)
-            guard session.canAddOutput(output) else { return }
-            session.addOutput(output)
-
-            micSession = session
-            micOutput = output
-            session.startRunning()
-        } catch {
-            mLog.error("mic capture setup failed: \(String(describing: error), privacy: .public)")
-        }
     }
 
     func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
@@ -725,7 +678,6 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
                 let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
                 writer.startSession(atSourceTime: pts)
                 sessionStarted = true
-                sessionStartPTS = pts
                 mLog.log("first frame received, session started at pts=\(CMTimeGetSeconds(pts), privacy: .public)s")
             }
 
@@ -740,54 +692,13 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             }
 
         case .microphone:
-            // Mic audio is handled via AVCaptureSession / captureOutput(_:didOutput:from:).
+            // Mic capture was removed; nothing to do if the system delivers
+            // a sample of this type (it shouldn't, since we never subscribe).
             break
 
         @unknown default:
             break
         }
-    }
-
-    func captureOutput(
-        _ output: AVCaptureOutput,
-        didOutput sampleBuffer: CMSampleBuffer,
-        from connection: AVCaptureConnection
-    ) {
-        guard sessionStarted,
-              let writer = assetWriter,
-              writer.status == .writing,
-              micAudioInput?.isReadyForMoreMediaData == true else { return }
-
-        // P1: Retime mic samples to the writer's session clock.
-        guard let anchor = sessionStartPTS else { return }
-        let micPTS = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-        if micStartPTS == nil {
-            micStartPTS = micPTS
-        }
-        let micOffset = CMTimeSubtract(micPTS, micStartPTS!)
-        let targetPTS = CMTimeAdd(anchor, micOffset)
-
-        if let retimed = retimedSample(sampleBuffer, to: targetPTS) {
-            micAudioInput?.append(retimed)
-        }
-    }
-
-    // P1: Helper to produce a copy of a sample buffer with a new presentation timestamp.
-    private func retimedSample(_ sample: CMSampleBuffer, to time: CMTime) -> CMSampleBuffer? {
-        var timing = CMSampleTimingInfo(
-            duration: CMSampleBufferGetDuration(sample),
-            presentationTimeStamp: time,
-            decodeTimeStamp: .invalid
-        )
-        var out: CMSampleBuffer?
-        let status = CMSampleBufferCreateCopyWithNewTiming(
-            allocator: kCFAllocatorDefault,
-            sampleBuffer: sample,
-            sampleTimingEntryCount: 1,
-            sampleTimingArray: &timing,
-            sampleBufferOut: &out
-        )
-        return status == noErr ? out : nil
     }
 
     // F1 + F2: Error path now delegates to teardown, which handles all resource
@@ -799,29 +710,20 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         }
     }
 
-    // F3: Mic is now best-effort. Screen recording permission is the only hard gate.
+    // Screen recording permission is the only hard gate now — mic capture was
+    // removed, system audio (Spotify, browser, app sound) still comes through
+    // the SCStream itself under the same Screen Recording permission.
     private func checkPermissions() -> Bool {
         guard PermissionsManager.hasScreenRecordingPermission() else {
-            PermissionsManager.requestScreenRecordingPermission()
+            PermissionsManager.requestScreenRecordingPermission {
+                PermissionsManager.openPreferences(at: .screenRecording)
+            }
             postNotification(
                 title: "Screen Recording Permission Required",
                 body: "Grant Screen Recording access in System Settings, then relaunch Macaveli."
             )
-            PermissionsManager.openPreferences(at: .screenRecording)
             return false
         }
-
-        // If mic is undetermined, trigger the system prompt but proceed regardless.
-        let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
-        if micStatus == .notDetermined {
-            PermissionsManager.requestMicrophonePermission { _ in }
-        } else if micStatus == .denied || micStatus == .restricted {
-            postNotification(
-                title: "Screen Recording",
-                body: "Recording without microphone — grant Microphone access in System Settings to include mic audio."
-            )
-        }
-
         return true
     }
 

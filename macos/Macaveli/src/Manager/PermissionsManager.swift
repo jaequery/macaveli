@@ -1,4 +1,3 @@
-import AVFoundation
 import Cocoa
 import ScreenCaptureKit
 
@@ -6,7 +5,6 @@ enum Preference {
     case accessibility
     case inputMonitoring
     case screenRecording
-    case microphone
 }
 
 class PermissionsManager {
@@ -51,45 +49,25 @@ class PermissionsManager {
         CGPreflightScreenCaptureAccess()
     }
 
-    private static let screenRecordingPreviouslyRequestedKey = "screenRecordingPermissionPreviouslyRequested"
-
+    /// Force TCC to register Macaveli for screen recording so it appears in
+    /// System Settings → Privacy & Security → Screen & System Audio Recording.
+    /// The app must *actually invoke* a screen-capture API for that — calling
+    /// CGRequestScreenCaptureAccess alone is unreliable on recent macOS.
+    /// SCShareableContent.current throws when permission is missing, but TCC
+    /// registers the bundle before the throw, which is the side effect we need.
+    /// `completion` always fires (after the async registration call) so the
+    /// caller can open Settings — if macOS pops its own TCC alert at the same
+    /// time, the user can dismiss whichever they don't need.
     static func requestScreenRecordingPermission(completion: @escaping () -> Void = {}) {
-        // Force TCC to register Macaveli for screen recording so it appears
-        // in System Settings → Privacy & Security → Screen Recording. The
-        // app has to *actually invoke* a screen-capture API for that to
-        // happen — CGRequestScreenCaptureAccess alone is not enough on
-        // recent macOS. SCShareableContent.current throws when permission
-        // is denied, but TCC registers the bundle BEFORE the throw, which
-        // is the side effect we need.
-        let defaults = UserDefaults.standard
-        let isFirstRequest = !defaults.bool(forKey: screenRecordingPreviouslyRequestedKey)
-        defaults.set(true, forKey: screenRecordingPreviouslyRequestedKey)
-
         _ = CGRequestScreenCaptureAccess()
         if #available(macOS 12.3, *) {
             Task { @MainActor in
                 _ = try? await SCShareableContent.current
-                // On the first request macOS shows its own TCC alert with
-                // an "Open System Settings" button. Opening Settings
-                // ourselves activates the Settings window on top of that
-                // alert and hides it. On subsequent requests no alert will
-                // appear, so the caller's completion is the only way the
-                // user reaches the toggle.
-                if !isFirstRequest {
-                    completion()
-                }
+                completion()
             }
-        } else if !isFirstRequest {
+        } else {
             completion()
         }
-    }
-
-    static func hasMicrophonePermission() -> Bool {
-        AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
-    }
-
-    static func requestMicrophonePermission(completion: @escaping (Bool) -> Void) {
-        AVCaptureDevice.requestAccess(for: .audio, completionHandler: completion)
     }
 
     static func openPreferences(at type: Preference) {
@@ -104,10 +82,6 @@ class PermissionsManager {
             }
         case .screenRecording:
             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                NSWorkspace.shared.open(url)
-            }
-        case .microphone:
-            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
                 NSWorkspace.shared.open(url)
             }
         }

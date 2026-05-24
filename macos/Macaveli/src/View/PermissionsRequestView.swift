@@ -25,36 +25,15 @@ struct PermissionRequestView: View {
                         Image(systemName: "exclamationmark.triangle").foregroundColor(.orange)
                         Spacer()
                         Button("Open Preferences") {
-                            PermissionsManager.openPreferences(at: .screenRecording)
-                        }
-                    }
-                    Text("Quit and relaunch Macaveli after granting.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            // F9: Use PermissionsManager abstraction instead of direct AVCaptureDevice call.
-            if !PermissionsManager.hasMicrophonePermission() {
-                Divider()
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Microphone").font(.subheadline)
-                        Image(systemName: "exclamationmark.triangle").foregroundColor(.orange)
-                        Spacer()
-                        Button("Open Preferences") {
-                            // macOS TCC only registers Macaveli in System
-                            // Settings → Microphone AFTER the app calls
-                            // requestAccess at least once. Without this call,
-                            // clicking the button opens an empty pane (or one
-                            // that lists every other app but not Macaveli).
-                            // Triggering the request shows the system prompt,
-                            // which registers us with TCC; then Settings opens
-                            // and the user sees Macaveli with a toggle.
-                            PermissionsManager.requestMicrophonePermission { _ in
-                                DispatchQueue.main.async {
-                                    PermissionsManager.openPreferences(at: .microphone)
-                                }
+                            // Same TCC dance as for Accessibility: macOS only
+                            // lists Macaveli in System Settings → Screen
+                            // Recording after the app has actually invoked a
+                            // capture API. `requestScreenRecordingPermission`
+                            // touches SCShareableContent.current, which
+                            // registers the bundle with TCC. We then open
+                            // Settings so the user can flip the toggle.
+                            PermissionsManager.requestScreenRecordingPermission {
+                                PermissionsManager.openPreferences(at: .screenRecording)
                             }
                         }
                     }
