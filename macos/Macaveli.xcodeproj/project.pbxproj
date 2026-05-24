@@ -37,6 +37,12 @@
 		E2E6F5EA2B3EF03C005B0D96 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E6F5E92B3EF03C005B0D96 /* Constants.swift */; };
 		AA001A300101000000000001 /* LicenseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A300102000000000001 /* LicenseManager.swift */; };
 		AA001A300101000000000002 /* LicenseSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A300102000000000002 /* LicenseSheet.swift */; };
+		BB001A010201000000001001 /* Annotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001001 /* Annotation.swift */; };
+		BB001A010201000000001002 /* AnnotatorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001002 /* AnnotatorManager.swift */; };
+		BB001A010201000000001003 /* AnnotatorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001003 /* AnnotatorWindow.swift */; };
+		BB001A010201000000001004 /* AnnotatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001004 /* AnnotatorView.swift */; };
+		BB001A010201000000001005 /* AnnotatorCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001005 /* AnnotatorCanvas.swift */; };
+		BB001A010201000000001006 /* AnnotatorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001006 /* AnnotatorToolbar.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +74,12 @@
 		FF11EG002B31EE0000FFEEE0 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
 		AA001A300102000000000001 /* LicenseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseManager.swift; sourceTree = "<group>"; };
 		AA001A300102000000000002 /* LicenseSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseSheet.swift; sourceTree = "<group>"; };
+		BB001A010202000000001001 /* Annotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Annotation.swift; sourceTree = "<group>"; };
+		BB001A010202000000001002 /* AnnotatorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorManager.swift; sourceTree = "<group>"; };
+		BB001A010202000000001003 /* AnnotatorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorWindow.swift; sourceTree = "<group>"; };
+		BB001A010202000000001004 /* AnnotatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorView.swift; sourceTree = "<group>"; };
+		BB001A010202000000001005 /* AnnotatorCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorCanvas.swift; sourceTree = "<group>"; };
+		BB001A010202000000001006 /* AnnotatorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorToolbar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +107,10 @@
 				177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */,
 				177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */,
 				AA001A300102000000000002 /* LicenseSheet.swift */,
+				BB001A010202000000001003 /* AnnotatorWindow.swift */,
+				BB001A010202000000001004 /* AnnotatorView.swift */,
+				BB001A010202000000001005 /* AnnotatorCanvas.swift */,
+				BB001A010202000000001006 /* AnnotatorToolbar.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -112,8 +128,17 @@
 				AA001A2A2C5F0000000AA001 /* ScreenRecorder.swift */,
 				AA001A2C2C5F0001000AA001 /* RecordingExporter.swift */,
 				AA001A300102000000000001 /* LicenseManager.swift */,
+				BB001A010202000000001002 /* AnnotatorManager.swift */,
 			);
 			path = Manager;
+			sourceTree = "<group>";
+		};
+		BB001A010203000000001001 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				BB001A010202000000001001 /* Annotation.swift */,
+			);
+			path = Model;
 			sourceTree = "<group>";
 		};
 		1751BFD72C19E98D00559AC7 /* lib */ = {
@@ -135,6 +160,7 @@
 				1751BFD72C19E98D00559AC7 /* lib */,
 				1751BFD52C19E90200559AC7 /* View */,
 				1751BFD62C19E91300559AC7 /* Manager */,
+				BB001A010203000000001001 /* Model */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -281,6 +307,12 @@
 				AA001A2D2C5F0001000AA001 /* RecordingExporter.swift in Sources */,
 				AA001A300101000000000001 /* LicenseManager.swift in Sources */,
 				AA001A300101000000000002 /* LicenseSheet.swift in Sources */,
+				BB001A010201000000001001 /* Annotation.swift in Sources */,
+				BB001A010201000000001002 /* AnnotatorManager.swift in Sources */,
+				BB001A010201000000001003 /* AnnotatorWindow.swift in Sources */,
+				BB001A010201000000001004 /* AnnotatorView.swift in Sources */,
+				BB001A010201000000001005 /* AnnotatorCanvas.swift in Sources */,
+				BB001A010201000000001006 /* AnnotatorToolbar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -89,7 +89,7 @@ struct AnnotatorView: View {
             canvasOrDropZone
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(Color(NSColor.windowBackgroundColor))
         // ⌘Z / ⇧⌘Z via hidden buttons so they fire through SwiftUI's focus system
         .background(undoRedoButtons)
         // Number-key tool switching
@@ -296,7 +296,7 @@ struct AnnotatorDropZone: View {
 
     var body: some View {
         ZStack {
-            Color(nsColor: .textBackgroundColor)
+            Color(NSColor.textBackgroundColor)
 
             VStack(spacing: 12) {
                 Image(systemName: "photo.on.rectangle.angled")
@@ -356,7 +356,7 @@ private struct TextPlacementOverlay: View {
                     .padding(.vertical, 3)
                     .background(
                         RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .fill(Color(nsColor: .windowBackgroundColor).opacity(0.85))
+                            .fill(Color(NSColor.windowBackgroundColor).opacity(0.85))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 4, style: .continuous)
