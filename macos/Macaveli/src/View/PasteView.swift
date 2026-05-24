@@ -189,7 +189,7 @@ struct PasteView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 24, weight: .light))
                 .foregroundStyle(.tertiary)
-            Text("No matches for "\(query)"")
+            Text("No matches for \u{201C}\(query)\u{201D}")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
         }
@@ -278,7 +278,7 @@ struct PasteRowView: View {
             // Position badge
             Text("\(position)")
                 .font(.system(size: 11, weight: .regular, design: .monospaced))
-                .foregroundStyle(isSelected ? Color.accentColor : .tertiary)
+                .foregroundStyle(isSelected ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
                 .frame(width: 16, alignment: .trailing)
 
             // Type icon
@@ -319,7 +319,7 @@ struct PasteRowView: View {
     // MARK: Helpers
 
     private var displayText: String {
-        if case .image(let filename) = item.kind {
+        if case .image = item.kind {
             var parts: [String] = ["image"]
             if let dims = imageDimensions {
                 parts.append(dims)

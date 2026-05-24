@@ -21,6 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let _ = ShortcutsManager.shared // immediately register shortcuts so we won't wait for the UI
         let _ = PasteManager.shared // start clipboard monitor before the first hotkey press
+        PasteWindowController.register() // wire PasteManager's panel-host factory
         // F5: Notification auth is requested lazily inside startRecording() via
         // ensureNotificationAuth(), so window-management-only users are not prompted at launch.
     }
