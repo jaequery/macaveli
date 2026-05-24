@@ -7,16 +7,12 @@ import LaunchAtLogin
 struct CheatsheetView: View {
     @State private var openSection: CheatSectionID? = nil
     @State private var hasAXPermission = PermissionsManager.hasAccessibilityPermission()
-    @State private var showLicenseSheet = false
-    @ObservedObject private var license = LicenseManager.shared
     private let permissionTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
-            CheatBrandBar(showLicenseSheet: $showLicenseSheet)
+            CheatBrandBar()
             Divider()
-
-            TrialBanner(showLicenseSheet: $showLicenseSheet)
 
             if hasAXPermission {
                 ScrollView {
@@ -74,9 +70,6 @@ struct CheatsheetView: View {
         .frame(width: MAIN_WINDOW_WIDTH)
         .onReceive(permissionTimer) { _ in
             hasAXPermission = PermissionsManager.hasAccessibilityPermission()
-        }
-        .sheet(isPresented: $showLicenseSheet) {
-            LicenseSheet()
         }
     }
 
@@ -368,8 +361,6 @@ enum KeyCodeGlyph {
 
 struct CheatBrandBar: View {
     @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) private var showMenuBarIcon = true
-    @ObservedObject private var license = LicenseManager.shared
-    @Binding var showLicenseSheet: Bool
 
     var body: some View {
         HStack(spacing: 10) {
@@ -378,9 +369,6 @@ struct CheatBrandBar: View {
             Spacer(minLength: 4)
 
             Menu {
-                Text(licenseMenuLabel)
-                Button("License…") { showLicenseSheet = true }
-                Divider()
                 LaunchAtLogin.Toggle()
                 Toggle(isOn: $showMenuBarIcon) {
                     Text("Show menu bar icon")
@@ -405,66 +393,6 @@ struct CheatBrandBar: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
-    }
-
-    private var licenseMenuLabel: String {
-        switch license.state {
-        case .licensed: return "Licensed"
-        case .trialing(let n): return "Trial · \(n) day\(n == 1 ? "" : "s") left"
-        case .trialExpired: return "Trial expired"
-        }
-    }
-}
-
-/// Slim status strip below the brand bar. Hidden when the user is licensed,
-/// so paying customers see no banner at all. Trialing users see a quiet
-/// "X days left" with a Buy link; expired users see the same shape in an
-/// accent color.
-struct TrialBanner: View {
-    @ObservedObject private var license = LicenseManager.shared
-    @Binding var showLicenseSheet: Bool
-
-    var body: some View {
-        switch license.state {
-        case .licensed:
-            EmptyView()
-        case .trialing(let n):
-            banner(text: "Trial · \(n) day\(n == 1 ? "" : "s") left", accent: false)
-        case .trialExpired:
-            banner(text: "Trial ended", accent: true)
-        }
-    }
-
-    private func banner(text: String, accent: Bool) -> some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(accent ? Color.orange : Color.secondary.opacity(0.6))
-                .frame(width: 6, height: 6)
-            Text(text)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(accent ? Color.orange : Color.secondary)
-            Spacer()
-            Button("Buy") {
-                if let url = URL(string: "https://macaveli.app/buy") {
-                    NSWorkspace.shared.open(url)
-                }
-            }
-            .buttonStyle(.borderless)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Color.accentColor)
-            Button {
-                showLicenseSheet = true
-            } label: {
-                Text("Enter key")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.borderless)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(accent ? Color.orange.opacity(0.08) : Color.primary.opacity(0.025))
-        .overlay(Divider(), alignment: .bottom)
     }
 }
 

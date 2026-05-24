@@ -35,8 +35,6 @@
 		E2CABBA82B44D69B00D66D43 /* UpdatesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CABBA72B44D69B00D66D43 /* UpdatesManager.swift */; };
 		E2D8CFB92B3C3B9B00EBB047 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D8CFB82B3C3B9B00EBB047 /* PermissionsManager.swift */; };
 		E2E6F5EA2B3EF03C005B0D96 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E6F5E92B3EF03C005B0D96 /* Constants.swift */; };
-		AA001A300101000000000001 /* LicenseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A300102000000000001 /* LicenseManager.swift */; };
-		AA001A300101000000000002 /* LicenseSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A300102000000000002 /* LicenseSheet.swift */; };
 		BB001A010201000000001001 /* Annotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001001 /* Annotation.swift */; };
 		BB001A010201000000001002 /* AnnotatorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001002 /* AnnotatorManager.swift */; };
 		BB001A010201000000001003 /* AnnotatorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001003 /* AnnotatorWindow.swift */; };
@@ -76,8 +74,6 @@
 		E2D8CFB82B3C3B9B00EBB047 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		E2E6F5E92B3EF03C005B0D96 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		FF11EG002B31EE0000FFEEE0 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = ffmpeg; sourceTree = "<group>"; };
-		AA001A300102000000000001 /* LicenseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseManager.swift; sourceTree = "<group>"; };
-		AA001A300102000000000002 /* LicenseSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseSheet.swift; sourceTree = "<group>"; };
 		BB001A010202000000001001 /* Annotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Annotation.swift; sourceTree = "<group>"; };
 		BB001A010202000000001002 /* AnnotatorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorManager.swift; sourceTree = "<group>"; };
 		BB001A010202000000001003 /* AnnotatorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorWindow.swift; sourceTree = "<group>"; };
@@ -114,7 +110,6 @@
 				E2CABBA42B447AEA00D66D43 /* UpdatesView.swift */,
 				177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */,
 				177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */,
-				AA001A300102000000000002 /* LicenseSheet.swift */,
 				BB001A010202000000001003 /* AnnotatorWindow.swift */,
 				BB001A010202000000001004 /* AnnotatorView.swift */,
 				BB001A010202000000001005 /* AnnotatorCanvas.swift */,
@@ -137,7 +132,6 @@
 				0FD765C118D54A97ADA99DEE /* WindowActions.swift */,
 				AA001A2A2C5F0000000AA001 /* ScreenRecorder.swift */,
 				AA001A2C2C5F0001000AA001 /* RecordingExporter.swift */,
-				AA001A300102000000000001 /* LicenseManager.swift */,
 				BB001A010202000000001002 /* AnnotatorManager.swift */,
 				CC001A010202000000002002 /* PasteManager.swift */,
 			);
@@ -317,8 +311,6 @@
 				CD0002012B31EE0000C0DD01 /* CountdownOverlay.swift in Sources */,
 				AA001A2B2C5F0000000AA001 /* ScreenRecorder.swift in Sources */,
 				AA001A2D2C5F0001000AA001 /* RecordingExporter.swift in Sources */,
-				AA001A300101000000000001 /* LicenseManager.swift in Sources */,
-				AA001A300101000000000002 /* LicenseSheet.swift in Sources */,
 				BB001A010201000000001001 /* Annotation.swift in Sources */,
 				BB001A010201000000001002 /* AnnotatorManager.swift in Sources */,
 				BB001A010201000000001003 /* AnnotatorWindow.swift in Sources */,
