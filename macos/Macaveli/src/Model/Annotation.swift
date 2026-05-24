@@ -26,12 +26,18 @@ enum AnnotationTool: String, CaseIterable, Identifiable {
 /// is responsible for scaling to pixel resolution.
 struct AnnotationStyle: Equatable {
     var color: Color
-    /// Clamped to 1…12 px in logical coordinates.
+    /// Stroke width for shapes (pencil / circle / rectangle / arrow).
+    /// Clamped to 1…12 pt in logical coordinates.
     var strokeWidth: CGFloat
+    /// Font size for new text annotations, in logical pt. Clamped to 8…72.
+    /// Independent of `strokeWidth` — the toolbar swaps which value the
+    /// size slider binds to based on the active tool.
+    var fontSize: CGFloat
 
-    init(color: Color, strokeWidth: CGFloat) {
+    init(color: Color, strokeWidth: CGFloat, fontSize: CGFloat = 16) {
         self.color = color
         self.strokeWidth = min(max(strokeWidth, 1), 12)
+        self.fontSize = min(max(fontSize, 8), 72)
     }
 }
 

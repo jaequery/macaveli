@@ -27,8 +27,9 @@ struct AnnotatorToolbar: View {
 
             toolbarDivider()
 
-            // Cluster 3: Stroke width
-            StrokeWidthCluster(strokeWidth: $style.strokeWidth)
+            // Cluster 3: Size slider — binds to font size while the Text tool
+            // is active, otherwise to stroke width.
+            SizeCluster(tool: tool, style: $style)
 
             toolbarDivider()
 
@@ -194,23 +195,53 @@ private struct ColorSwatch: View {
     }
 }
 
-// MARK: - Stroke width cluster
+// MARK: - Size cluster (tool-aware: font size for text, stroke width otherwise)
 
-private struct StrokeWidthCluster: View {
-    @Binding var strokeWidth: CGFloat
+private struct SizeCluster: View {
+    let tool: AnnotationTool
+    @Binding var style: AnnotationStyle
+
+    private var isTextMode: Bool { tool == .text }
+
+    /// Two-way binding into the right field on `style` depending on the
+    /// active tool. Wraps the value so the same Slider can drive either.
+    private var sizeBinding: Binding<CGFloat> {
+        Binding(
+            get: { isTextMode ? style.fontSize : style.strokeWidth },
+            set: { newValue in
+                if isTextMode {
+                    style.fontSize = min(max(newValue, 8), 72)
+                } else {
+                    style.strokeWidth = min(max(newValue, 1), 12)
+                }
+            }
+        )
+    }
+
+    private var range: ClosedRange<CGFloat> { isTextMode ? 8...72 : 1...12 }
+    private var step:  CGFloat { isTextMode ? 1 : 1 }
+    private var labelText: String {
+        isTextMode ? "\(Int(style.fontSize)) pt" : "\(Int(style.strokeWidth)) pt"
+    }
+    private var accessibilityLabel: String { isTextMode ? "Font size" : "Stroke width" }
+    private var accessibilityValue: String {
+        isTextMode
+            ? "\(Int(style.fontSize)) points"
+            : "\(Int(style.strokeWidth)) points"
+    }
 
     var body: some View {
         HStack(spacing: 6) {
-            Slider(value: $strokeWidth, in: 1...12, step: 1)
+            Slider(value: sizeBinding, in: range, step: step)
                 .frame(width: 90)
                 .controlSize(.mini)
-                .accessibilityLabel("Stroke width")
-                .accessibilityValue("\(Int(strokeWidth)) points")
-            Text("\(Int(strokeWidth)) pt")
+                .accessibilityLabel(accessibilityLabel)
+                .accessibilityValue(accessibilityValue)
+            Text(labelText)
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-                .frame(width: 28, alignment: .leading)
+                .frame(width: 32, alignment: .leading)
         }
     }
 }

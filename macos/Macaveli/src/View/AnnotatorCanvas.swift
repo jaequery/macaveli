@@ -54,10 +54,6 @@ struct AnnotatorCanvas: View {
     private let rotateHandleOffset: CGFloat = 28
     private let rotateHandleRadius: CGFloat = 7
     private let cornerHandleRadius: CGFloat = 5
-    /// Default point size used when committing a new text annotation.
-    /// Placed text is intentionally small so it doesn't dominate screenshots;
-    /// use the Select tool's corner handles to scale it up after placement.
-    private let defaultTextFontSize: CGFloat = 7
 
     var body: some View {
         GeometryReader { geo in
@@ -100,11 +96,11 @@ struct AnnotatorCanvas: View {
                 if activeTool == .text, let origin = textOverlayOrigin {
                     TextField("", text: $textOverlayValue)
                         .textFieldStyle(.plain)
-                        .font(.system(size: defaultTextFontSize, weight: .semibold))
+                        .font(.system(size: activeStyle.fontSize, weight: .semibold))
                         .foregroundColor(activeStyle.color)
-                        .frame(width: 200, alignment: .leading)
+                        .frame(width: max(200, activeStyle.fontSize * 12), alignment: .leading)
                         .focused($textFieldFocused)
-                        .position(x: origin.x + 100, y: origin.y)
+                        .position(x: origin.x + max(100, activeStyle.fontSize * 6), y: origin.y)
                         .onSubmit { commitTextOverlay(at: origin) }
                         .onChange(of: textFieldFocused) { focused in
                             if !focused { commitTextOverlay(at: origin) }
@@ -450,7 +446,7 @@ struct AnnotatorCanvas: View {
 
         let localOrigin = anchorCoords(origin, imageRect: displayedRect)
         commitAnnotation(Annotation(
-            shape: .text(origin: localOrigin, string: trimmed, fontSize: defaultTextFontSize),
+            shape: .text(origin: localOrigin, string: trimmed, fontSize: activeStyle.fontSize),
             style: activeStyle
         ))
     }
