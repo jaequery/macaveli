@@ -136,7 +136,13 @@ struct AnnotatorCanvas: View {
                 guard activeTool != .text else { return }
                 let pt = clampedPoint(value.location, to: imgRect)
                 if !isDragging {
+                    // Initialize both start and end to the click point so a
+                    // no-move click renders a zero-length (invisible) draft.
+                    // Otherwise draftEnd keeps its previous value (or .zero
+                    // on first use) and the draft briefly draws across the
+                    // canvas before the gesture ends.
                     draftStart  = pt
+                    draftEnd    = pt
                     draftPoints = [pt]
                     isDragging  = true
                 } else {
