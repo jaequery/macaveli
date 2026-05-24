@@ -401,9 +401,9 @@ enum RecordingExporter {
         }
     }
 
-    /// ffmpeg-backed optimization: libx264 CRF mode for best size/quality
-    /// tradeoff, downscaled to 1080p, AAC audio at 128k, and faststart so the
-    /// file plays instantly in browsers and chat apps.
+    /// ffmpeg-backed optimization: libx264 CRF mode tuned for screen content,
+    /// width capped at 2560 (preserves Retina detail), AAC audio at 128k, and
+    /// faststart so the file plays instantly in browsers and chat apps.
     private static func ffmpegOptimizeMP4(
         ffmpeg: URL,
         input: URL,
@@ -415,16 +415,24 @@ enum RecordingExporter {
                 .appendingPathComponent("optimize-\(UUID().uuidString)")
                 .appendingPathExtension("mp4")
 
-            // -vf cap height at 1080 (preserve aspect); -crf 28 (visually close
-            // to lossless for screen content); -preset slow trades CPU for
-            // better compression; -movflags +faststart enables instant playback.
+            // Screen-content settings (not natural-video defaults):
+            //   -crf 20             20 keeps text/UI edges crisp; the libx264
+            //                       default of 23–28 visibly softens screen caps.
+            //   -tune animation     preserves flat color regions and sharp
+            //                       edges — closest x264 tune for screen UI.
+            //   scale … 2560        cap *width* at 2560 so Retina captures
+            //                       (~2880–3456 wide) keep most of their detail
+            //                       while still shrinking 5K displays.
+            //   yuv420p             kept for universal player compat; the
+            //                       remaining softness is from chroma subsampling.
             let exitCode = runFFmpeg(ffmpeg, args: [
                 "-y", "-loglevel", "error",
                 "-i", input.path,
-                "-vf", "scale='min(1920,iw)':'-2':force_original_aspect_ratio=decrease",
+                "-vf", "scale='min(2560,iw)':'-2':force_original_aspect_ratio=decrease",
                 "-c:v", "libx264",
                 "-preset", "slow",
-                "-crf", "28",
+                "-tune", "animation",
+                "-crf", "20",
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
                 "-b:a", "128k",

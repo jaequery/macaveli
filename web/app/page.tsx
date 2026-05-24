@@ -1,4 +1,7 @@
-const DOWNLOAD_URL = "/Macaveli.dmg";
+import versionInfo from "../version.json";
+
+const VERSION = versionInfo.version;
+const DOWNLOAD_URL = versionInfo.downloadUrl;
 const RELEASES_URL = "https://github.com/jaequery/macaveli/releases/latest";
 const REPO_URL = "https://github.com/jaequery/macaveli";
 

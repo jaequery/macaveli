@@ -1,4 +1,4 @@
-.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon dmg publish-web release
+.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon dmg upload publish-web release
 
 fetch-ffmpeg:
 	@bash scripts/fetch-ffmpeg.sh
@@ -37,16 +37,23 @@ appcast:
 dmg:
 	./scripts/build-dmg.sh
 
-# Copy the latest DMG into web/public/ so the marketing site serves it
-# at /Macaveli.dmg. Run after `make dmg`.
-publish-web: build/Macaveli.dmg
-	@mkdir -p ../web/public
-	cp build/Macaveli.dmg ../web/public/Macaveli.dmg
-	@echo "✓ Copied to web/public/Macaveli.dmg"
-	@echo "  Commit it (or deploy it) for the website Download button to work."
+# Upload the versioned DMG to the S3-compatible bucket configured in ../.env
+# (DigitalOcean Spaces). Writes the resulting public URL to build/dmg-url.txt.
+upload: build/Macaveli.dmg
+	./scripts/upload-dmg.sh
 
-# Full release: build the DMG and drop it into the web app.
-release: dmg publish-web
+# Write web/version.json with the just-uploaded CDN URL, so the landing page
+# links to the right versioned DMG. No DMG is copied into web/public/ — the
+# bucket hosts it.
+publish-web: upload
+	@VERSION=$$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/export/Macaveli.app/Contents/Info.plist); \
+	URL=$$(cat build/dmg-url.txt); \
+	printf '{"version":"%s","downloadUrl":"%s"}\n' "$$VERSION" "$$URL" > ../web/version.json; \
+	echo "✓ web/version.json → $$URL"; \
+	echo "  Commit it so the website's Download button picks up the new release."
+
+# Full release: build DMG → upload to bucket → update web/version.json.
+release: dmg upload publish-web
 
 generate-keys:
 	@$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))

@@ -108,7 +108,16 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         ensureNotificationAuth()
         guard checkPermissions() else { return }
 
-        // Pre-roll countdown so the user can switch to the target window.
+        // macOS 14+: go straight to the picker. The countdown runs AFTER the
+        // user picks what to share (see SCContentSharingPickerObserver below),
+        // so they can pick → compose during 3-2-1 → recording starts. Showing
+        // the countdown before the picker would just stall the picker.
+        if #available(macOS 14, *) {
+            beginCapture()
+            return
+        }
+
+        // macOS 13 fallback: no picker, so the countdown still runs first.
         // Stored as Int seconds; 0 = disabled. Default 3 when key never set.
         let raw = UserDefaults.standard.object(forKey: PreferenceKey.recordingCountdownSeconds.rawValue) as? Int
         let countdownSeconds = raw ?? 3
@@ -128,98 +137,164 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         }
     }
 
+    // Bundles everything the SCStream startup path needs, regardless of where
+    // the SCContentFilter came from (system picker vs. legacy auto-pick).
+    fileprivate struct StreamSetup {
+        let filter: SCContentFilter
+        let width: Int        // pixels
+        let height: Int       // pixels
+        let pointHeight: Int  // points — basis for cursor Y-flip in Demo Mode
+        let scale: Double     // points → pixels factor
+    }
+
     private func beginCapture() {
         lifecycleState = .starting
         Self.frameCallbackCounter = 0
 
+        // macOS 14+: hand control to SCContentSharingPicker. The user picks
+        // what to share via Apple's system UI, so we never "bypass the system
+        // private window picker" — no scary privacy dialog on macOS 15+.
+        if #available(macOS 14, *) {
+            presentContentPicker()
+            return
+        }
+
+        // macOS 13 fallback: build the filter ourselves (always the main
+        // display, excluding our own windows). This path doesn't trigger the
+        // bypass dialog because macOS 15 doesn't run there.
         Task { @MainActor in
             do {
-                let content = try await SCShareableContent.current
-                mLog.log("SCShareableContent: displays=\(content.displays.count, privacy: .public) windows=\(content.windows.count, privacy: .public) applications=\(content.applications.count, privacy: .public)")
-                guard let display = content.displays.first(where: { $0.displayID == CGMainDisplayID() }) else {
-                    postNotification(title: "Screen Recording", body: "Could not find the primary display.")
-                    self.lifecycleState = .idle
-                    return
-                }
-                mLog.log("using display \(display.displayID, privacy: .public) size=\(display.width, privacy: .public)x\(display.height, privacy: .public)")
-
-                let ownWindows = content.windows.filter {
-                    $0.owningApplication?.bundleIdentifier == Bundle.main.bundleIdentifier
-                }
-
-                let filter = SCContentFilter(display: display, excludingWindows: ownWindows)
-
-                // P9: SCDisplay.width/height are in POINTS. SCStreamConfiguration
-                // .width/.height are in PIXELS. On a Retina display this 2× mismatch
-                // means we'd record at half native resolution if we passed points
-                // straight through — which is the "blurry MP4" symptom.
-                let scale = Int(NSScreen.screens.first {
-                    ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) == display.displayID
-                }?.backingScaleFactor ?? 2.0)
-                let captureWidth = display.width * scale
-                let captureHeight = display.height * scale
-                mLog.log("capture resolution \(captureWidth, privacy: .public)x\(captureHeight, privacy: .public) (scale=\(scale, privacy: .public))")
-
-                let fps = Self.preferredFps()
-                let config = SCStreamConfiguration()
-                config.width = captureWidth
-                config.height = captureHeight
-                config.minimumFrameInterval = CMTime(value: 1, timescale: Int32(fps))
-                config.queueDepth = 8
-                config.capturesAudio = true
-                config.sampleRate = 48000
-                config.channelCount = 2
-                // P8: Explicit pixel format and cursor visibility.
-                config.pixelFormat = kCVPixelFormatType_32BGRA
-                config.showsCursor = true
-
-                let mp4URL = RecordingFileNamer.nextURL(format: .mp4)
-                self.outputMP4URL = mp4URL
-
-                try self.setupAssetWriter(outputURL: mp4URL, width: captureWidth, height: captureHeight, fps: fps)
-                self.setupMicCapture()
-
-                let stream = SCStream(filter: filter, configuration: config, delegate: self)
-                try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: self.writerQueue)
-                try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: self.writerQueue)
-                self.stream = stream
-
-                try await stream.startCapture()
-                mLog.log("stream.startCapture returned successfully; awaiting frames…")
-
-                self.lifecycleState = .recording
-
-                // Demo Mode: start sampling cursor positions for post-process
-                // auto-zoom. Cheap (one NSEvent call every 33ms) and harmless
-                // when demo mode is off — we just don't use the samples.
-                self.captureDisplayPointHeight = display.height
-                self.captureScaleFactor = Double(scale)
-                self.captureVideoWidth = captureWidth
-                self.captureVideoHeight = captureHeight
-                self.startCursorSampling()
-                self.startClickTracking()
-
-                // P3: Schedule auto-stop for GIF max duration.
-                let currentFormat = self.recordingFormat()
-                if currentFormat == .gif {
-                    let maxSeconds = UserDefaults.standard.integer(forKey: PreferenceKey.recordingGifMaxSeconds.rawValue)
-                    let effectiveMax = maxSeconds > 0 ? maxSeconds : 30
-                    let item = DispatchWorkItem { [weak self] in
-                        guard let self, self.lifecycleState == .recording, self.recordingFormat() == .gif else { return }
-                        self.postNotification(
-                            title: "Screen Recording",
-                            body: "GIF max duration of \(effectiveMax) seconds reached."
-                        )
-                        self.stopRecording()
-                    }
-                    self.gifAutoStopItem = item
-                    DispatchQueue.main.asyncAfter(deadline: .now() + Double(effectiveMax), execute: item)
-                }
+                let setup = try await self.buildLegacySetup()
+                await self.startStream(with: setup)
             } catch {
                 // F6: Sanitize error messages to avoid leaking file paths.
                 postNotification(title: "Screen Recording Failed", body: sanitizedBody(for: error))
                 self.lifecycleState = .idle
             }
+        }
+    }
+
+    @MainActor
+    private func buildLegacySetup() async throws -> StreamSetup {
+        let content = try await SCShareableContent.current
+        mLog.log("SCShareableContent: displays=\(content.displays.count, privacy: .public) windows=\(content.windows.count, privacy: .public) applications=\(content.applications.count, privacy: .public)")
+        guard let display = content.displays.first(where: { $0.displayID == CGMainDisplayID() }) else {
+            throw RecorderError.noPrimaryDisplay
+        }
+        mLog.log("using display \(display.displayID, privacy: .public) size=\(display.width, privacy: .public)x\(display.height, privacy: .public)")
+
+        let ownWindows = content.windows.filter {
+            $0.owningApplication?.bundleIdentifier == Bundle.main.bundleIdentifier
+        }
+        let filter = SCContentFilter(display: display, excludingWindows: ownWindows)
+
+        // P9: SCDisplay.width/height are POINTS, SCStreamConfiguration is PIXELS.
+        // Multiply by the screen scale or the Retina capture comes out at half
+        // native resolution (the "blurry MP4" symptom).
+        let scale = Int(NSScreen.screens.first {
+            ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) == display.displayID
+        }?.backingScaleFactor ?? 2.0)
+
+        return StreamSetup(
+            filter: filter,
+            width: display.width * scale,
+            height: display.height * scale,
+            pointHeight: display.height,
+            scale: Double(scale)
+        )
+    }
+
+    @available(macOS 14, *)
+    private func presentContentPicker() {
+        let picker = SCContentSharingPicker.shared
+        picker.add(self)
+        picker.maximumStreamCount = 1
+
+        var config = SCContentSharingPickerConfiguration()
+        config.allowedPickerModes = [.singleDisplay, .singleWindow, .multipleApplications]
+        // Hide our own UI (countdown overlay, menubar popover) from the picker
+        // selection list — the user shouldn't be able to pick Macaveli itself.
+        if let bundleID = Bundle.main.bundleIdentifier {
+            config.excludedBundleIDs = [bundleID]
+        }
+        picker.defaultConfiguration = config
+
+        picker.isActive = true
+        picker.present()
+    }
+
+    @available(macOS 14, *)
+    fileprivate func detachPicker() {
+        let picker = SCContentSharingPicker.shared
+        picker.isActive = false
+        picker.remove(self)
+    }
+
+    @MainActor
+    fileprivate func startStream(with setup: StreamSetup) async {
+        do {
+            mLog.log("starting stream \(setup.width, privacy: .public)x\(setup.height, privacy: .public) (scale=\(setup.scale, privacy: .public))")
+
+            let fps = Self.preferredFps()
+            let config = SCStreamConfiguration()
+            config.width = setup.width
+            config.height = setup.height
+            config.minimumFrameInterval = CMTime(value: 1, timescale: Int32(fps))
+            config.queueDepth = 8
+            config.capturesAudio = true
+            config.sampleRate = 48000
+            config.channelCount = 2
+            // P8: Explicit pixel format and cursor visibility.
+            config.pixelFormat = kCVPixelFormatType_32BGRA
+            config.showsCursor = true
+
+            let mp4URL = RecordingFileNamer.nextURL(format: .mp4)
+            self.outputMP4URL = mp4URL
+
+            try self.setupAssetWriter(outputURL: mp4URL, width: setup.width, height: setup.height, fps: fps)
+            self.setupMicCapture()
+
+            let stream = SCStream(filter: setup.filter, configuration: config, delegate: self)
+            try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: self.writerQueue)
+            try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: self.writerQueue)
+            self.stream = stream
+
+            try await stream.startCapture()
+            mLog.log("stream.startCapture returned successfully; awaiting frames…")
+
+            self.lifecycleState = .recording
+
+            // Demo Mode cursor sampling — accurate when the user picks the
+            // entire screen; offset by the picked window's origin when they
+            // pick a window (acceptable trade-off; the auto-zoom still tracks
+            // the cursor's motion).
+            self.captureDisplayPointHeight = setup.pointHeight
+            self.captureScaleFactor = setup.scale
+            self.captureVideoWidth = setup.width
+            self.captureVideoHeight = setup.height
+            self.startCursorSampling()
+            self.startClickTracking()
+
+            // P3: Schedule auto-stop for GIF max duration.
+            let currentFormat = self.recordingFormat()
+            if currentFormat == .gif {
+                let maxSeconds = UserDefaults.standard.integer(forKey: PreferenceKey.recordingGifMaxSeconds.rawValue)
+                let effectiveMax = maxSeconds > 0 ? maxSeconds : 30
+                let item = DispatchWorkItem { [weak self] in
+                    guard let self, self.lifecycleState == .recording, self.recordingFormat() == .gif else { return }
+                    self.postNotification(
+                        title: "Screen Recording",
+                        body: "GIF max duration of \(effectiveMax) seconds reached."
+                    )
+                    self.stopRecording()
+                }
+                self.gifAutoStopItem = item
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(effectiveMax), execute: item)
+            }
+        } catch {
+            // F6: Sanitize error messages to avoid leaking file paths.
+            postNotification(title: "Screen Recording Failed", body: sanitizedBody(for: error))
+            self.lifecycleState = .idle
         }
     }
 
@@ -788,9 +863,77 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
 
     enum RecorderError: LocalizedError {
         case cannotAddInputs
+        case noPrimaryDisplay
 
         var errorDescription: String? {
-            "Cannot add inputs to AVAssetWriter."
+            switch self {
+            case .cannotAddInputs:
+                return "Cannot add inputs to AVAssetWriter."
+            case .noPrimaryDisplay:
+                return "Could not find the primary display."
+            }
+        }
+    }
+}
+
+// MARK: - SCContentSharingPickerObserver (macOS 14+)
+
+@available(macOS 14, *)
+extension ScreenRecorder: SCContentSharingPickerObserver {
+    func contentSharingPicker(_ picker: SCContentSharingPicker, didUpdateWith filter: SCContentFilter, for stream: SCStream?) {
+        detachPicker()
+
+        // filter.contentRect is in POINTS; multiply by pointPixelScale for the
+        // SCStreamConfiguration pixel dimensions.
+        let scale = Double(filter.pointPixelScale)
+        let setup = StreamSetup(
+            filter: filter,
+            width: Int(filter.contentRect.width * CGFloat(scale)),
+            height: Int(filter.contentRect.height * CGFloat(scale)),
+            pointHeight: Int(filter.contentRect.height),
+            scale: scale
+        )
+
+        DispatchQueue.main.async {
+            // Now that the user has chosen what to share, run the countdown
+            // (if configured) and *then* start the stream — giving them a
+            // moment to compose the screen before frames hit disk.
+            let raw = UserDefaults.standard.object(forKey: PreferenceKey.recordingCountdownSeconds.rawValue) as? Int
+            let countdownSeconds = raw ?? 3
+
+            guard countdownSeconds > 0 else {
+                Task { @MainActor in
+                    await self.startStream(with: setup)
+                }
+                return
+            }
+
+            self.lifecycleState = .countingDown
+            CountdownOverlay.shared.show(seconds: countdownSeconds) { [weak self] in
+                guard let self else { return }
+                // Bail if the user cancelled during countdown — `toggle()`
+                // would have flipped lifecycleState to .idle.
+                guard self.lifecycleState == .countingDown else { return }
+                self.lifecycleState = .starting
+                Task { @MainActor in
+                    await self.startStream(with: setup)
+                }
+            }
+        }
+    }
+
+    func contentSharingPicker(_ picker: SCContentSharingPicker, didCancelFor stream: SCStream?) {
+        detachPicker()
+        Task { @MainActor in
+            self.lifecycleState = .idle
+        }
+    }
+
+    func contentSharingPickerStartDidFailWithError(_ error: Error) {
+        detachPicker()
+        postNotification(title: "Screen Recording Failed", body: sanitizedBody(for: error))
+        Task { @MainActor in
+            self.lifecycleState = .idle
         }
     }
 }

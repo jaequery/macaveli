@@ -143,24 +143,76 @@ codesign --force \
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
 # ---- 5. Build the DMG ---------------------------------------------------
+#
+# Two-step build: create a writable DMG, mount it and style the Finder
+# window via AppleScript (icon size, positions, no toolbar/sidebar), then
+# convert to a compressed read-only DMG. This is what produces the big
+# "drag-the-app-into-Applications" installer window users expect.
 
 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist")
 DMG_PATH="${BUILD_DIR}/${APP_NAME}-${VERSION}.dmg"
 STAGING="${BUILD_DIR}/dmg-staging"
+VOLUME_NAME="${APP_NAME} ${VERSION}"
+RW_DMG="${BUILD_DIR}/${APP_NAME}-rw.dmg"
+MOUNT_DIR="/Volumes/${VOLUME_NAME}"
 
-rm -rf "$STAGING" "$DMG_PATH"
+rm -rf "$STAGING" "$DMG_PATH" "$RW_DMG"
 mkdir -p "$STAGING"
 cp -R "$APP_PATH" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
 
-echo "→ Building DMG…"
+echo "→ Building writable DMG…"
 hdiutil create \
-    -volname "$APP_NAME" \
+    -volname "$VOLUME_NAME" \
     -srcfolder "$STAGING" \
     -ov \
-    -format UDZO \
+    -format UDRW \
     -fs HFS+ \
-    "$DMG_PATH"
+    "$RW_DMG"
+
+# Detach any leftover mount from a previous failed run, then attach fresh.
+hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
+echo "→ Mounting writable DMG for styling…"
+hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen >/dev/null
+
+echo "→ Styling Finder window…"
+osascript <<APPLESCRIPT
+tell application "Finder"
+    tell disk "${VOLUME_NAME}"
+        open
+        set current view of container window to icon view
+        set toolbar visible of container window to false
+        set statusbar visible of container window to false
+        -- {left, top, right, bottom} → 660 × 420 window
+        set the bounds of container window to {240, 140, 900, 560}
+        set viewOptions to the icon view options of container window
+        set arrangement of viewOptions to not arranged
+        set icon size of viewOptions to 128
+        set text size of viewOptions to 13
+        set label position of viewOptions to bottom
+        set shows item info of viewOptions to false
+        set shows icon preview of viewOptions to true
+        set position of item "${APP_NAME}.app" of container window to {180, 200}
+        set position of item "Applications" of container window to {480, 200}
+        update without registering applications
+        delay 1
+        close
+    end tell
+end tell
+APPLESCRIPT
+
+sync
+
+echo "→ Detaching writable DMG…"
+hdiutil detach "$MOUNT_DIR" -force
+
+echo "→ Compressing to read-only DMG…"
+hdiutil convert "$RW_DMG" \
+    -format UDZO \
+    -imagekey zlib-level=9 \
+    -o "$DMG_PATH"
+
+rm -f "$RW_DMG"
 
 echo "→ Signing DMG…"
 codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG_PATH"
