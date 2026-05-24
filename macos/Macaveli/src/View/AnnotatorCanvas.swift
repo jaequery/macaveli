@@ -23,6 +23,7 @@ import AppKit
 //   The export path in AnnotatorManager scales these to pixel coordinates.
 
 struct AnnotatorCanvas: View {
+    @ObservedObject var state: AnnotatorState
     @Binding var cgImage: CGImage?
     @Binding var annotations: [Annotation]
     @Binding var activeTool: AnnotationTool
@@ -104,7 +105,9 @@ struct AnnotatorCanvas: View {
                             draftPoints = [pt]
                             isDragging  = true
                         } else {
-                            if activeTool == .pencil {
+                            // Soft cap on pencil points to prevent unbounded
+                            // memory growth on ProMotion (120 Hz) long-drag input.
+                            if activeTool == .pencil, draftPoints.count < 4000 {
                                 draftPoints.append(pt)
                             }
                             draftEnd = pt
@@ -169,9 +172,12 @@ struct AnnotatorCanvas: View {
             }
             .onAppear {
                 displayedRect = imgRect
+                state.displayedSize = imgRect.size
             }
             .onChange(of: bounds.size) { _ in
-                displayedRect = imageRect(in: bounds.size)
+                let rect = imageRect(in: bounds.size)
+                displayedRect = rect
+                state.displayedSize = rect.size
             }
         }
     }
@@ -263,6 +269,7 @@ struct AnnotatorCanvas: View {
                 provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
                     guard let data = item as? Data,
                           let url = URL(dataRepresentation: data, relativeTo: nil),
+                          url.isFileURL, url.scheme == "file",
                           let nsImage = NSImage(contentsOf: url) else { return }
                     DispatchQueue.main.async {
                         loadNSImage(nsImage)
@@ -275,8 +282,7 @@ struct AnnotatorCanvas: View {
 
     private func loadNSImage(_ nsImage: NSImage) {
         guard let cg = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
-        cgImage = cg
-        annotations.removeAll()
+        state.loadImage(cg)
     }
 
     // MARK: - Canvas drawing helpers

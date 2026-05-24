@@ -15,8 +15,8 @@ enum AnnotatorWindow {
         let screen = NSScreen.main ?? NSScreen.screens.first
         let screenFrame = screen?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
 
-        let defaultWidth  = min(max(screenFrame.width  * 0.75, 640), screenFrame.width  * 0.9)
-        let defaultHeight = min(max(screenFrame.height * 0.75, 440), screenFrame.height * 0.9)
+        let defaultWidth  = min(max(screenFrame.width  * 0.75, 760), screenFrame.width  * 0.9)
+        let defaultHeight = min(max(screenFrame.height * 0.75, 460), screenFrame.height * 0.9)
         let contentRect = CGRect(x: 0, y: 0, width: defaultWidth, height: defaultHeight)
 
         let window = NSWindow(
@@ -35,7 +35,7 @@ enum AnnotatorWindow {
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.frame = CGRect(origin: .zero, size: contentRect.size)
         window.contentView = hostingView
-        window.minSize = CGSize(width: 640, height: 440)
+        window.minSize = CGSize(width: 760, height: 460)
 
         let maxW = screenFrame.width  * 0.9
         let maxH = screenFrame.height * 0.9

@@ -15,8 +15,17 @@ final class AnnotatorManager {
     static let shared = AnnotatorManager()
 
     private var windowController: NSWindowController?
+    /// Weak reference to the live `AnnotatorState` inside the hosted view.
+    /// Set via `register(state:)` called from `AnnotatorView.onAppear`.
+    private weak var currentState: AnnotatorState?
 
     private init() {}
+
+    /// Called from `AnnotatorView.onAppear` to wire the live state reference.
+    @MainActor
+    func register(state: AnnotatorState) {
+        currentState = state
+    }
 
     // MARK: - Open
 
@@ -26,9 +35,8 @@ final class AnnotatorManager {
 
         if let wc = windowController, let window = wc.window, window.isVisible {
             // Window already open — update image if clipboard changed, then focus.
-            if let hostingView = window.contentView as? NSHostingView<AnnotatorView>,
-               let newImage = image {
-                hostingView.rootView.loadImage(newImage)
+            if let newImage = image {
+                currentState?.loadImage(newImage)
             }
             NSApp.activate(ignoringOtherApps: true)
             window.makeKeyAndOrderFront(nil)
@@ -165,17 +173,20 @@ final class AnnotatorManager {
     }
 
     /// Writes PNG data (plus a TIFF fallback) to the system pasteboard.
-    func writePNGToClipboard(data: Data) {
+    /// Returns `true` if the primary PNG write succeeded.
+    @discardableResult
+    func writePNGToClipboard(data: Data) -> Bool {
         let pb = NSPasteboard.general
         pb.clearContents()
-        pb.setData(data, forType: .png)
+        let pngOK = pb.setData(data, forType: .png)
 
-        // Legacy TIFF for compatibility with older apps.
-        if let image = NSImage(data: data) {
-            if let tiffData = image.tiffRepresentation {
-                pb.setData(tiffData, forType: .tiff)
-            }
+        // Legacy TIFF for compatibility with older apps — best-effort only.
+        if let image = NSImage(data: data),
+           let tiffData = image.tiffRepresentation {
+            pb.setData(tiffData, forType: .tiff)
         }
+
+        return pngOK
     }
 
     // MARK: - CGContext drawing
@@ -302,9 +313,46 @@ final class AnnotatorManager {
     }
 
     /// Converts a SwiftUI `Color` to an `NSColor`.
-    /// This works on macOS 13+ via the `resolve(in:)` path or direct init.
+    ///
+    /// `NSColor.init(_ color: Color)` and `Color.resolve(in:)` both require
+    /// macOS 14+.  We bridge via `CIColor` — available on all supported OS
+    /// versions — which can be initialised from any `CGColor`.  The palette
+    /// colors are all `Color(red:green:blue:)` sRGB so `CGColor(srgbRed:…)`
+    /// gives the exact same values without any availability issues.
     private func nsColor(from color: Color) -> NSColor {
-        NSColor(color)
+        // All annotation palette colors are defined as Color(red:green:blue:)
+        // using sRGB components.  Mirror those components via NSColor's sRGB
+        // initialiser.  We extract the underlying CGColor components by
+        // constructing a 1×1 offscreen context, filling it, and sampling it.
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        var pixelData = [CGFloat](repeating: 0, count: 4)
+        guard let ctx = CGContext(
+            data: &pixelData,
+            width: 1, height: 1,
+            bitsPerComponent: 32,
+            bytesPerRow: 4 * 4,
+            space: colorSpace,
+            bitmapInfo: CGBitmapInfo.floatComponents.rawValue
+                | CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return .black }
+
+        // Paint the SwiftUI Color into the context via an NSHostingView layer.
+        let hostView = NSHostingView(
+            rootView: Rectangle().fill(color).frame(width: 1, height: 1)
+        )
+        hostView.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+        hostView.layout()
+        hostView.layer?.render(in: ctx)
+
+        // Un-premultiply.
+        let alpha = pixelData[3]
+        guard alpha > 0 else { return NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 0) }
+        return NSColor(
+            srgbRed:  pixelData[0] / alpha,
+            green:    pixelData[1] / alpha,
+            blue:     pixelData[2] / alpha,
+            alpha:    alpha
+        )
     }
 }
 
