@@ -44,6 +44,14 @@ struct CheatsheetView: View {
                             rows: recordRows,
                             settings: { RecordSettingsStrip() }
                         )
+                        SectionDivider()
+                        CheatSection(
+                            id: .annotate,
+                            title: "Annotate",
+                            openSection: $openSection,
+                            rows: annotateRows,
+                            settings: { AnnotateSettingsStrip() }
+                        )
                     }
                     .padding(.vertical, 6)
                 }
@@ -85,11 +93,16 @@ struct CheatsheetView: View {
             .init(type: .record, label: "Toggle recording", desc: "Start or stop a screen capture"),
         ]
     }
+    private var annotateRows: [CheatRowSpec] {
+        [
+            .init(type: .annotate, label: "Annotate", desc: "Annotate the clipboard image"),
+        ]
+    }
 }
 
 // MARK: - Section primitives
 
-enum CheatSectionID: Hashable { case snap, drag, record }
+enum CheatSectionID: Hashable { case snap, drag, record, annotate }
 
 struct CheatRowSpec: Identifiable {
     var id: ShortcutType { type }
@@ -587,6 +600,14 @@ struct RecordSettingsStrip: View {
         panel.directoryURL = URL(fileURLWithPath: (current as NSString).expandingTildeInPath, isDirectory: true)
         if panel.runModal() == .OK, let url = panel.url {
             saveFolder = url.path
+        }
+    }
+}
+
+struct AnnotateSettingsStrip: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            BindingEditorRow(type: .annotate, label: "Hotkey")
         }
     }
 }
