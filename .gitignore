@@ -1,6 +1,15 @@
 .DS_Store
 xcuserdata
 project.xcworkspace
-build/
-Macaveli/ffmpeg
-Macaveli/AppIcon.icns
+
+# macOS app build outputs
+macos/build/
+macos/Macaveli/ffmpeg
+macos/Macaveli/AppIcon.icns
+
+# Next.js web app
+web/.next/
+web/node_modules/
+web/out/
+web/.vercel/
+web/next-env.d.ts

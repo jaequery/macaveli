@@ -2,9 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build & run
+## Repo layout
 
-The Makefile is the canonical way to build outside of Xcode (Xcode signing is fiddly — see README).
+Monorepo with two apps, no monorepo tooling — each app builds independently.
+
+- `macos/` — the macOS menubar app (Swift, Xcode, Sparkle auto-updates). All
+  paths in this doc that begin with `Macaveli/` or refer to `Makefile`,
+  `appcast.xml`, `scripts/`, etc. live under `macos/`.
+- `web/` — the marketing landing page (Next.js 15, TypeScript, Tailwind v4).
+  See `web/README.md`.
+
+The remaining sections describe the macOS app; run all macOS commands from
+`macos/`.
+
+## Build & run (macOS app)
+
+The Makefile is the canonical way to build outside of Xcode (Xcode signing is fiddly — see README). Run from `macos/`.
 
 - `make build` — `xcodebuild -scheme Macaveli build SYMROOT=$PWD/build`, drops the app at `./build/Debug/Macaveli.app`.
 - `make run` — build + open the debug app.
