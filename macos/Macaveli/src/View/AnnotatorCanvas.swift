@@ -3,8 +3,6 @@ import AppKit
 
 // MARK: - AnnotatorCanvas
 //
-// Owned by: Senior Developer
-//
 // The canvas drawing surface embedded inside `AnnotatorView`.
 //
 // Bindings contract (caller is `AnnotatorView`):
@@ -14,13 +12,12 @@ import AppKit
 //   activeStyle      — color + strokeWidth for new annotations
 //   commitAnnotation — closure: called with a fully-constructed Annotation
 //                      when the user finishes a drag or submits a text field.
-//                      Caller (AnnotatorView) appends to its own list and
-//                      clears the redo stack.
 //
 // Coordinate system:
-//   All annotation coordinates are stored in "canvas logical space":
-//   top-left origin, matching the `displayedRect` computed here.
-//   The export path in AnnotatorManager scales these to pixel coordinates.
+//   Anchor coordinates are stored in "image-local space" — top-left origin
+//   relative to the displayed image rect. Each Annotation also carries
+//   `translation` and `rotation` (around its anchor center) which are
+//   applied at render and export time.
 
 struct AnnotatorCanvas: View {
     @ObservedObject var state: AnnotatorState
@@ -41,9 +38,18 @@ struct AnnotatorCanvas: View {
     @State private var textOverlayValue:  String   = ""
     @FocusState private var textFieldFocused: Bool
 
+    // Selection / manipulation state.
+    private enum ManipulationMode { case idle, move, rotate }
+    @State private var manipulation: ManipulationMode = .idle
+    @State private var manipStartTranslation: CGSize = .zero
+    @State private var manipStartRotation:    CGFloat = 0
+    @State private var manipStartLocation:    CGPoint = .zero
+
     // The rect where the image is actually rendered inside the canvas bounds.
-    // Updated every layout pass via a GeometryReader.
     @State private var displayedRect: CGRect = .zero
+
+    private let rotateHandleOffset: CGFloat = 28
+    private let rotateHandleRadius: CGFloat = 7
 
     var body: some View {
         GeometryReader { geo in
@@ -51,35 +57,38 @@ struct AnnotatorCanvas: View {
             let imgRect = imageRect(in: bounds.size)
 
             ZStack {
-                // Background.
                 Color(NSColor.windowBackgroundColor)
 
                 if let cg = cgImage {
-                    // Base image + annotations rendered with SwiftUI Canvas.
-                    Canvas { context, size in
+                    Canvas { context, _ in
                         // 1. Base image.
                         let uiImage = Image(decorative: cg, scale: 1, orientation: .up)
                         context.draw(uiImage, in: imgRect)
 
-                        // 2. Committed annotations.
+                        // 2. Committed annotations (with their transforms).
                         for annotation in annotations {
-                            drawAnnotation(annotation, in: &context, rect: imgRect)
+                            drawAnnotation(annotation, in: &context, imageRect: imgRect)
                         }
 
                         // 3. In-progress draft.
-                        if isDragging {
-                            drawDraft(in: &context, rect: imgRect, style: activeStyle)
+                        if isDragging, activeTool != .select {
+                            drawDraft(in: &context, style: activeStyle)
+                        }
+
+                        // 4. Selection overlay.
+                        if activeTool == .select,
+                           let id = state.selectedAnnotationID,
+                           let annotation = annotations.first(where: { $0.id == id }) {
+                            drawSelectionOverlay(for: annotation, in: &context, imageRect: imgRect)
                         }
                     }
                     .frame(width: bounds.width, height: bounds.height)
-                    // Allow swapping the image by dropping a new one over the canvas.
                     .onDrop(of: [.image, .fileURL], isTargeted: nil) { providers in
                         handleDrop(providers: providers)
                         return true
                     }
                 }
 
-                // Text-tool overlay.
                 if activeTool == .text, let origin = textOverlayOrigin {
                     TextField("", text: $textOverlayValue)
                         .textFieldStyle(.plain)
@@ -94,85 +103,7 @@ struct AnnotatorCanvas: View {
                         }
                 }
             }
-            // Single drag gesture handles drawing AND text placement.
-            // (A separate `.onTapGesture` would never fire because the
-            // DragGesture(minimumDistance: 0) claims the event stream first.)
-            .gesture(
-                DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                    .onChanged { value in
-                        guard activeTool != .text else { return }
-                        let pt = clampedPoint(value.location, to: imgRect)
-                        if !isDragging {
-                            draftStart  = pt
-                            draftPoints = [pt]
-                            isDragging  = true
-                        } else {
-                            // Soft cap on pencil points to prevent unbounded
-                            // memory growth on ProMotion (120 Hz) long-drag input.
-                            if activeTool == .pencil, draftPoints.count < 4000 {
-                                draftPoints.append(pt)
-                            }
-                            draftEnd = pt
-                        }
-                    }
-                    .onEnded { value in
-                        // Text tool: a near-zero drag is a tap. Place the overlay.
-                        if activeTool == .text {
-                            let location = clampedPoint(value.location, to: imgRect)
-                            guard imgRect.contains(location) else { return }
-                            // If an overlay is already open, commit it first.
-                            if let origin = textOverlayOrigin, !textOverlayValue.isEmpty {
-                                commitTextOverlay(at: origin)
-                            }
-                            textOverlayOrigin = location
-                            textOverlayValue  = ""
-                            textFieldFocused  = true
-                            return
-                        }
-                        guard isDragging else { return }
-                        let pt = clampedPoint(value.location, to: imgRect)
-                        draftEnd = pt
-
-                        let localStart = toLocalCoords(draftStart, imageRect: imgRect)
-                        let localEnd   = toLocalCoords(draftEnd,   imageRect: imgRect)
-                        let localPoints = draftPoints.map { toLocalCoords($0, imageRect: imgRect) }
-
-                        let newAnnotation: Annotation
-                        let id = UUID()
-                        switch activeTool {
-                        case .pencil:
-                            newAnnotation = .pencil(id: id,
-                                                    points: localPoints.count > 1 ? localPoints : [localStart, localEnd],
-                                                    style: activeStyle)
-                        case .circle:
-                            newAnnotation = .circle(id: id,
-                                                    rect: rectFromPoints(localStart, localEnd),
-                                                    style: activeStyle)
-                        case .rectangle:
-                            newAnnotation = .rectangle(id: id,
-                                                       rect: rectFromPoints(localStart, localEnd),
-                                                       style: activeStyle)
-                        case .arrow:
-                            newAnnotation = .arrow(id: id,
-                                                   from: localStart,
-                                                   to: localEnd,
-                                                   style: activeStyle)
-                        case .text:
-                            // Handled by tap gesture below.
-                            draftPoints.removeAll()
-                            isDragging = false
-                            return
-                        }
-
-                        // Only commit non-trivial annotations (avoid 0-length shapes).
-                        let dist = distance(draftStart, draftEnd)
-                        if dist > 2 || activeTool == .pencil {
-                            commitAnnotation(newAnnotation)
-                        }
-                        draftPoints.removeAll()
-                        isDragging = false
-                    }
-            )
+            .gesture(canvasDragGesture(imgRect: imgRect))
             .onAppear {
                 displayedRect = imgRect
                 state.displayedSize = imgRect.size
@@ -182,12 +113,180 @@ struct AnnotatorCanvas: View {
                 displayedRect = rect
                 state.displayedSize = rect.size
             }
+            .onChange(of: activeTool) { newTool in
+                // Leaving select mode clears the selection.
+                if newTool != .select { state.selectedAnnotationID = nil }
+            }
         }
+    }
+
+    // MARK: - Gesture
+
+    private func canvasDragGesture(imgRect: CGRect) -> some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .onChanged { value in
+                if activeTool == .select {
+                    handleSelectGestureChanged(value, imageRect: imgRect)
+                    return
+                }
+                guard activeTool != .text else { return }
+                let pt = clampedPoint(value.location, to: imgRect)
+                if !isDragging {
+                    draftStart  = pt
+                    draftPoints = [pt]
+                    isDragging  = true
+                } else {
+                    if activeTool == .pencil, draftPoints.count < 4000 {
+                        draftPoints.append(pt)
+                    }
+                    draftEnd = pt
+                }
+            }
+            .onEnded { value in
+                if activeTool == .select {
+                    handleSelectGestureEnded(value, imageRect: imgRect)
+                    return
+                }
+                if activeTool == .text {
+                    let location = clampedPoint(value.location, to: imgRect)
+                    guard imgRect.contains(location) else { return }
+                    if let origin = textOverlayOrigin, !textOverlayValue.isEmpty {
+                        commitTextOverlay(at: origin)
+                    }
+                    textOverlayOrigin = location
+                    textOverlayValue  = ""
+                    textFieldFocused  = true
+                    return
+                }
+                guard isDragging else { return }
+                let pt = clampedPoint(value.location, to: imgRect)
+                draftEnd = pt
+                commitDraft(imageRect: imgRect)
+                draftPoints.removeAll()
+                isDragging = false
+            }
+    }
+
+    // MARK: - Select-mode handling
+
+    private func handleSelectGestureChanged(_ value: DragGesture.Value, imageRect: CGRect) {
+        if manipulation == .idle {
+            // Decide what we're manipulating at gesture start.
+            manipStartLocation = value.startLocation
+            if let id = state.selectedAnnotationID,
+               let annotation = annotations.first(where: { $0.id == id }),
+               let rotateHandle = rotateHandlePosition(for: annotation, imageRect: imageRect),
+               distance(value.startLocation, rotateHandle) <= rotateHandleRadius + 4 {
+                manipulation = .rotate
+                manipStartRotation = annotation.rotation
+            } else if let id = state.selectedAnnotationID,
+                      let annotation = annotations.first(where: { $0.id == id }),
+                      transformedBoundingBox(for: annotation, imageRect: imageRect)
+                          .insetBy(dx: -4, dy: -4)
+                          .contains(value.startLocation) {
+                manipulation = .move
+                manipStartTranslation = annotation.translation
+            } else {
+                // Tap-or-drag empty area: defer selection change to .onEnded.
+                manipulation = .idle
+                return
+            }
+        }
+
+        guard let id = state.selectedAnnotationID,
+              let index = annotations.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+
+        switch manipulation {
+        case .move:
+            let dx = value.location.x - manipStartLocation.x
+            let dy = value.location.y - manipStartLocation.y
+            annotations[index].translation = CGSize(
+                width:  manipStartTranslation.width  + dx,
+                height: manipStartTranslation.height + dy
+            )
+        case .rotate:
+            let center = transformedAnchorCenterCanvas(for: annotations[index], imageRect: imageRect)
+            let startAngle = atan2(manipStartLocation.y - center.y, manipStartLocation.x - center.x)
+            let currentAngle = atan2(value.location.y - center.y, value.location.x - center.x)
+            annotations[index].rotation = manipStartRotation + (currentAngle - startAngle)
+        case .idle:
+            break
+        }
+    }
+
+    private func handleSelectGestureEnded(_ value: DragGesture.Value, imageRect: CGRect) {
+        defer {
+            manipulation = .idle
+        }
+
+        // If we were actively manipulating, the change is already applied.
+        if manipulation != .idle { return }
+
+        // Otherwise this was a click. Hit-test annotations in reverse draw order
+        // (topmost wins).
+        let tap = value.location
+        for annotation in annotations.reversed() {
+            if hitTest(annotation, point: tap, imageRect: imageRect) {
+                state.selectedAnnotationID = annotation.id
+                return
+            }
+        }
+        state.selectedAnnotationID = nil
+    }
+
+    // MARK: - Hit testing
+
+    private func hitTest(_ annotation: Annotation, point: CGPoint, imageRect: CGRect) -> Bool {
+        // Map the canvas point back into the annotation's anchor coordinate
+        // space by applying the inverse of the annotation's transform.
+        let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
+        // Inverse: translate then rotate around center.
+        let dx = point.x - annotation.translation.width  - center.x
+        let dy = point.y - annotation.translation.height - center.y
+        let cosA = cos(-annotation.rotation)
+        let sinA = sin(-annotation.rotation)
+        let rotated = CGPoint(
+            x: dx * cosA - dy * sinA + center.x,
+            y: dx * sinA + dy * cosA + center.y
+        )
+        // Now `rotated` is the equivalent canvas-space point as if the
+        // annotation had no transform. Convert to anchor (image-local) coords.
+        let anchorPoint = anchorCoords(rotated, imageRect: imageRect)
+        let bbox = annotation.anchorBoundingBox.insetBy(dx: -6, dy: -6)
+        return bbox.contains(anchorPoint)
+    }
+
+    // MARK: - Draft commit
+
+    private func commitDraft(imageRect: CGRect) {
+        let localStart = anchorCoords(draftStart, imageRect: imageRect)
+        let localEnd   = anchorCoords(draftEnd,   imageRect: imageRect)
+        let localPoints = draftPoints.map { anchorCoords($0, imageRect: imageRect) }
+
+        let dist = distance(draftStart, draftEnd)
+        let shape: AnnotationShape
+        switch activeTool {
+        case .pencil:
+            shape = .pencil(points: localPoints.count > 1 ? localPoints : [localStart, localEnd])
+        case .circle:
+            guard dist > 2 else { return }
+            shape = .circle(rect: rectFromPoints(localStart, localEnd))
+        case .rectangle:
+            guard dist > 2 else { return }
+            shape = .rectangle(rect: rectFromPoints(localStart, localEnd))
+        case .arrow:
+            guard dist > 2 else { return }
+            shape = .arrow(from: localStart, to: localEnd)
+        case .text, .select:
+            return
+        }
+        commitAnnotation(Annotation(shape: shape, style: activeStyle))
     }
 
     // MARK: - Geometry helpers
 
-    /// Returns the rect within `size` that the image occupies (aspect-fit).
     private func imageRect(in size: CGSize) -> CGRect {
         guard let cg = cgImage, cg.width > 0, cg.height > 0 else {
             return CGRect(origin: .zero, size: size)
@@ -203,7 +302,6 @@ struct AnnotatorCanvas: View {
         }
     }
 
-    /// Clamps `point` to remain within `rect`.
     private func clampedPoint(_ point: CGPoint, to rect: CGRect) -> CGPoint {
         CGPoint(
             x: min(max(point.x, rect.minX), rect.maxX),
@@ -211,13 +309,21 @@ struct AnnotatorCanvas: View {
         )
     }
 
-    /// Converts a canvas-space point to image-local coordinates
-    /// (origin top-left of the displayed image rect).
-    private func toLocalCoords(_ point: CGPoint, imageRect: CGRect) -> CGPoint {
-        CGPoint(
-            x: point.x - imageRect.minX,
-            y: point.y - imageRect.minY
-        )
+    /// Canvas-space point → anchor (image-local) coords.
+    private func anchorCoords(_ point: CGPoint, imageRect: CGRect) -> CGPoint {
+        CGPoint(x: point.x - imageRect.minX, y: point.y - imageRect.minY)
+    }
+
+    /// Anchor (image-local) coords → canvas-space point.
+    private func canvasPoint(forAnchor point: CGPoint, imageRect: CGRect) -> CGPoint {
+        CGPoint(x: point.x + imageRect.minX, y: point.y + imageRect.minY)
+    }
+
+    private func canvasRect(forAnchor rect: CGRect, imageRect: CGRect) -> CGRect {
+        CGRect(x: rect.minX + imageRect.minX,
+               y: rect.minY + imageRect.minY,
+               width: rect.width,
+               height: rect.height)
     }
 
     private func rectFromPoints(_ a: CGPoint, _ b: CGPoint) -> CGRect {
@@ -234,6 +340,62 @@ struct AnnotatorCanvas: View {
         return sqrt(dx * dx + dy * dy)
     }
 
+    /// Returns the canvas-space center of an annotation after applying its
+    /// translation (rotation is around this point, so it doesn't displace it).
+    private func transformedAnchorCenterCanvas(for annotation: Annotation, imageRect: CGRect) -> CGPoint {
+        let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
+        return CGPoint(
+            x: center.x + annotation.translation.width,
+            y: center.y + annotation.translation.height
+        )
+    }
+
+    /// Axis-aligned bounding box in canvas space after applying transform.
+    private func transformedBoundingBox(for annotation: Annotation, imageRect: CGRect) -> CGRect {
+        let anchorBox = annotation.anchorBoundingBox
+        let canvasBox = canvasRect(forAnchor: anchorBox, imageRect: imageRect)
+        let center = transformedAnchorCenterCanvas(for: annotation, imageRect: imageRect)
+        let translatedBox = canvasBox.offsetBy(dx: annotation.translation.width,
+                                               dy: annotation.translation.height)
+        let corners: [CGPoint] = [
+            CGPoint(x: translatedBox.minX, y: translatedBox.minY),
+            CGPoint(x: translatedBox.maxX, y: translatedBox.minY),
+            CGPoint(x: translatedBox.maxX, y: translatedBox.maxY),
+            CGPoint(x: translatedBox.minX, y: translatedBox.maxY),
+        ]
+        let rotated = corners.map { rotate($0, around: center, by: annotation.rotation) }
+        return rotated.boundingRect
+    }
+
+    private func rotate(_ point: CGPoint, around center: CGPoint, by angle: CGFloat) -> CGPoint {
+        let dx = point.x - center.x
+        let dy = point.y - center.y
+        let c = cos(angle), s = sin(angle)
+        return CGPoint(x: dx * c - dy * s + center.x,
+                       y: dx * s + dy * c + center.y)
+    }
+
+    private func rotateHandlePosition(for annotation: Annotation, imageRect: CGRect) -> CGPoint? {
+        // Place handle above the (rotated) top-center of the bounding box.
+        let anchorBox = annotation.anchorBoundingBox
+        let canvasBox = canvasRect(forAnchor: anchorBox, imageRect: imageRect)
+        let center = transformedAnchorCenterCanvas(for: annotation, imageRect: imageRect)
+        let translatedTopCenter = CGPoint(
+            x: canvasBox.midX + annotation.translation.width,
+            y: canvasBox.minY + annotation.translation.height
+        )
+        let rotatedTopCenter = rotate(translatedTopCenter, around: center, by: annotation.rotation)
+        // Push the handle further out from the center along the same direction.
+        let dx = rotatedTopCenter.x - center.x
+        let dy = rotatedTopCenter.y - center.y
+        let len = sqrt(dx * dx + dy * dy)
+        guard len > 0 else {
+            return CGPoint(x: center.x, y: center.y - rotateHandleOffset)
+        }
+        let scale = (len + rotateHandleOffset) / len
+        return CGPoint(x: center.x + dx * scale, y: center.y + dy * scale)
+    }
+
     // MARK: - Text overlay commit
 
     private func commitTextOverlay(at origin: CGPoint) {
@@ -245,14 +407,12 @@ struct AnnotatorCanvas: View {
         let trimmed = textOverlayValue.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
 
-        let imgRect = displayedRect
-        let localOrigin = toLocalCoords(origin, imageRect: imgRect)
+        let localOrigin = anchorCoords(origin, imageRect: displayedRect)
         let fontSize: CGFloat = activeStyle.strokeWidth * 3 + 10
-        commitAnnotation(.text(id: UUID(),
-                               origin: localOrigin,
-                               string: trimmed,
-                               style: activeStyle,
-                               fontSize: fontSize))
+        commitAnnotation(Annotation(
+            shape: .text(origin: localOrigin, string: trimmed, fontSize: fontSize),
+            style: activeStyle
+        ))
     }
 
     // MARK: - Drop handling
@@ -262,9 +422,7 @@ struct AnnotatorCanvas: View {
             if provider.canLoadObject(ofClass: NSImage.self) {
                 _ = provider.loadObject(ofClass: NSImage.self) { image, _ in
                     guard let nsImage = image as? NSImage else { return }
-                    DispatchQueue.main.async {
-                        loadNSImage(nsImage)
-                    }
+                    DispatchQueue.main.async { loadNSImage(nsImage) }
                 }
                 return
             }
@@ -274,9 +432,7 @@ struct AnnotatorCanvas: View {
                           let url = URL(dataRepresentation: data, relativeTo: nil),
                           url.isFileURL, url.scheme == "file",
                           let nsImage = NSImage(contentsOf: url) else { return }
-                    DispatchQueue.main.async {
-                        loadNSImage(nsImage)
-                    }
+                    DispatchQueue.main.async { loadNSImage(nsImage) }
                 }
                 return
             }
@@ -288,21 +444,32 @@ struct AnnotatorCanvas: View {
         state.loadImage(cg)
     }
 
-    // MARK: - Canvas drawing helpers
+    // MARK: - Drawing
 
     private func drawAnnotation(_ annotation: Annotation,
-                                 in context: inout GraphicsContext,
-                                 rect: CGRect) {
-        let style = annotation.style
+                                in context: inout GraphicsContext,
+                                imageRect: CGRect) {
+        let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
+        context.drawLayer { layer in
+            layer.translateBy(x: annotation.translation.width, y: annotation.translation.height)
+            layer.translateBy(x: center.x, y: center.y)
+            layer.rotate(by: Angle(radians: annotation.rotation))
+            layer.translateBy(x: -center.x, y: -center.y)
+            drawShape(annotation.shape, style: annotation.style, in: &layer, imageRect: imageRect)
+        }
+    }
 
-        switch annotation {
-
-        case .pencil(_, let points, _):
+    private func drawShape(_ shape: AnnotationShape,
+                           style: AnnotationStyle,
+                           in context: inout GraphicsContext,
+                           imageRect: CGRect) {
+        switch shape {
+        case .pencil(let points):
             guard points.count > 1 else { return }
             var path = Path()
-            path.move(to: toCanvasCoords(points[0], imageRect: rect))
+            path.move(to: canvasPoint(forAnchor: points[0], imageRect: imageRect))
             for pt in points.dropFirst() {
-                path.addLine(to: toCanvasCoords(pt, imageRect: rect))
+                path.addLine(to: canvasPoint(forAnchor: pt, imageRect: imageRect))
             }
             context.stroke(path,
                            with: .color(style.color),
@@ -310,43 +477,34 @@ struct AnnotatorCanvas: View {
                                               lineCap: .round,
                                               lineJoin: .round))
 
-        case .circle(_, let r, _):
-            let canvasRect = toCanvasRect(r, imageRect: rect)
-            let path = Path(ellipseIn: canvasRect)
-            context.stroke(path,
-                           with: .color(style.color),
-                           lineWidth: style.strokeWidth)
+        case .circle(let r):
+            let path = Path(ellipseIn: canvasRect(forAnchor: r, imageRect: imageRect))
+            context.stroke(path, with: .color(style.color), lineWidth: style.strokeWidth)
 
-        case .rectangle(_, let r, _):
-            let canvasRect = toCanvasRect(r, imageRect: rect)
-            let path = Path(canvasRect)
-            context.stroke(path,
-                           with: .color(style.color),
-                           lineWidth: style.strokeWidth)
+        case .rectangle(let r):
+            let path = Path(canvasRect(forAnchor: r, imageRect: imageRect))
+            context.stroke(path, with: .color(style.color), lineWidth: style.strokeWidth)
 
-        case .arrow(_, let from, let to, _):
-            let canvasFrom = toCanvasCoords(from, imageRect: rect)
-            let canvasTo   = toCanvasCoords(to,   imageRect: rect)
-            drawCanvasArrow(from: canvasFrom,
-                            to: canvasTo,
-                            style: style,
-                            in: &context)
+        case .arrow(let from, let to):
+            drawCanvasArrow(
+                from: canvasPoint(forAnchor: from, imageRect: imageRect),
+                to:   canvasPoint(forAnchor: to,   imageRect: imageRect),
+                style: style,
+                in: &context
+            )
 
-        case .text(_, let origin, let string, let style, let fontSize):
-            let canvasOrigin = toCanvasCoords(origin, imageRect: rect)
+        case .text(let origin, let string, let fontSize):
             context.draw(
                 Text(string)
                     .font(.system(size: fontSize, weight: .semibold))
                     .foregroundColor(style.color),
-                at: canvasOrigin,
+                at: canvasPoint(forAnchor: origin, imageRect: imageRect),
                 anchor: .topLeading
             )
         }
     }
 
-    private func drawDraft(in context: inout GraphicsContext,
-                            rect: CGRect,
-                            style: AnnotationStyle) {
+    private func drawDraft(in context: inout GraphicsContext, style: AnnotationStyle) {
         switch activeTool {
         case .pencil:
             guard draftPoints.count > 1 else { return }
@@ -363,41 +521,34 @@ struct AnnotatorCanvas: View {
 
         case .circle:
             let r = rectFromPoints(draftStart, draftEnd)
-            let path = Path(ellipseIn: r)
-            context.stroke(path,
+            context.stroke(Path(ellipseIn: r),
                            with: .color(style.color.opacity(0.85)),
                            lineWidth: style.strokeWidth)
 
         case .rectangle:
             let r = rectFromPoints(draftStart, draftEnd)
-            let path = Path(r)
-            context.stroke(path,
+            context.stroke(Path(r),
                            with: .color(style.color.opacity(0.85)),
                            lineWidth: style.strokeWidth)
 
         case .arrow:
-            drawCanvasArrow(from: draftStart,
-                            to: draftEnd,
-                            style: style,
-                            in: &context,
-                            alpha: 0.85)
+            drawCanvasArrow(from: draftStart, to: draftEnd, style: style, in: &context, alpha: 0.85)
 
-        case .text:
+        case .text, .select:
             break
         }
     }
 
     private func drawCanvasArrow(from: CGPoint,
-                                  to: CGPoint,
-                                  style: AnnotationStyle,
-                                  in context: inout GraphicsContext,
-                                  alpha: Double = 1.0) {
+                                 to: CGPoint,
+                                 style: AnnotationStyle,
+                                 in context: inout GraphicsContext,
+                                 alpha: Double = 1.0) {
         let dx = to.x - from.x
         let dy = to.y - from.y
         let len = sqrt(dx * dx + dy * dy)
 
         if len < 8 {
-            // Too short — just a line.
             var path = Path()
             path.move(to: from)
             path.addLine(to: to)
@@ -416,20 +567,17 @@ struct AnnotatorCanvas: View {
             y: to.y - headLength * sin(angle)
         )
 
-        // Shaft.
         var shaft = Path()
         shaft.move(to: from)
         shaft.addLine(to: shaftEnd)
         context.stroke(shaft,
                        with: .color(style.color.opacity(alpha)),
-                       style: StrokeStyle(lineWidth: style.strokeWidth,
-                                          lineCap: .round))
+                       style: StrokeStyle(lineWidth: style.strokeWidth, lineCap: .round))
 
-        // Arrowhead.
         let left  = CGPoint(x: to.x - headLength * cos(angle - headAngle),
-                             y: to.y - headLength * sin(angle - headAngle))
+                            y: to.y - headLength * sin(angle - headAngle))
         let right = CGPoint(x: to.x - headLength * cos(angle + headAngle),
-                             y: to.y - headLength * sin(angle + headAngle))
+                            y: to.y - headLength * sin(angle + headAngle))
         var head = Path()
         head.move(to: to)
         head.addLine(to: left)
@@ -438,17 +586,51 @@ struct AnnotatorCanvas: View {
         context.fill(head, with: .color(style.color.opacity(alpha)))
     }
 
-    // MARK: - Coordinate conversion (local → canvas)
+    // MARK: - Selection overlay
 
-    private func toCanvasCoords(_ point: CGPoint, imageRect: CGRect) -> CGPoint {
-        CGPoint(x: point.x + imageRect.minX,
-                y: point.y + imageRect.minY)
-    }
+    private func drawSelectionOverlay(for annotation: Annotation,
+                                      in context: inout GraphicsContext,
+                                      imageRect: CGRect) {
+        let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
+        let anchorBox = annotation.anchorBoundingBox
+        let canvasBox = canvasRect(forAnchor: anchorBox, imageRect: imageRect)
 
-    private func toCanvasRect(_ rect: CGRect, imageRect: CGRect) -> CGRect {
-        CGRect(x: rect.minX + imageRect.minX,
-               y: rect.minY + imageRect.minY,
-               width: rect.width,
-               height: rect.height)
+        // Draw the dashed bounding box + connector + rotate handle inside
+        // a layer that carries the annotation's transform, so the box
+        // rotates with the shape.
+        context.drawLayer { layer in
+            layer.translateBy(x: annotation.translation.width, y: annotation.translation.height)
+            layer.translateBy(x: center.x, y: center.y)
+            layer.rotate(by: Angle(radians: annotation.rotation))
+            layer.translateBy(x: -center.x, y: -center.y)
+
+            let inset = canvasBox.insetBy(dx: -4, dy: -4)
+            let bboxPath = Path(roundedRect: inset, cornerRadius: 3)
+            layer.stroke(bboxPath,
+                         with: .color(Color.accentColor),
+                         style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+
+            // Connector from top-center to rotate handle.
+            let topCenter = CGPoint(x: inset.midX, y: inset.minY)
+            let handleCenter = CGPoint(x: inset.midX, y: inset.minY - rotateHandleOffset)
+            var connector = Path()
+            connector.move(to: topCenter)
+            connector.addLine(to: handleCenter)
+            layer.stroke(connector, with: .color(Color.accentColor), lineWidth: 1)
+
+            // Rotate handle.
+            let handleRect = CGRect(
+                x: handleCenter.x - rotateHandleRadius,
+                y: handleCenter.y - rotateHandleRadius,
+                width: rotateHandleRadius * 2,
+                height: rotateHandleRadius * 2
+            )
+            layer.fill(Path(ellipseIn: handleRect), with: .color(Color.accentColor))
+            layer.stroke(Path(ellipseIn: handleRect), with: .color(.white), lineWidth: 1.5)
+        }
     }
 }
+
+// Local helper — array of CGPoint bounding rect is defined in Annotation.swift,
+// but the canvas also needs it on `[CGPoint]` produced by transformedBoundingBox.
+// (Same extension — already public via Annotation.swift.)

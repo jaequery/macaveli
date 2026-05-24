@@ -11,6 +11,7 @@ class AnnotatorState: ObservableObject {
     @Published var redoStack: [Annotation]   = []
     @Published var activeTool: AnnotationTool = .pencil
     @Published var activeStyle: AnnotationStyle = .defaultStyle
+    @Published var selectedAnnotationID: UUID? = nil
     /// Published by `AnnotatorCanvas` once it knows its actual display rect.
     /// Used by `copyAndClose` to derive the correct canvas size for export.
     @Published var displayedSize: CGSize = .zero
@@ -19,6 +20,7 @@ class AnnotatorState: ObservableObject {
         cgImage = image
         annotations = []
         redoStack   = []
+        selectedAnnotationID = nil
     }
 
     func commitAnnotation(_ annotation: Annotation) {
@@ -28,12 +30,21 @@ class AnnotatorState: ObservableObject {
 
     func undo() {
         guard let last = annotations.popLast() else { return }
+        if last.id == selectedAnnotationID { selectedAnnotationID = nil }
         redoStack.append(last)
     }
 
     func redo() {
         guard let next = redoStack.popLast() else { return }
         annotations.append(next)
+    }
+
+    /// Removes the currently selected annotation (if any) and clears selection.
+    func deleteSelection() {
+        guard let id = selectedAnnotationID,
+              let index = annotations.firstIndex(where: { $0.id == id }) else { return }
+        annotations.remove(at: index)
+        selectedAnnotationID = nil
     }
 }
 
@@ -50,6 +61,8 @@ class AnnotatorState: ObservableObject {
 ///   ⌘↩      — copy flattened PNG to clipboard, close window
 ///   ⎋       — close without writing
 ///   1–5     — switch active tool (pencil/circle/rectangle/arrow/text)
+///   S       — switch to the select tool
+///   ⌫       — delete the currently selected annotation
 struct AnnotatorView: View {
     @StateObject private var state: AnnotatorState
     @State private var isDragTargeted = false
@@ -81,8 +94,9 @@ struct AnnotatorView: View {
             .background(Color(NSColor.windowBackgroundColor))
             // ⌘Z / ⇧⌘Z via hidden buttons so they fire through SwiftUI's focus system
             .background(undoRedoButtons)
-            // Number-key tool switching
+            // Number-key tool switching + S = select + ⌫ = delete selection
             .background(toolSwitchButtons)
+            .background(deleteSelectionButton)
             // ⌘V paste when canvas/drop-zone has focus
             .onPasteCommand(
                 of: [
@@ -180,7 +194,18 @@ struct AnnotatorView: View {
                 .keyboardShortcut("5", modifiers: [])
                 .frame(width: 0, height: 0)
                 .hidden()
+            Button("") { state.activeTool = .select }
+                .keyboardShortcut("s", modifiers: [])
+                .frame(width: 0, height: 0)
+                .hidden()
         }
+    }
+
+    private var deleteSelectionButton: some View {
+        Button("") { state.deleteSelection() }
+            .keyboardShortcut(.delete, modifiers: [])
+            .frame(width: 0, height: 0)
+            .hidden()
     }
 
     // MARK: - Actions

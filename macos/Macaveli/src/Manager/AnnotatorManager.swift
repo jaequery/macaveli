@@ -202,10 +202,25 @@ final class AnnotatorManager {
         ctx.setLineCap(.round)
         ctx.setLineJoin(.round)
 
-        switch annotation {
+        // Apply the annotation's transform around its anchor center.
+        // Translation is in logical pt, so scale it; rotation is unitless.
+        let center = annotation.anchorCenter
+        let scaledCenter = scaled(center, by: scale)
+        let scaledTranslation = CGSize(
+            width:  annotation.translation.width  * scale,
+            height: annotation.translation.height * scale
+        )
 
-        case .pencil(_, let points, _):
-            guard points.count > 1 else { return }
+        ctx.saveGState()
+        ctx.translateBy(x: scaledTranslation.width, y: scaledTranslation.height)
+        ctx.translateBy(x: scaledCenter.x, y: scaledCenter.y)
+        ctx.rotate(by: annotation.rotation)
+        ctx.translateBy(x: -scaledCenter.x, y: -scaledCenter.y)
+
+        switch annotation.shape {
+
+        case .pencil(let points):
+            guard points.count > 1 else { ctx.restoreGState(); return }
             ctx.beginPath()
             ctx.move(to: scaled(points[0], by: scale))
             for pt in points.dropFirst() {
@@ -213,7 +228,7 @@ final class AnnotatorManager {
             }
             ctx.strokePath()
 
-        case .circle(_, let rect, _):
+        case .circle(let rect):
             let scaledRect = CGRect(
                 x: rect.minX * scale,
                 y: rect.minY * scale,
@@ -222,7 +237,7 @@ final class AnnotatorManager {
             )
             ctx.strokeEllipse(in: scaledRect)
 
-        case .rectangle(_, let rect, _):
+        case .rectangle(let rect):
             let scaledRect = CGRect(
                 x: rect.minX * scale,
                 y: rect.minY * scale,
@@ -231,7 +246,7 @@ final class AnnotatorManager {
             )
             ctx.stroke(scaledRect)
 
-        case .arrow(_, let from, let to, _):
+        case .arrow(let from, let to):
             let scaledFrom = scaled(from, by: scale)
             let scaledTo   = scaled(to, by: scale)
             drawArrow(ctx: ctx,
@@ -239,7 +254,7 @@ final class AnnotatorManager {
                       to: scaledTo,
                       lineWidth: lineWidth)
 
-        case .text(_, let origin, let string, let style, let fontSize):
+        case .text(let origin, let string, let fontSize):
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: fontSize * scale, weight: .semibold),
                 .foregroundColor: nsColor(from: style.color),
@@ -254,6 +269,8 @@ final class AnnotatorManager {
             attrStr.draw(at: .zero)
             ctx.restoreGState()
         }
+
+        ctx.restoreGState()
     }
 
     private func drawArrow(ctx: CGContext,

@@ -68,6 +68,7 @@ private struct ToolPickerCluster: View {
     @Binding var tool: AnnotationTool
 
     private let tools: [(AnnotationTool, String, String)] = [
+        (.select,    "cursorarrow",        "Select (S)"),
         (.pencil,    "pencil.tip",         "Pencil (1)"),
         (.circle,    "circle",             "Circle (2)"),
         (.rectangle, "rectangle",          "Rectangle (3)"),
