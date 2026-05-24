@@ -2,15 +2,6 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-// MARK: - PendingText
-
-/// Tracks an in-progress text annotation being placed on the canvas.
-struct PendingText: Identifiable, Equatable {
-    let id = UUID()
-    let origin: CGPoint
-    var string: String = ""
-}
-
 // MARK: - AnnotatorState
 
 /// State container passed down to the canvas via `@Binding`.
@@ -58,7 +49,6 @@ class AnnotatorState: ObservableObject {
 ///   1–5     — switch active tool (pencil/circle/rectangle/arrow/text)
 struct AnnotatorView: View {
     @StateObject private var state: AnnotatorState
-    @State private var pendingText: PendingText? = nil
     @State private var isDragTargeted = false
 
     init(initialImage: CGImage?) {
@@ -113,7 +103,7 @@ struct AnnotatorView: View {
 
     @ViewBuilder
     private var canvasOrDropZone: some View {
-        if let cgImage = state.cgImage {
+        if state.cgImage != nil {
             AnnotatorCanvas(
                 cgImage: $state.cgImage,
                 annotations: $state.annotations,
@@ -121,16 +111,6 @@ struct AnnotatorView: View {
                 activeStyle: $state.activeStyle,
                 commitAnnotation: { state.commitAnnotation($0) }
             )
-            .overlay {
-                if let pending = pendingText {
-                    TextPlacementOverlay(
-                        pending: pending,
-                        style: state.activeStyle,
-                        onCommit: commitPendingText(_:),
-                        onDiscard: { pendingText = nil }
-                    )
-                }
-            }
         } else {
             AnnotatorDropZone(isDragTargeted: isDragTargeted)
                 .onDrop(
@@ -269,24 +249,6 @@ struct AnnotatorView: View {
         }
     }
 
-    // MARK: - Pending text
-
-    private func commitPendingText(_ text: String) {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              let pending = pendingText else {
-            pendingText = nil
-            return
-        }
-        let annotation = Annotation.text(
-            id: UUID(),
-            origin: pending.origin,
-            string: text,
-            style: state.activeStyle,
-            fontSize: 18
-        )
-        state.commitAnnotation(annotation)
-        pendingText = nil
-    }
 }
 
 // MARK: - Drop zone
@@ -328,69 +290,6 @@ struct AnnotatorDropZone: View {
             .padding(40)
         }
         .accessibilityLabel("Drop an image here to annotate it, or press Command V to paste from the clipboard")
-    }
-}
-
-// MARK: - Text placement overlay
-
-private struct TextPlacementOverlay: View {
-    let pending: PendingText
-    let style: AnnotationStyle
-    let onCommit: (String) -> Void
-    let onDiscard: () -> Void
-
-    @State private var text = ""
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        GeometryReader { geo in
-            VStack(alignment: .leading, spacing: 4) {
-                TextField("Type here…", text: $text)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 18))
-                    .foregroundStyle(style.color)
-                    .focused($isFocused)
-                    .onSubmit { onCommit(text) }
-                    .frame(minWidth: 120)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .fill(Color(NSColor.windowBackgroundColor).opacity(0.85))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .stroke(style.color.opacity(0.5), lineWidth: 1)
-                    )
-                    .accessibilityLabel("Text annotation input")
-
-                HStack(spacing: 6) {
-                    Button("Done") { onCommit(text) }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.accentColor)
-                        .keyboardShortcut(.return, modifiers: [])
-                    Button("Cancel") { onDiscard() }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .keyboardShortcut(.escape, modifiers: [])
-                }
-            }
-            .position(
-                x: min(max(pending.origin.x, 70), geo.size.width  - 70),
-                y: min(max(pending.origin.y, 30), geo.size.height - 60)
-            )
-        }
-        .onAppear { isFocused = true }
-        .onChange(of: isFocused) { focused in
-            guard !focused else { return }
-            if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                onCommit(text)
-            } else {
-                onDiscard()
-            }
-        }
     }
 }
 

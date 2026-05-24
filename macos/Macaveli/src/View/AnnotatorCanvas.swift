@@ -67,29 +67,15 @@ struct AnnotatorCanvas: View {
 
                         // 3. In-progress draft.
                         if isDragging {
-                            var draftStyle = activeStyle
-                            draftStyle = AnnotationStyle(
-                                color: draftStyle.color,
-                                strokeWidth: draftStyle.strokeWidth
-                            )
-                            drawDraft(in: &context, rect: imgRect, style: draftStyle)
+                            drawDraft(in: &context, rect: imgRect, style: activeStyle)
                         }
                     }
                     .frame(width: bounds.width, height: bounds.height)
-                    // Drop-zone support: accept image files dragged from Finder.
+                    // Allow swapping the image by dropping a new one over the canvas.
                     .onDrop(of: [.image, .fileURL], isTargeted: nil) { providers in
                         handleDrop(providers: providers)
                         return true
                     }
-
-                } else {
-                    // Drop-zone empty state.
-                    dropZoneView
-                        .frame(width: bounds.width, height: bounds.height)
-                        .onDrop(of: [.image, .fileURL], isTargeted: nil) { providers in
-                            handleDrop(providers: providers)
-                            return true
-                        }
                 }
 
                 // Text-tool overlay.
@@ -188,22 +174,6 @@ struct AnnotatorCanvas: View {
                 displayedRect = imageRect(in: bounds.size)
             }
         }
-    }
-
-    // MARK: - Drop-zone view
-
-    private var dropZoneView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "photo.badge.plus")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("Drop an image here or paste from clipboard")
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(NSColor.windowBackgroundColor))
     }
 
     // MARK: - Geometry helpers
@@ -307,15 +277,6 @@ struct AnnotatorCanvas: View {
         guard let cg = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
         cgImage = cg
         annotations.removeAll()
-    }
-
-    private func loadFromClipboard() {
-        let pb = NSPasteboard.general
-        if let nsImage = NSImage(pasteboard: pb),
-           let cg = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-            cgImage = cg
-            annotations.removeAll()
-        }
     }
 
     // MARK: - Canvas drawing helpers
