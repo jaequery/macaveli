@@ -50,9 +50,9 @@ struct PasteView: View {
                 .stroke(Color.primary.opacity(0.10), lineWidth: 0.5)
         )
         // Reset selection when query changes.
-        .onChange(of: query) { _ in selectedIndex = 0 }
+        .onChangeCompat(of: query) { selectedIndex = 0 }
         // Clamp selection when item count changes.
-        .onChange(of: manager.items.count) { _ in clampSelection() }
+        .onChangeCompat(of: manager.items.count) { clampSelection() }
         // Global key monitor for full keyboard control.
         .background(KeyboardHandler(
             onUp:        { moveSelection(-1) },
@@ -159,8 +159,8 @@ struct PasteView: View {
                 }
                 .frame(maxHeight: .infinity)
                 // Auto-scroll selected row into view whenever selection changes.
-                .onChange(of: selectedIndex) { idx in
-                    let bounded = max(0, min(idx, items.count - 1))
+                .onChangeCompat(of: selectedIndex) { newValue in
+                    let bounded = max(0, min(newValue, items.count - 1))
                     if bounded < items.count {
                         withAnimation(.easeInOut(duration: 0.12)) {
                             proxy.scrollTo(items[bounded].id, anchor: .center)
@@ -529,6 +529,32 @@ private struct KeyboardHandler: NSViewRepresentable {
             }
 
             return event
+        }
+    }
+}
+
+// MARK: - onChange compatibility shim
+
+/// Dispatches to the two-argument form on macOS 14+ (non-deprecated) and to the
+/// single-argument form on macOS 13 (the only form available there).
+private extension View {
+    /// Variant whose action receives the new value.
+    @ViewBuilder
+    func onChangeCompat<V: Equatable>(of value: V, perform action: @escaping (V) -> Void) -> some View {
+        if #available(macOS 14.0, *) {
+            self.onChange(of: value) { _, newValue in action(newValue) }
+        } else {
+            self.onChange(of: value) { newValue in action(newValue) }
+        }
+    }
+
+    /// Variant whose action ignores the new value.
+    @ViewBuilder
+    func onChangeCompat<V: Equatable>(of value: V, perform action: @escaping () -> Void) -> some View {
+        if #available(macOS 14.0, *) {
+            self.onChange(of: value) { _, _ in action() }
+        } else {
+            self.onChange(of: value) { _ in action() }
         }
     }
 }

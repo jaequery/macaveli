@@ -39,8 +39,8 @@ final class PasteManager: ObservableObject {
     /// Set by the UI layer at launch so `togglePanel()` can lazily create the host.
     var makePanelHost: (() -> PastePanelHost)?
 
-    /// Weak reference to the live panel host. Lazily populated on first `togglePanel()`.
-    weak var panelHost: PastePanelHost?
+    /// Strong reference to the live panel host. Lazily populated on first `togglePanel()`.
+    var panelHost: PastePanelHost?
 
     // MARK: Private state
 
@@ -290,6 +290,8 @@ final class PasteManager: ObservableObject {
             pb.writeObjects([image])
         }
 
+        // Prevent the polling timer from immediately re-capturing the item we just wrote.
+        lastChangeCount = pb.changeCount
         hidePanel()
 
         let pid = prevFrontmostPID
@@ -395,7 +397,7 @@ final class PasteManager: ObservableObject {
     // MARK: - Helpers
 
     private func historyCap() -> Int {
-        let stored = UserDefaults.standard.integer(forKey: "pasteHistorySize")
+        let stored = UserDefaults.standard.integer(forKey: PreferenceKey.pasteHistorySize.rawValue)
         let raw = stored > 0 ? stored : 100
         return max(25, min(raw, 500))
     }
