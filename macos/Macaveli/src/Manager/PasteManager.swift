@@ -54,15 +54,27 @@ final class PasteManager: ObservableObject {
     private let storageQueue = DispatchQueue(label: "com.macaveli.pastemanager.storage", qos: .utility)
     private var saveWorkItem: DispatchWorkItem?
 
+    private let maxTextBytes = 1_000_000          // 1 MB
+    private let maxImageBytes = 10_000_000        // 10 MB
+
+    private let privatePasteboardMarkers: Set<String> = [
+        "org.nspasteboard.ConcealedType",        // de-facto opt-out
+        "org.nspasteboard.TransientType",        // explicit "do not record"
+        "com.agilebits.onepassword-pasteboard",  // 1Password (legacy)
+        "de.codeux.passwords",                   // Secrets.app
+        "com.lastpass.LastPass"                  // LastPass
+    ]
+
     private lazy var pasteHistoryDir: URL = {
-        let support = FileManager.default.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first!
-        return support.appendingPathComponent("Macaveli/PasteHistory")
+        let fm = FileManager.default
+        if let support = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            return support.appendingPathComponent("Macaveli/PasteHistory")
+        }
+        logger.fault("PasteManager: could not resolve Application Support directory; falling back to temp dir")
+        return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("Macaveli/PasteHistory")
     }()
 
-    private var imagesDir: URL { pasteHistoryDir.appendingPathComponent("images") }
+    var imagesDir: URL { pasteHistoryDir.appendingPathComponent("images") }
     private var manifestURL: URL { pasteHistoryDir.appendingPathComponent("manifest.json") }
 
     private let logger = Logger(subsystem: "com.macaveli", category: "PasteManager")
@@ -99,9 +111,9 @@ final class PasteManager: ObservableObject {
     // MARK: - Capture
 
     private func capture(pb: NSPasteboard) {
-        // Honor the nspasteboard.org privacy opt-out used by password managers:
-        // if the pasteboard carries ConcealedType, do not record this entry.
-        if pb.types?.map(\.rawValue).contains("org.nspasteboard.ConcealedType") == true {
+        // Honor privacy opt-out markers used by password managers and sensitive apps.
+        let pbTypes = Set(pb.types?.map(\.rawValue) ?? [])
+        if !privatePasteboardMarkers.isDisjoint(with: pbTypes) {
             return
         }
 
@@ -111,10 +123,18 @@ final class PasteManager: ObservableObject {
 
         if let nsImage = NSImage(pasteboard: pb) {
             guard let pngData = pngData(from: nsImage) else { return }
+            if pngData.count > maxImageBytes {
+                logger.info("PasteManager: skipping image — size \(pngData.count) bytes exceeds cap")
+                return
+            }
             let filename = "\(id.uuidString).png"
-            let fileURL = imagesDir.appendingPathComponent(filename)
+            guard let fileURL = imageURL(for: filename) else {
+                logger.error("PasteManager: imageURL rejected filename \(filename)")
+                return
+            }
             do {
                 try pngData.write(to: fileURL, options: .atomic)
+                try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: fileURL.path)
             } catch {
                 logger.error("PasteManager: failed to write image \(filename): \(error.localizedDescription)")
                 return
@@ -131,6 +151,11 @@ final class PasteManager: ObservableObject {
 
         } else if let rtfData = pb.data(forType: .rtf) {
             let plain = pb.string(forType: .string) ?? ""
+            let totalBytes = plain.utf8.count + rtfData.count
+            if totalBytes > maxTextBytes {
+                logger.info("PasteManager: skipping text — size \(totalBytes) bytes exceeds cap")
+                return
+            }
             let preview = String(plain.prefix(200))
             let byteSize = plain.utf8.count
             let item = PasteboardItem(
@@ -143,13 +168,17 @@ final class PasteManager: ObservableObject {
             addOrPromote(item)
 
         } else if let plain = pb.string(forType: .string), !plain.isEmpty {
+            let textBytes = plain.utf8.count
+            if textBytes > maxTextBytes {
+                logger.info("PasteManager: skipping text — size \(textBytes) bytes exceeds cap")
+                return
+            }
             let preview = String(plain.prefix(200))
-            let byteSize = plain.utf8.count
             let item = PasteboardItem(
                 id: id,
                 kind: .text(plain: plain, rtf: nil),
                 preview: preview,
-                byteSize: byteSize,
+                byteSize: textBytes,
                 createdAt: now
             )
             addOrPromote(item)
@@ -247,7 +276,10 @@ final class PasteManager: ObservableObject {
             }
 
         case .image(let filename):
-            let fileURL = imagesDir.appendingPathComponent(filename)
+            guard let fileURL = imageURL(for: filename) else {
+                logger.error("PasteManager: path traversal rejected for activation: \(filename)")
+                return
+            }
             guard
                 FileManager.default.fileExists(atPath: fileURL.path),
                 let image = NSImage(contentsOfFile: fileURL.path)
@@ -310,7 +342,11 @@ final class PasteManager: ObservableObject {
         for dir in [pasteHistoryDir, imagesDir] {
             if !fm.fileExists(atPath: dir.path) {
                 do {
-                    try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+                    try fm.createDirectory(
+                        at: dir,
+                        withIntermediateDirectories: true,
+                        attributes: [.posixPermissions: 0o700]
+                    )
                 } catch {
                     logger.error("PasteManager: could not create directory \(dir.path): \(error.localizedDescription)")
                 }
@@ -332,23 +368,25 @@ final class PasteManager: ObservableObject {
     }
 
     /// Debounces actual disk writes: re-arms a 1s work item on every mutation.
+    /// Must be called on the main thread (items is main-only).
     private func scheduleSave() {
         saveWorkItem?.cancel()
+        let snapshot = items  // captured on main thread — safe
         let work = DispatchWorkItem { [weak self] in
-            self?.saveManifestNow()
+            self?.saveManifestNow(snapshot: snapshot)
         }
         saveWorkItem = work
         storageQueue.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
 
-    private func saveManifestNow() {
-        let snapshot = items
+    private func saveManifestNow(snapshot: [PasteboardItem]) {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             encoder.dateEncodingStrategy = .iso8601
             let data = try encoder.encode(snapshot)
             try data.write(to: manifestURL, options: .atomic)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: manifestURL.path)
         } catch {
             logger.error("PasteManager: failed to save manifest: \(error.localizedDescription)")
         }
@@ -358,13 +396,30 @@ final class PasteManager: ObservableObject {
 
     private func historyCap() -> Int {
         let stored = UserDefaults.standard.integer(forKey: "pasteHistorySize")
-        return stored > 0 ? stored : 100
+        let raw = stored > 0 ? stored : 100
+        return max(25, min(raw, 500))
     }
 
     private func deleteImageFile(for item: PasteboardItem) {
         guard case .image(let filename) = item.kind else { return }
-        let url = imagesDir.appendingPathComponent(filename)
+        guard let url = imageURL(for: filename) else {
+            logger.error("PasteManager: path traversal rejected for deletion: \(filename)")
+            return
+        }
         try? FileManager.default.removeItem(at: url)
+    }
+
+    /// Resolves a filename within imagesDir, rejecting any path-traversal attempts.
+    /// Returns nil if the filename contains "/", starts with ".", or escapes imagesDir
+    /// after standardization.
+    func imageURL(for filename: String) -> URL? {
+        guard !filename.isEmpty,
+              !filename.contains("/"),
+              !filename.hasPrefix(".") else { return nil }
+        let candidate = imagesDir.appendingPathComponent(filename).standardized
+        let dir = imagesDir.standardized
+        guard candidate.path.hasPrefix(dir.path + "/") else { return nil }
+        return candidate
     }
 
     /// Converts an `NSImage` to PNG `Data`. Returns `nil` if encoding fails.

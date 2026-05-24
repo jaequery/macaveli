@@ -359,14 +359,8 @@ struct PasteRowView: View {
     /// Uses `CGImageSourceCopyPropertiesAtIndex` for cheap metadata access.
     private func resolveImageDimensions() {
         guard case .image(let filename) = item.kind, imageDimensions == nil else { return }
-        let fm = FileManager.default
-        guard
-            let support = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-        else { return }
-        let url = support
-            .appendingPathComponent("Macaveli/PasteHistory/images")
-            .appendingPathComponent(filename)
-        guard fm.fileExists(atPath: url.path) else { return }
+        guard let url = PasteManager.shared.imageURL(for: filename) else { return }
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
 
         DispatchQueue.global(qos: .utility).async {
             guard
