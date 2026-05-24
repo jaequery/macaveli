@@ -28,43 +28,55 @@ struct PasteboardItem: Identifiable, Codable, Equatable {
     /// Raw byte count: UTF-8 length for text, PNG file size for images.
     let byteSize: Int
     let createdAt: Date
+    /// SHA-256 of the canonical content bytes (UTF-8 text or PNG image data).
+    /// Computed once at capture time and persisted so de-dup never re-reads disk.
+    let contentHash: String
 
-    // MARK: - Content hash
+    // MARK: - Init
 
-    /// SHA-256 of the item's canonical content bytes.
-    ///
-    /// Text: UTF-8 bytes of `plain`.
-    /// Image: PNG file bytes, loaded on demand.
-    /// If the image file is missing the hash falls back to the item's id bytes
-    /// so de-dup never crashes, and the missing-file case is treated as unique.
-    var contentHash: String {
-        switch kind {
-        case .text(let plain, _):
-            let data = Data(plain.utf8)
-            return SHA256.hash(data: data).hexString
+    init(id: UUID, kind: Kind, preview: String, byteSize: Int, createdAt: Date, contentHash: String) {
+        self.id = id
+        self.kind = kind
+        self.preview = preview
+        self.byteSize = byteSize
+        self.createdAt = createdAt
+        self.contentHash = contentHash
+    }
 
-        case .image(let filename):
-            let fm = FileManager.default
-            guard
-                let support = fm.urls(
-                    for: .applicationSupportDirectory,
-                    in: .userDomainMask
-                ).first
-            else {
-                return id.uuidString
-            }
-            let url = support
-                .appendingPathComponent("Macaveli/PasteHistory/images")
-                .appendingPathComponent(filename)
-            guard
-                fm.fileExists(atPath: url.path),
-                let data = try? Data(contentsOf: url)
-            else {
-                // Stable per-id fallback — file missing but we must not crash.
-                return SHA256.hash(data: Data(id.uuidString.utf8)).hexString
-            }
-            return SHA256.hash(data: data).hexString
+    // MARK: - Codable
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, preview, byteSize, createdAt, contentHash
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id        = try c.decode(UUID.self,   forKey: .id)
+        kind      = try c.decode(Kind.self,   forKey: .kind)
+        preview   = try c.decode(String.self, forKey: .preview)
+        byteSize  = try c.decode(Int.self,    forKey: .byteSize)
+        createdAt = try c.decode(Date.self,   forKey: .createdAt)
+        // Legacy manifests (pre-hash-caching) don't carry contentHash. Synthesise
+        // a stable per-id hash so legacy items remain unique under de-dup — they
+        // won't collide with each other, and a fresh copy of the same content
+        // simply creates a new entry alongside the legacy one.
+        if let stored = try c.decodeIfPresent(String.self, forKey: .contentHash) {
+            contentHash = stored
+        } else {
+            contentHash = SHA256.hash(data: Data(id.uuidString.utf8)).hexString
         }
+    }
+
+    // MARK: - Hash helpers
+
+    /// SHA-256 of UTF-8-encoded text. Used by the manager at capture time.
+    static func hash(for text: String) -> String {
+        SHA256.hash(data: Data(text.utf8)).hexString
+    }
+
+    /// SHA-256 of arbitrary bytes (e.g. PNG image data). Used by the manager.
+    static func hash(for data: Data) -> String {
+        SHA256.hash(data: data).hexString
     }
 }
 

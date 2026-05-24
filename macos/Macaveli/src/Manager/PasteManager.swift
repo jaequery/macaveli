@@ -119,7 +119,6 @@ final class PasteManager: ObservableObject {
 
         let id = UUID()
         let now = Date()
-        let kind: PasteboardItem.Kind
 
         if let nsImage = NSImage(pasteboard: pb) {
             guard let pngData = pngData(from: nsImage) else { return }
@@ -139,13 +138,14 @@ final class PasteManager: ObservableObject {
                 logger.error("PasteManager: failed to write image \(filename): \(error.localizedDescription)")
                 return
             }
-            let preview = "Image (\(byteCountString(pngData.count)))"
+            let preview = "Image (\(PasteManager.byteCountString(pngData.count)))"
             let item = PasteboardItem(
                 id: id,
                 kind: .image(filename: filename),
                 preview: preview,
                 byteSize: pngData.count,
-                createdAt: now
+                createdAt: now,
+                contentHash: PasteboardItem.hash(for: pngData)
             )
             addOrPromote(item)
 
@@ -163,7 +163,8 @@ final class PasteManager: ObservableObject {
                 kind: .text(plain: plain, rtf: rtfData),
                 preview: preview,
                 byteSize: byteSize,
-                createdAt: now
+                createdAt: now,
+                contentHash: PasteboardItem.hash(for: plain)
             )
             addOrPromote(item)
 
@@ -179,7 +180,8 @@ final class PasteManager: ObservableObject {
                 kind: .text(plain: plain, rtf: nil),
                 preview: preview,
                 byteSize: textBytes,
-                createdAt: now
+                createdAt: now,
+                contentHash: PasteboardItem.hash(for: plain)
             )
             addOrPromote(item)
         }
@@ -441,9 +443,13 @@ final class PasteManager: ObservableObject {
         return mutableData as Data
     }
 
-    private func byteCountString(_ count: Int) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: Int64(count))
+    static func byteCountString(_ count: Int) -> String {
+        byteCountFormatter.string(fromByteCount: Int64(count))
     }
+
+    private static let byteCountFormatter: ByteCountFormatter = {
+        let f = ByteCountFormatter()
+        f.countStyle = .file
+        return f
+    }()
 }

@@ -631,13 +631,7 @@ struct PasteSettingsStrip: View {
 
     private var formattedBytes: String {
         let total = manager.items.reduce(0) { $0 + $1.byteSize }
-        if total < 1024 {
-            return "\(total) B"
-        } else if total < 1024 * 1024 {
-            return String(format: "%.1f KB", Double(total) / 1024)
-        } else {
-            return String(format: "%.1f MB", Double(total) / (1024 * 1024))
-        }
+        return PasteManager.byteCountString(total)
     }
 
     var body: some View {

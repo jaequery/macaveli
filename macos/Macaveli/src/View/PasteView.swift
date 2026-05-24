@@ -109,9 +109,9 @@ struct PasteView: View {
             } else {
                 // Right-aligned key hint in the style of Spotlight / Linear.
                 HStack(spacing: 2) {
-                    KeyBadge("⌃")
-                    KeyBadge("⌘")
-                    KeyBadge("P")
+                    KeyCap(text: "⌃")
+                    KeyCap(text: "⌘")
+                    KeyCap(text: "P")
                 }
             }
         }
@@ -306,8 +306,8 @@ struct PasteRowView: View {
             // Quick-paste badge for positions 1–9
             if position <= 9 {
                 HStack(spacing: 2) {
-                    KeyBadge("⌘")
-                    KeyBadge("\(position)")
+                    KeyCap(text: "⌘")
+                    KeyCap(text: "\(position)")
                 }
                 .opacity(isSelected ? 1 : 0.4)
             }
@@ -380,30 +380,7 @@ struct PasteRowView: View {
     }
 }
 
-// MARK: - Footer / key-badge helpers
-
-/// A small key-badge label matching the `KeyCap` style from `CheatsheetView`.
-struct KeyBadge: View {
-    let text: String
-    init(_ text: String) { self.text = text }
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 10.5, weight: .semibold, design: .monospaced))
-            .foregroundStyle(Color.primary.opacity(0.92))
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .frame(minWidth: 18, minHeight: 18)
-            .background(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(Color.primary.opacity(0.07))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
-            )
-    }
-}
+// MARK: - Footer helpers
 
 /// One entry in the footer hint strip.
 private struct FooterHint: View {
