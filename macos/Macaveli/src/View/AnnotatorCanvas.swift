@@ -490,6 +490,35 @@ struct AnnotatorCanvas: View {
                                 in context: inout GraphicsContext,
                                 imageRect: CGRect) {
         let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
+
+        // SwiftUI's GraphicsContext.draw(Text, at:) does NOT visually honor a
+        // surrounding `layer.scaleBy` — the rendered glyphs stay at the
+        // declared font size while everything around them scales. Handle text
+        // explicitly: multiply fontSize by `annotation.scale` and reposition
+        // the origin around the anchor center.
+        if case .text(let originAnchor, let string, let fontSize) = annotation.shape {
+            let originCanvas = canvasPoint(forAnchor: originAnchor, imageRect: imageRect)
+            let scaledOrigin = CGPoint(
+                x: center.x + (originCanvas.x - center.x) * annotation.scale,
+                y: center.y + (originCanvas.y - center.y) * annotation.scale
+            )
+            context.drawLayer { layer in
+                layer.translateBy(x: annotation.translation.width, y: annotation.translation.height)
+                layer.translateBy(x: center.x, y: center.y)
+                layer.rotate(by: Angle(radians: annotation.rotation))
+                layer.translateBy(x: -center.x, y: -center.y)
+                layer.draw(
+                    Text(string)
+                        .font(.system(size: fontSize * annotation.scale, weight: .semibold))
+                        .foregroundColor(annotation.style.color),
+                    at: scaledOrigin,
+                    anchor: .topLeading
+                )
+            }
+            return
+        }
+
+        // Non-text shapes scale uniformly via the layer transform.
         context.drawLayer { layer in
             layer.translateBy(x: annotation.translation.width, y: annotation.translation.height)
             layer.translateBy(x: center.x, y: center.y)
