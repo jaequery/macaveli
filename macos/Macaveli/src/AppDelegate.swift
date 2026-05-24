@@ -1,5 +1,6 @@
 import ShortcutRecorder
 import AppKit
+import LaunchAtLogin
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate!
@@ -18,6 +19,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // clear them, dragged windows animate every position write and
         // maximize/center grow incrementally instead of snapping.
         WindowManager.cleanupResidualAccessibilityFlags()
+
+        // Enable Launch at Login on first run only. Re-applying every launch
+        // would prevent the user from turning it off.
+        let didApplyKey = "didApplyLaunchAtLoginDefault"
+        if !UserDefaults.standard.bool(forKey: didApplyKey) {
+            LaunchAtLogin.isEnabled = true
+            UserDefaults.standard.set(true, forKey: didApplyKey)
+        }
 
         let _ = ShortcutsManager.shared // immediately register shortcuts so we won't wait for the UI
         let _ = PasteManager.shared // start clipboard monitor before the first hotkey press
