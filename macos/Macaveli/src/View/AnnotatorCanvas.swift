@@ -94,13 +94,22 @@ struct AnnotatorCanvas: View {
                 }
 
                 if activeTool == .text, let origin = textOverlayOrigin {
+                    // SwiftUI's .position(x:y:) centers the view at the point.
+                    // Committed text is drawn with its top at `origin`, so the
+                    // TextField needs to be shifted down by ~half its own height
+                    // for its top edge to coincide with `origin` — otherwise the
+                    // committed text appears half-a-line lower than where the
+                    // user was typing.
+                    let frameWidth = max(200, activeStyle.fontSize * 12)
+                    let frameHeight = activeStyle.fontSize * 1.2
                     TextField("", text: $textOverlayValue)
                         .textFieldStyle(.plain)
                         .font(.system(size: activeStyle.fontSize, weight: .semibold))
                         .foregroundColor(activeStyle.color)
-                        .frame(width: max(200, activeStyle.fontSize * 12), alignment: .leading)
+                        .frame(width: frameWidth, height: frameHeight, alignment: .leading)
                         .focused($textFieldFocused)
-                        .position(x: origin.x + max(100, activeStyle.fontSize * 6), y: origin.y)
+                        .position(x: origin.x + frameWidth / 2,
+                                  y: origin.y + frameHeight / 2)
                         .onSubmit { commitTextOverlay(at: origin) }
                         .onChange(of: textFieldFocused) { focused in
                             if !focused { commitTextOverlay(at: origin) }
