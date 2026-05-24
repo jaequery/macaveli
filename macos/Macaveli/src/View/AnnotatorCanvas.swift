@@ -51,6 +51,10 @@ struct AnnotatorCanvas: View {
     // The rect where the image is actually rendered inside the canvas bounds.
     @State private var displayedRect: CGRect = .zero
 
+    // Tracks whether the cursor is currently over the canvas, so we can
+    // restore the system arrow when the cursor leaves.
+    @State private var isHoveringCanvas = false
+
     private let rotateHandleOffset: CGFloat = 28
     private let rotateHandleRadius: CGFloat = 7
     private let cornerHandleRadius: CGFloat = 5
@@ -117,6 +121,14 @@ struct AnnotatorCanvas: View {
                 }
             }
             .gesture(canvasDragGesture(imgRect: imgRect))
+            .onHover { hovering in
+                isHoveringCanvas = hovering
+                if hovering {
+                    cursor(for: activeTool).set()
+                } else {
+                    NSCursor.arrow.set()
+                }
+            }
             .onAppear {
                 displayedRect = imgRect
                 state.displayedSize = imgRect.size
@@ -129,6 +141,9 @@ struct AnnotatorCanvas: View {
             .onChange(of: activeTool) { newTool in
                 // Leaving select mode clears the selection.
                 if newTool != .select { state.selectedAnnotationID = nil }
+                // If the cursor is currently over the canvas, refresh it for
+                // the new tool without waiting for the next mouse move.
+                if isHoveringCanvas { cursor(for: newTool).set() }
             }
         }
     }
@@ -319,6 +334,18 @@ struct AnnotatorCanvas: View {
             return
         }
         commitAnnotation(Annotation(shape: shape, style: activeStyle))
+    }
+
+    // MARK: - Cursor
+
+    /// The cursor that should appear while hovering the canvas with a
+    /// given tool active.
+    private func cursor(for tool: AnnotationTool) -> NSCursor {
+        switch tool {
+        case .text:                                 return .iBeam
+        case .select:                               return .arrow
+        case .pencil, .circle, .rectangle, .arrow:  return .crosshair
+        }
     }
 
     // MARK: - Geometry helpers
