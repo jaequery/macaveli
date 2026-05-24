@@ -89,6 +89,11 @@ struct PasteView: View {
                 .focused($searchFocused)
                 .accessibilityLabel("Search clipboard history")
                 .onSubmit { activateSelected() }
+                .onAppear {
+                    // Auto-focus on first show — matches Spotlight / Raycast convention
+                    // so the user can start typing immediately when the panel pops up.
+                    DispatchQueue.main.async { searchFocused = true }
+                }
 
             if !query.isEmpty {
                 Button {
