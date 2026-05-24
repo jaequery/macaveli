@@ -43,7 +43,19 @@ struct PermissionRequestView: View {
                         Image(systemName: "exclamationmark.triangle").foregroundColor(.orange)
                         Spacer()
                         Button("Open Preferences") {
-                            PermissionsManager.openPreferences(at: .microphone)
+                            // macOS TCC only registers Macaveli in System
+                            // Settings → Microphone AFTER the app calls
+                            // requestAccess at least once. Without this call,
+                            // clicking the button opens an empty pane (or one
+                            // that lists every other app but not Macaveli).
+                            // Triggering the request shows the system prompt,
+                            // which registers us with TCC; then Settings opens
+                            // and the user sees Macaveli with a toggle.
+                            PermissionsManager.requestMicrophonePermission { _ in
+                                DispatchQueue.main.async {
+                                    PermissionsManager.openPreferences(at: .microphone)
+                                }
+                            }
                         }
                     }
                     Text("Quit and relaunch Macaveli after granting.")

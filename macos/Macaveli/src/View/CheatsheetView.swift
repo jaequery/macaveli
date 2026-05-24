@@ -7,6 +7,7 @@ import LaunchAtLogin
 struct CheatsheetView: View {
     @State private var openSection: CheatSectionID? = nil
     @State private var hasAXPermission = PermissionsManager.hasAccessibilityPermission()
+    @State private var hasScreenRecordingPermission = PermissionsManager.hasScreenRecordingPermission()
     private let permissionTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -38,6 +39,21 @@ struct CheatsheetView: View {
                             title: "Record",
                             openSection: $openSection,
                             rows: recordRows,
+                            rowsDisabled: !hasScreenRecordingPermission,
+                            permissionPrompt: hasScreenRecordingPermission ? nil : CheatPermissionPrompt(
+                                message: "Screen Recording permission is required.",
+                                buttonLabel: "Allow…",
+                                action: {
+                                    // Same TCC dance as the mic button in
+                                    // PermissionRequestView: the app must
+                                    // touch the API before Settings will
+                                    // list it. Open Settings only after that
+                                    // registration call completes.
+                                    PermissionsManager.requestScreenRecordingPermission {
+                                        PermissionsManager.openPreferences(at: .screenRecording)
+                                    }
+                                }
+                            ),
                             settings: { RecordSettingsStrip() }
                         )
                         SectionDivider()
@@ -70,6 +86,7 @@ struct CheatsheetView: View {
         .frame(width: MAIN_WINDOW_WIDTH)
         .onReceive(permissionTimer) { _ in
             hasAXPermission = PermissionsManager.hasAccessibilityPermission()
+            hasScreenRecordingPermission = PermissionsManager.hasScreenRecordingPermission()
         }
     }
 
@@ -117,11 +134,19 @@ struct CheatRowSpec: Identifiable {
     let desc: String?
 }
 
+struct CheatPermissionPrompt {
+    let message: String
+    let buttonLabel: String
+    let action: () -> Void
+}
+
 struct CheatSection<Settings: View>: View {
     let id: CheatSectionID
     let title: String
     @Binding var openSection: CheatSectionID?
     let rows: [CheatRowSpec]
+    var rowsDisabled: Bool = false
+    var permissionPrompt: CheatPermissionPrompt? = nil
     @ViewBuilder let settings: () -> Settings
 
     @State private var gearHover: Bool = false
@@ -173,6 +198,33 @@ struct CheatSection<Settings: View>: View {
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
+                if let prompt = permissionPrompt {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.orange)
+                        Text(prompt.message)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.primary)
+                        Spacer(minLength: 4)
+                        Button(prompt.buttonLabel, action: prompt.action)
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color.orange.opacity(0.10))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(Color.orange.opacity(0.30), lineWidth: 0.5)
+                    )
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 6)
+                }
+
                 VStack(spacing: 1) {
                     ForEach(rows) { row in
                         CheatRow(spec: row)
@@ -180,6 +232,8 @@ struct CheatSection<Settings: View>: View {
                 }
                 .padding(.horizontal, 6)
                 .padding(.bottom, 8)
+                .disabled(rowsDisabled)
+                .opacity(rowsDisabled ? 0.45 : 1.0)
         }
     }
 }
