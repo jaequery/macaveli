@@ -13,3 +13,4 @@ web/node_modules/
 web/out/
 web/.vercel/
 web/next-env.d.ts
+.supabuild/
