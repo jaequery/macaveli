@@ -94,7 +94,9 @@ struct AnnotatorCanvas: View {
                         }
                 }
             }
-            // Drag gesture for drawing tools (all except text).
+            // Single drag gesture handles drawing AND text placement.
+            // (A separate `.onTapGesture` would never fire because the
+            // DragGesture(minimumDistance: 0) claims the event stream first.)
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .local)
                     .onChanged { value in
@@ -114,7 +116,20 @@ struct AnnotatorCanvas: View {
                         }
                     }
                     .onEnded { value in
-                        guard activeTool != .text, isDragging else { return }
+                        // Text tool: a near-zero drag is a tap. Place the overlay.
+                        if activeTool == .text {
+                            let location = clampedPoint(value.location, to: imgRect)
+                            guard imgRect.contains(location) else { return }
+                            // If an overlay is already open, commit it first.
+                            if let origin = textOverlayOrigin, !textOverlayValue.isEmpty {
+                                commitTextOverlay(at: origin)
+                            }
+                            textOverlayOrigin = location
+                            textOverlayValue  = ""
+                            textFieldFocused  = true
+                            return
+                        }
+                        guard isDragging else { return }
                         let pt = clampedPoint(value.location, to: imgRect)
                         draftEnd = pt
 
@@ -158,18 +173,6 @@ struct AnnotatorCanvas: View {
                         isDragging = false
                     }
             )
-            // Text tool: single tap places the overlay.
-            .onTapGesture { location in
-                guard activeTool == .text else { return }
-                guard imageRect(in: bounds.size).contains(location) else { return }
-                // If a text overlay is already open, commit it first.
-                if let origin = textOverlayOrigin, !textOverlayValue.isEmpty {
-                    commitTextOverlay(at: origin)
-                }
-                textOverlayOrigin = location
-                textOverlayValue  = ""
-                textFieldFocused  = true
-            }
             .onAppear {
                 displayedRect = imgRect
                 state.displayedSize = imgRect.size
