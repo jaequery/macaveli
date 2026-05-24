@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Macaveli — Menu Design Variants</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  /* ─── Page chrome ───────────────────────────────────────────── */
+  :root {
+    color-scheme: dark;
+    --bg: #0e0f12;
+    --panel: #1c1d22;
+    --panel-2: #25262c;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.14);
+    --text: #ecedef;
+    --muted: #9ca0a8;
+    --dim: #6b6f78;
+    --accent: #6f8bff;
+    --accent-2: #b18bff;
+    --accent-soft: rgba(111, 139, 255, 0.18);
+    --red: #ff5d5d;
+    --green: #34c08a;
+    --yellow: #ffc857;
+    --kbd-bg: #2c2e36;
+    --kbd-line: rgba(255, 255, 255, 0.10);
+    --kbd-shadow: 0 1px 0 rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 600px at 20% 0%, #1b1c22 0%, transparent 60%),
+      radial-gradient(900px 500px at 95% 100%, #181924 0%, transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .page {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 56px 28px 80px;
+  }
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .page-head h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    background: linear-gradient(180deg, #fff 0%, #c3c6cf 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .page-head p { margin: 0; color: var(--muted); max-width: 600px; }
+  .legend { color: var(--dim); font-size: 12px; }
+  .legend kbd { font-size: 11px; }
+
+  /* Grid of variants */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 36px 28px;
+    align-items: start;
+  }
+  .variant {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .variant-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .variant-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 3px 7px;
+    width: max-content;
+  }
+  .variant-name {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .variant-note {
+    color: var(--muted);
+    font-size: 12.5px;
+    max-width: 380px;
+  }
+
+  /* ─── The menu shell — emulates a macOS menubar popover ────── */
+  .menu {
+    width: 380px;
+    background: linear-gradient(180deg, #1f2026 0%, #18191e 100%);
+    border-radius: 12px;
+    border: 1px solid var(--line-strong);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 24px 50px -20px rgba(0, 0, 0, 0.55),
+      0 6px 18px -6px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    position: relative;
+  }
+  /* Menubar pointer triangle */
+  .menu::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 14px; height: 14px;
+    background: #1f2026;
+    border-left: 1px solid var(--line-strong);
+    border-top: 1px solid var(--line-strong);
+    border-radius: 3px;
+  }
+
+  /* Header common to all variants (tiny brand strip) */
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand-left { display: flex; align-items: center; gap: 8px; }
+  .logo {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    color: white;
+    font-weight: 800;
+    font-size: 13px;
+    box-shadow: 0 1px 3px rgba(111, 139, 255, 0.4);
+  }
+  .brand-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .brand-actions {
+    display: flex; align-items: center; gap: 4px;
+    color: var(--muted);
+  }
+  .icon-btn {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+  }
+  .icon-btn:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+  .icon-btn svg { width: 14px; height: 14px; }
+
+  /* ─── kbd styling — used by every variant ───────────────── */
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    background: var(--kbd-bg);
+    border: 1px solid var(--kbd-line);
+    border-radius: 5px;
+    font: 600 11px/1 "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+    color: #e7e8ec;
+    box-shadow: var(--kbd-shadow);
+    letter-spacing: 0.02em;
+  }
+  kbd.lg {
+    height: 30px;
+    min-width: 30px;
+    font-size: 14px;
+    padding: 0 9px;
+    border-radius: 7px;
+  }
+  kbd.xl {
+    height: 38px;
+    min-width: 38px;
+    font-size: 17px;
+    padding: 0 11px;
+    border-radius: 8px;
+  }
+  .kbd-group { display: inline-flex; gap: 4px; align-items: center; }
+  .kbd-plus {
+    color: var(--dim);
+    font-size: 10px;
+    margin: 0 1px;
+  }
+
+  /* ─── Footer common ─────────────────────────────────────── */
+  .footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .footer-hint { display: flex; gap: 4px; align-items: center; }
+
+  /* ════════════════════════════════════════════════════════════
+     VARIANT 1 — Command Palette
+     Search-first, arrow-key navigable, hotkey on the right.
+     Press the key or Enter to fire. Settings via ⌘, .
+     ════════════════════════════════════════════════════════════ */
+  .v1 .search {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .v1 .search-icon { color: var(--dim); }
+  .v1 .search-icon svg { width: 14px; height: 14px; display: block; }
+  .v1 .search input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font: 500 14px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    outline: none;
+    padding: 4px 0;
+  }
+  .v1 .search input::placeholder { color: var(--dim); }
+  .v1 .search .esc {
+    font-size: 10px;
+    color: var(--dim);
+    border: 1px solid var(--line-strong);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .v1 .list { padding: 6px; }
+  .v1 .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .v1 .row .row-icon {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    display: grid; place-items: center;
+    color: var(--muted);
+  }
+  .v1 .row .row-icon svg { width: 14px; height: 14px; }
+  .v1 .row .row-text { flex: 1; min-width: 0; }
+  .v1 .row .row-title { font-weight: 500; }
+  .v1 .row .row-sub { color: var(--muted); font-size: 11.5px; }
+  .v1 .row.active {
+    background: var(--accent-soft);
+  }
+  .v1 .row.active .row-icon {
+    background: var(--accent);
+    color: white;
+  }
+  .v1 .group-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 12px 4px;
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     VARIANT 2 — Keyboard Map
+     A miniature visual keyboard. Mapped keys glow. Hover a key →
+     action name appears in the readout above. Modifiers pinned.
+     ════════════════════════════════════════════════════════════ */
+  .v2 .readout {
+    margin: 14px 12px 6px;
+    padding: 12px 12px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(111,139,255,0.12) 0%, rgba(111,139,255,0.04) 100%);
+    border: 1px solid rgba(111,139,255,0.18);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .v2 .readout .glyph {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: rgba(111,139,255,0.18);
+    display: grid; place-items: center;
+    color: var(--accent);
+  }
+  .v2 .readout .glyph svg { width: 18px; height: 18px; }
+  .v2 .readout-title { font-weight: 600; }
+  .v2 .readout-sub { color: var(--muted); font-size: 11.5px; }
+  .v2 .readout .combo { margin-left: auto; }
+
+  .v2 .modifier-strip {
+    display: flex; gap: 6px;
+    padding: 10px 12px 6px;
+  }
+  .v2 .mod {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 7px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .v2 .mod.on {
+    background: var(--accent-soft);
+    border-color: rgba(111,139,255,0.45);
+    color: var(--accent);
+  }
+  .v2 .mod-glyph { font-weight: 700; font-size: 14px; }
+  .v2 .mod-name { font-size: 10.5px; }
+
+  .v2 .keyboard {
+    margin: 4px 12px 14px;
+    padding: 10px;
+    background: linear-gradient(180deg, #15161b 0%, #101116 100%);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .v2 .krow { display: flex; gap: 5px; }
+  .v2 .key {
+    flex: 1;
+    aspect-ratio: 1 / 1;
+    background: var(--kbd-bg);
+    border: 1px solid var(--kbd-line);
+    border-radius: 5px;
+    display: grid; place-items: center;
+    font: 600 11px/1 "SF Mono", ui-monospace, monospace;
+    color: var(--muted);
+    position: relative;
+    box-shadow: var(--kbd-shadow);
+  }
+  .v2 .key.wide { flex: 2; aspect-ratio: auto; padding: 6px 0; }
+  .v2 .key.mapped {
+    background: linear-gradient(180deg, var(--accent) 0%, #5670e5 100%);
+    color: white;
+    border-color: rgba(255,255,255,0.18);
+    box-shadow: 0 0 0 1px rgba(111,139,255,0.4), 0 4px 12px -4px rgba(111,139,255,0.6);
+  }
+  .v2 .key.mapped::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent 50%);
+    pointer-events: none;
+  }
+  .v2 .key .badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--accent);
+    font-size: 9px;
+    display: grid; place-items: center;
+    font-weight: 800;
+    box-shadow: 0 1px 2px rgba(0,0,0,.5);
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     VARIANT 3 — Hotkey Cards
+     Each action is a card. The hotkey IS the hero — large, top.
+     Click card to fire (or press the key). Very glanceable.
+     ════════════════════════════════════════════════════════════ */
+  .v3 .now-window {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--line);
+  }
+  .v3 .now-window .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px rgba(52,192,138,0.6); }
+  .v3 .now-window .name { font-weight: 500; }
+  .v3 .now-window .name span { color: var(--muted); font-weight: 400; }
+
+  .v3 .grid-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 10px;
+  }
+  .v3 .card {
+    background: linear-gradient(180deg, #23252c 0%, #1a1c22 100%);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 8px 9px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .v3 .card:hover {
+    border-color: rgba(111,139,255,0.45);
+    transform: translateY(-1px);
+  }
+  .v3 .card.primary {
+    grid-column: span 3;
+    background: linear-gradient(180deg, rgba(111,139,255,0.18), rgba(111,139,255,0.05));
+    border-color: rgba(111,139,255,0.4);
+    display: flex; align-items: center; gap: 12px; text-align: left;
+    padding: 12px;
+  }
+  .v3 .card.primary .icon-wrap {
+    width: 42px; height: 42px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: white;
+    display: grid; place-items: center;
+  }
+  .v3 .card.primary .icon-wrap svg { width: 22px; height: 22px; }
+  .v3 .card.primary .meta { flex: 1; }
+  .v3 .card.primary .title { font-weight: 600; font-size: 14px; }
+  .v3 .card.primary .sub { color: var(--muted); font-size: 11.5px; }
+
+  .v3 .card .combo {
+    font: 700 13px/1 "SF Mono", ui-monospace, monospace;
+    margin-bottom: 6px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .v3 .card .label {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .v3 .card svg { width: 16px; height: 16px; }
+  .v3 .card .ic { color: var(--accent); margin-bottom: 4px; }
+
+  /* ════════════════════════════════════════════════════════════
+     VARIANT 4 — Cheatsheet
+     Dense two-column reference. Monospace shortcuts on the left,
+     plain action names on the right. Filter input on top.
+     Designed to be glanced at and memorized.
+     ════════════════════════════════════════════════════════════ */
+  .v4 .filter {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    color: var(--dim);
+  }
+  .v4 .filter svg { width: 13px; height: 13px; }
+  .v4 .filter input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--text);
+    font-size: 12.5px;
+  }
+  .v4 .filter input::placeholder { color: var(--dim); }
+  .v4 .filter .badge {
+    font: 600 10px/1 "SF Mono", ui-monospace, monospace;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: var(--muted);
+  }
+
+  .v4 .section {
+    padding: 8px 12px 10px;
+  }
+  .v4 .section + .section { border-top: 1px solid var(--line); }
+  .v4 .section-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 6px;
+  }
+  .v4 .sheet { display: flex; flex-direction: column; gap: 2px; }
+  .v4 .line {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 5px;
+  }
+  .v4 .line:hover { background: rgba(255,255,255,0.04); }
+  .v4 .line .combo {
+    font: 600 12px/1 "SF Mono", ui-monospace, monospace;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .v4 .line .combo .dim { color: var(--dim); margin: 0 1px; font-weight: 400; }
+  .v4 .line .name {
+    font-size: 12.5px;
+    color: var(--text);
+  }
+  .v4 .line .name .desc { color: var(--muted); font-size: 11.5px; margin-left: 6px; }
+  .v4 .line.unset .combo { color: var(--dim); font-style: italic; font-weight: 400; }
+
+  /* ════════════════════════════════════════════════════════════
+     VARIANT 5 — Hold-to-Act / Live Modifier
+     Bottom: modifier "pads" light up as you hold them. The center
+     stage shows what action will fire if you press a key right now.
+     "Hotkey-centric" taken literally: nothing happens by clicking
+     — the UI teaches you the shortcuts in real time.
+     ════════════════════════════════════════════════════════════ */
+  .v5 .stage {
+    padding: 16px 14px 12px;
+    text-align: center;
+    background:
+      radial-gradient(220px 100px at 50% 0%, rgba(111,139,255,0.18) 0%, transparent 70%);
+    border-bottom: 1px solid var(--line);
+  }
+  .v5 .stage .holding {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .v5 .stage .combo {
+    display: inline-flex; gap: 6px; align-items: center;
+    margin-bottom: 10px;
+  }
+  .v5 .stage .action {
+    font-size: 16px; font-weight: 600; margin-bottom: 2px;
+  }
+  .v5 .stage .hint {
+    font-size: 11.5px; color: var(--muted);
+  }
+  .v5 .next-keys {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-top: 10px; flex-wrap: wrap;
+  }
+  .v5 .next-keys .opt {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 6px 4px 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .v5 .next-keys .opt strong { color: var(--text); font-weight: 500; }
+
+  .v5 .pads {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+    padding: 12px;
+  }
+  .v5 .pad {
+    background: linear-gradient(180deg, #1f2128 0%, #15171c 100%);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 6px 8px;
+    text-align: center;
+    color: var(--muted);
+    transition: all .12s ease;
+  }
+  .v5 .pad .glyph { font-size: 18px; font-weight: 700; line-height: 1; }
+  .v5 .pad .name {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+    color: var(--dim);
+  }
+  .v5 .pad.held {
+    background: linear-gradient(180deg, var(--accent) 0%, #5670e5 100%);
+    color: white;
+    border-color: rgba(255,255,255,0.18);
+    box-shadow: 0 0 0 1px rgba(111,139,255,0.4), 0 6px 16px -6px rgba(111,139,255,0.6);
+    transform: translateY(-1px);
+  }
+  .v5 .pad.held .name { color: rgba(255,255,255,0.85); }
+
+  .v5 .list {
+    padding: 0 12px 10px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .v5 .list .li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 8px;
+    border-radius: 7px;
+  }
+  .v5 .list .li.match { background: var(--accent-soft); }
+  .v5 .list .li .ic {
+    width: 20px; height: 20px;
+    color: var(--muted);
+    display: grid; place-items: center;
+  }
+  .v5 .list .li .ic svg { width: 13px; height: 13px; }
+  .v5 .list .li.match .ic { color: var(--accent); }
+  .v5 .list .li .nm { flex: 1; font-size: 12.5px; }
+  .v5 .list .li .ky { color: var(--muted); }
+  .v5 .list .li.match .ky { color: var(--accent); }
+
+  .v5 .next-keys .opt kbd { background: rgba(255,255,255,0.08); }
+</style>
+</head>
+<body>
+
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1>Macaveli — Menu Variants</h1>
+      <p>Five different takes on a hotkey-centric menubar UI. All ~380 pt wide. Pick the one that feels right and we'll build it.</p>
+    </div>
+    <div class="legend">
+      Tip: every variant assumes you can press the shown key with the menu open to fire the action — clicks are a fallback, not the primary path.
+    </div>
+  </header>
+
+  <section class="grid">
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VARIANT 1 — Command Palette                              -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="variant">
+      <div class="variant-head">
+        <span class="variant-tag">Variant 1</span>
+        <div class="variant-name">Command Palette</div>
+        <div class="variant-note">Raycast-style. Open the menu, start typing, or press ↑↓ to navigate. Each row shows its hotkey on the right — but you can also fire by Enter, or by pressing the key combo while focused.</div>
+      </div>
+
+      <div class="menu v1">
+        <div class="brand">
+          <div class="brand-left">
+            <div class="logo">M</div>
+            <div class="brand-name">Macaveli</div>
+          </div>
+          <div class="brand-actions">
+            <div class="icon-btn" title="Settings ⌘,"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          </div>
+        </div>
+
+        <div class="search">
+          <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <input placeholder="Type a command…" />
+          <span class="esc">esc</span>
+        </div>
+
+        <div class="group-label">Window</div>
+        <div class="list">
+          <div class="row active">
+            <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/></svg></div>
+            <div class="row-text">
+              <div class="row-title">Maximize window</div>
+              <div class="row-sub">Fill the screen, respect Dock</div>
+            </div>
+            <span class="kbd-group">
+              <kbd>⌃</kbd><kbd>⌘</kbd><kbd>↑</kbd>
+            </span>
+          </div>
+          <div class="row">
+            <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M9 12h6"/></svg></div>
+            <div class="row-text">
+              <div class="row-title">Center window</div>
+              <div class="row-sub">Re-center without resizing</div>
+            </div>
+            <span class="kbd-group">
+              <kbd>⌃</kbd><kbd>⌘</kbd><kbd>↓</kbd>
+            </span>
+          </div>
+          <div class="row">
+            <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1" stroke-dasharray="2 2"/></svg></div>
+            <div class="row-text">
+              <div class="row-title">Snap to left half</div>
+            </div>
+            <span class="kbd-group"><kbd>⌃</kbd><kbd>[</kbd></span>
+          </div>
+          <div class="row">
+            <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="8" height="14" rx="1" stroke-dasharray="2 2"/><rect x="13" y="5" width="8" height="14" rx="1"/></svg></div>
+            <div class="row-text">
+              <div class="row-title">Snap to right half</div>
+            </div>
+            <span class="kbd-group"><kbd>⌃</kbd><kbd>]</kbd></span>
+          </div>
+        </div>
+
+        <div class="group-label">Drag</div>
+        <div class="list">
+          <div class="row">
+            <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 9l-2 3 2 3"/><path d="M19 9l2 3-2 3"/><path d="M9 5l3-2 3 2"/><path d="M9 19l3 2 3-2"/></svg></div>
+            <div class="row-text">
+              <div class="row-title">Move window (drag)</div>
+              <div class="row-sub">Hold to grab any window</div>
+            </div>
+            <span class="kbd-group"><kbd>⌃</kbd><kbd>⌘</kbd></span>
+          </div>
+          <div class="row">
+            <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6"/><path d="M14 14h6v6"/><path d="M4 4l16 16"/></svg></div>
+            <div class="row-text">
+              <div class="row-title">Resize window (drag)</div>
+              <div class="row-sub">Hold + drag from any spot</div>
+            </div>
+            <span class="kbd-group"><kbd>⇧</kbd><kbd>⌘</kbd></span>
+          </div>
+        </div>
+
+        <div class="group-label">Recording</div>
+        <div class="list">
+          <div class="row">
+            <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg></div>
+            <div class="row-text">
+              <div class="row-title">Toggle screen recording</div>
+            </div>
+            <span class="kbd-group"><kbd>⌃</kbd><kbd>⌘</kbd><kbd>R</kbd></span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="footer-hint"><kbd>↑</kbd><kbd>↓</kbd><span style="margin: 0 4px;">navigate</span><kbd>↵</kbd><span style="margin-left:4px;">run</span></div>
+          <div class="footer-hint"><span style="margin-right:4px;">settings</span><kbd>⌘</kbd><kbd>,</kbd></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VARIANT 2 — Keyboard Map                                 -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="variant">
+      <div class="variant-head">
+        <span class="variant-tag">Variant 2</span>
+        <div class="variant-name">Keyboard Map</div>
+        <div class="variant-note">A small live keyboard. Modifier pads on top stay highlighted while you hold them. Mapped keys glow blue — hover (or hold the modifier on a real keyboard) and you see exactly which key does what.</div>
+      </div>
+
+      <div class="menu v2">
+        <div class="brand">
+          <div class="brand-left">
+            <div class="logo">M</div>
+            <div class="brand-name">Macaveli</div>
+          </div>
+          <div class="brand-actions">
+            <div class="icon-btn" title="Edit bindings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
+            <div class="icon-btn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          </div>
+        </div>
+
+        <div class="readout">
+          <div class="glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v8H4z"/><path d="M2 19h20"/></svg></div>
+          <div>
+            <div class="readout-title">Maximize window</div>
+            <div class="readout-sub">Currently hovering <strong style="color:var(--text)">↑</strong></div>
+          </div>
+          <span class="kbd-group combo">
+            <kbd>⌃</kbd><kbd>⌘</kbd><kbd>↑</kbd>
+          </span>
+        </div>
+
+        <div class="modifier-strip">
+          <div class="mod on"><span class="mod-glyph">⌃</span><span class="mod-name">Control</span></div>
+          <div class="mod on"><span class="mod-glyph">⌘</span><span class="mod-name">Command</span></div>
+          <div class="mod"><span class="mod-glyph">⌥</span><span class="mod-name">Option</span></div>
+          <div class="mod"><span class="mod-glyph">⇧</span><span class="mod-name">Shift</span></div>
+        </div>
+
+        <div class="keyboard">
+          <div class="krow">
+            <div class="key">Q</div><div class="key">W</div><div class="key">E</div>
+            <div class="key">R<span class="badge">●</span></div>
+            <div class="key">T</div><div class="key">Y</div><div class="key">U</div>
+            <div class="key">I</div><div class="key">O</div><div class="key">P</div>
+          </div>
+          <div class="krow">
+            <div class="key">A</div><div class="key">S</div><div class="key">D</div>
+            <div class="key">F</div><div class="key">G</div><div class="key">H</div>
+            <div class="key">J</div><div class="key">K</div><div class="key">L</div>
+            <div class="key mapped" title="Left Half">[</div>
+            <div class="key mapped" title="Right Half">]</div>
+          </div>
+          <div class="krow">
+            <div class="key">Z</div><div class="key">X</div><div class="key">C</div>
+            <div class="key">V</div><div class="key">B</div><div class="key">N</div>
+            <div class="key">M</div><div class="key">←</div>
+            <div class="key mapped" title="Center">↓</div>
+            <div class="key mapped" title="Maximize">↑</div>
+            <div class="key">→</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="footer-hint"><span style="color:var(--accent)">●</span><span style="margin-left:6px;">2 modifiers held · 3 actions available</span></div>
+          <div class="footer-hint">tap a key to rebind</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VARIANT 3 — Hotkey Cards                                 -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="variant">
+      <div class="variant-head">
+        <span class="variant-tag">Variant 3</span>
+        <div class="variant-name">Hotkey Cards</div>
+        <div class="variant-note">Each action is a tile, with the hotkey as its hero. Top card is the contextual primary (Record while idle, Stop while recording). Most visual of the five — designed to teach the shortcuts by repetition.</div>
+      </div>
+
+      <div class="menu v3">
+        <div class="brand">
+          <div class="brand-left">
+            <div class="logo">M</div>
+            <div class="brand-name">Macaveli</div>
+          </div>
+          <div class="brand-actions">
+            <div class="icon-btn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          </div>
+        </div>
+
+        <div class="now-window">
+          <div class="dot"></div>
+          <div class="name">Safari<span> · Macaveli — Menu Variants</span></div>
+        </div>
+
+        <div class="grid-cards">
+          <div class="card primary">
+            <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg></div>
+            <div class="meta">
+              <div class="title">Start recording</div>
+              <div class="sub">Full screen · MP4 · optimize on save</div>
+            </div>
+            <span class="kbd-group">
+              <kbd class="lg">⌃</kbd><kbd class="lg">⌘</kbd><kbd class="lg">R</kbd>
+            </span>
+          </div>
+
+          <div class="card">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6"/><path d="M20 20h-6v-6"/><path d="M4 4l16 16"/></svg></div>
+            <div class="combo">⌃⌘↑</div>
+            <div class="label">Maximize</div>
+          </div>
+          <div class="card">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M9 12h6"/></svg></div>
+            <div class="combo">⌃⌘↓</div>
+            <div class="label">Center</div>
+          </div>
+          <div class="card">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="8" height="14" rx="1"/></svg></div>
+            <div class="combo">⌃[</div>
+            <div class="label">Left half</div>
+          </div>
+          <div class="card">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="13" y="5" width="8" height="14" rx="1"/></svg></div>
+            <div class="combo">⌃]</div>
+            <div class="label">Right half</div>
+          </div>
+          <div class="card">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 9l-2 3 2 3"/><path d="M19 9l2 3-2 3"/><path d="M9 5l3-2 3 2"/><path d="M9 19l3 2 3-2"/></svg></div>
+            <div class="combo">⌃⌘ drag</div>
+            <div class="label">Move</div>
+          </div>
+          <div class="card">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6"/><path d="M14 14h6v6"/><path d="M4 4l16 16"/></svg></div>
+            <div class="combo">⇧⌘ drag</div>
+            <div class="label">Resize</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="footer-hint">7 of 7 bindings active</div>
+          <div class="footer-hint"><span style="margin-right:4px;">customize</span><kbd>⌘</kbd><kbd>,</kbd></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VARIANT 4 — Cheatsheet                                   -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="variant">
+      <div class="variant-head">
+        <span class="variant-tag">Variant 4</span>
+        <div class="variant-name">Cheatsheet</div>
+        <div class="variant-note">Vim-help dense. Two-column reference with shortcuts on the left, monospaced. Maximum information density — designed to live open in a second monitor while you're learning the bindings.</div>
+      </div>
+
+      <div class="menu v4">
+        <div class="brand">
+          <div class="brand-left">
+            <div class="logo">M</div>
+            <div class="brand-name">Macaveli</div>
+          </div>
+          <div class="brand-actions">
+            <div class="icon-btn" title="Print cheatsheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg></div>
+            <div class="icon-btn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          </div>
+        </div>
+
+        <div class="filter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input placeholder="Filter actions…" />
+          <span class="badge">7 actions</span>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Snap</div>
+          <div class="sheet">
+            <div class="line">
+              <span class="combo">⌃<span class="dim">+</span>⌘<span class="dim">+</span>↑</span>
+              <span class="name">Maximize<span class="desc">fill screen</span></span>
+            </div>
+            <div class="line">
+              <span class="combo">⌃<span class="dim">+</span>⌘<span class="dim">+</span>↓</span>
+              <span class="name">Center<span class="desc">recenter, no resize</span></span>
+            </div>
+            <div class="line">
+              <span class="combo">⌃<span class="dim">+</span>[</span>
+              <span class="name">Left half</span>
+            </div>
+            <div class="line">
+              <span class="combo">⌃<span class="dim">+</span>]</span>
+              <span class="name">Right half</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Drag</div>
+          <div class="sheet">
+            <div class="line">
+              <span class="combo">⌃<span class="dim">+</span>⌘<span class="dim">·</span>drag</span>
+              <span class="name">Move window<span class="desc">grab anywhere</span></span>
+            </div>
+            <div class="line">
+              <span class="combo">⇧<span class="dim">+</span>⌘<span class="dim">·</span>drag</span>
+              <span class="name">Resize window<span class="desc">quadrant-aware</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Record</div>
+          <div class="sheet">
+            <div class="line">
+              <span class="combo">⌃<span class="dim">+</span>⌘<span class="dim">+</span>R</span>
+              <span class="name">Toggle recording</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="footer-hint">v1.2.0 · all shortcuts live</div>
+          <div class="footer-hint"><kbd>⌘</kbd><kbd>,</kbd></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- VARIANT 5 — Hold-to-Act / Live Modifier                  -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="variant">
+      <div class="variant-head">
+        <span class="variant-tag">Variant 5</span>
+        <div class="variant-name">Live Modifier</div>
+        <div class="variant-note">The menu reacts to the keys you're holding right now. Modifier pads light up; the stage tells you exactly what's about to fire and which key to press next. Teaches by doing, not by reading.</div>
+      </div>
+
+      <div class="menu v5">
+        <div class="brand">
+          <div class="brand-left">
+            <div class="logo">M</div>
+            <div class="brand-name">Macaveli</div>
+          </div>
+          <div class="brand-actions">
+            <div class="icon-btn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="holding">Holding ⌃⌘ · 3 actions ready</div>
+          <div class="combo">
+            <kbd class="xl">⌃</kbd><kbd class="xl">⌘</kbd>
+            <span style="color: var(--dim); font-size: 22px;">+</span>
+            <kbd class="xl" style="background: linear-gradient(180deg, var(--accent) 0%, #5670e5 100%); color: white; border-color: rgba(255,255,255,0.18);">?</kbd>
+          </div>
+          <div class="action">Press a key to act</div>
+          <div class="hint">Or release to cancel</div>
+          <div class="next-keys">
+            <span class="opt"><kbd>↑</kbd><strong>Maximize</strong></span>
+            <span class="opt"><kbd>↓</kbd><strong>Center</strong></span>
+            <span class="opt"><kbd>R</kbd><strong>Record</strong></span>
+          </div>
+        </div>
+
+        <div class="pads">
+          <div class="pad held"><div class="glyph">⌃</div><div class="name">Control</div></div>
+          <div class="pad held"><div class="glyph">⌘</div><div class="name">Command</div></div>
+          <div class="pad"><div class="glyph">⌥</div><div class="name">Option</div></div>
+          <div class="pad"><div class="glyph">⇧</div><div class="name">Shift</div></div>
+        </div>
+
+        <div class="list">
+          <div class="li match">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h16v8H4z"/></svg></span>
+            <span class="nm">Maximize</span>
+            <span class="ky"><kbd>↑</kbd></span>
+          </div>
+          <div class="li match">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M9 12h6"/></svg></span>
+            <span class="nm">Center</span>
+            <span class="ky"><kbd>↓</kbd></span>
+          </div>
+          <div class="li match">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg></span>
+            <span class="nm">Toggle recording</span>
+            <span class="ky"><kbd>R</kbd></span>
+          </div>
+          <div class="li">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="8" height="14" rx="1"/></svg></span>
+            <span class="nm">Left half · need ⌃ only</span>
+            <span class="ky"><kbd>[</kbd></span>
+          </div>
+          <div class="li">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="13" y="5" width="8" height="14" rx="1"/></svg></span>
+            <span class="nm">Right half · need ⌃ only</span>
+            <span class="ky"><kbd>]</kbd></span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="footer-hint">menu listens to keys globally</div>
+          <div class="footer-hint"><kbd>⌘</kbd><kbd>,</kbd></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section style="margin-top: 56px; max-width: 760px; color: var(--muted);">
+    <h2 style="color: var(--text); font-size: 16px; font-weight: 600; margin: 0 0 12px;">How they differ — quick decision guide</h2>
+    <ul style="padding-left: 18px; line-height: 1.7;">
+      <li><strong style="color:var(--text)">Command Palette</strong> — most familiar (Raycast/Spotlight). Best if you'll add more commands over time. Search-first.</li>
+      <li><strong style="color:var(--text)">Keyboard Map</strong> — most opinionated and Macaveli-native. Best at <em>teaching</em> the bindings spatially. Heaviest to build (requires a keyboard renderer).</li>
+      <li><strong style="color:var(--text)">Hotkey Cards</strong> — most marketable, screenshot-friendly. Treats hotkeys as the hero copy on each tile. Great default.</li>
+      <li><strong style="color:var(--text)">Cheatsheet</strong> — densest, lowest-chrome. Best for power users who already know what they want. Easiest to build.</li>
+      <li><strong style="color:var(--text)">Live Modifier</strong> — most novel. Genuinely "hotkey-centric" — the UI is driven by what you're physically holding. Risk: depends on real-time keystroke capture inside an open popover (doable, but the most engineering work).</li>
+    </ul>
+  </section>
+</main>
+
+</body>
+</html>

@@ -1,27 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "SF Pro Text",
-    "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-  --color-bg: #0a0a0c;
-  --color-bg-elevated: #111114;
-  --color-border: #1f1f23;
-  --color-fg: #ededee;
-  --color-fg-muted: #9b9ba3;
-  --color-accent: #5eead4;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", "Helvetica Neue", Inter, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    monospace;
 }
 
 html,
 body {
-  background: var(--color-bg);
-  color: var(--color-fg);
+  background: #fafafa;
+  color: #18181b;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: rgba(94, 234, 212, 0.25);
+  background: rgba(37, 99, 235, 0.18);
+}
+
+/* Soft Apple-style multi-stop wash for the hero. Subtle — never competes
+   with the headline. */
+.apple-wash {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(125, 211, 252, 0.22), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(244, 114, 182, 0.12), transparent 60%),
+    #fafafa;
 }

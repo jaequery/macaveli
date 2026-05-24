@@ -1,4 +1,4 @@
-.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon
+.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon
 
 fetch-ffmpeg:
 	@bash scripts/fetch-ffmpeg.sh
@@ -8,6 +8,12 @@ fetch-ffmpeg:
 # bundle's .icns post-build with the full-fidelity one this script produces.
 render-icon:
 	@swift scripts/render-icon.swift
+
+# Regenerate the menubar icon PNGs (16/32/48 px) into the asset catalog.
+# Not chained into `build:` because it's a manual design step — edit the
+# renderer, run this, then `make build`.
+render-menubar-icon:
+	@swift scripts/render-menubar-icon.swift
 
 build: fetch-ffmpeg render-icon
 	xcodebuild -scheme Macaveli build SYMROOT=$(PWD)/build

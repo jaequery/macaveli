@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Macaveli — Move, resize, and record macOS windows from anywhere",
+  title: "Macaveli — One app. Replace twelve.",
   description:
-    "A tiny macOS menubar app for fast window management and screen recording. Hold a modifier, drag anywhere on a window to move or resize. Snap to halves with ⌃[ and ⌃].",
+    "The Mac utility you forgot to install. Window management, snap layouts, screen recording — every macOS utility you reinstall on a fresh Mac, in one tiny menubar app. Free, open source, no signup.",
   openGraph: {
-    title: "Macaveli",
-    description:
-      "Move, resize, and record macOS windows from anywhere. A tiny menubar app.",
+    title: "Macaveli — One app. Replace twelve.",
+    description: "Every macOS utility you reinstall on a fresh Mac, in one menubar app.",
     type: "website",
   },
 };

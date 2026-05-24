@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Macaveli — 5 Fresh Landing Page Concepts</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+    /* === Team-credit strip styling === */
+    .team-strip { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+    /* === V3 animated window snap loop === */
+    @keyframes window-dance {
+      0%, 10%   { left: 25%; top: 20%; width: 50%; height: 60%; }
+      25%, 40%  { left: 4%;  top: 6%;  width: 46%; height: 88%; }   /* snap left */
+      55%, 70%  { left: 50%; top: 6%;  width: 46%; height: 88%; }   /* snap right */
+      85%, 100% { left: 25%; top: 20%; width: 50%; height: 60%; }   /* center */
+    }
+    .demo-window {
+      position: absolute;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #2a2a32 0%, #1c1c22 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      transition: all 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: window-dance 9s infinite;
+      overflow: hidden;
+    }
+    .demo-window::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 26px;
+      background: linear-gradient(180deg, #36363f, #2a2a32);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .demo-window::after {
+      content: "";
+      position: absolute; top: 9px; left: 12px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ff5f57;
+      box-shadow: 14px 0 #febc2e, 28px 0 #28c840;
+    }
+
+    /* === V5 Apple-style soft gradient backdrop === */
+    .apple-grad {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(125,211,252,0.18), transparent 60%),
+        radial-gradient(ellipse 80% 50% at 50% 100%, rgba(244,114,182,0.10), transparent 60%),
+        #fafafa;
+    }
+
+    /* === Reused rainbow CTA pill (kept — you said you liked it) === */
+    .rainbow-pill {
+      position: relative; display: inline-flex; border-radius: 9999px;
+      padding: 1.5px; transition: transform 0.15s ease;
+    }
+    .rainbow-pill:hover { transform: scale(1.02); }
+    .rainbow-pill::before {
+      content: ""; position: absolute; inset: 0; border-radius: 9999px;
+      background: conic-gradient(from 140deg at 50% 50%,
+        #f87171 0deg, #fbbf24 70deg, #34d399 150deg,
+        #60a5fa 220deg, #c084fc 300deg, #f87171 360deg);
+      opacity: 0.92;
+    }
+    .rainbow-pill > span {
+      position: relative; display: inline-flex; align-items: center; gap: 0.5rem;
+      border-radius: 9999px; padding: 0.875rem 1.875rem;
+      font-size: 15px; font-weight: 600; color: #fff;
+    }
+    .rainbow-pill.on-black > span { background: #000; }
+    .rainbow-pill.on-cream > span { background: #fbf9f4; color: #18181b; }
+    .rainbow-pill.on-pink > span { background: #18171a; }
+    .rainbow-pill.on-light > span { background: #fff; color: #111; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-white" style="font-family: Inter, system-ui, sans-serif">
+
+  <!-- =====================================================================
+       Sticky nav
+       ===================================================================== -->
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-zinc-950/85 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center gap-6 px-6 py-3 text-xs">
+      <span class="team-strip text-[11px] uppercase tracking-[0.08em] text-white">
+        Macaveli · 5 concepts · 5 fictional studios
+      </span>
+      <nav class="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-zinc-400">
+        <a href="#v1" class="hover:text-white">1 · Margin &amp; Co.</a>
+        <a href="#v2" class="hover:text-white">2 · Liquid Steel</a>
+        <a href="#v3" class="hover:text-white">3 · Render Lab</a>
+        <a href="#v4" class="hover:text-white">4 · Devstack</a>
+        <a href="#v5" class="hover:text-white">5 · Cupertino</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       V1 — MARGIN & CO. (Editorial Minimalist Studio)
+       ===================================================================== -->
+
+  <!-- Team credit -->
+  <div class="border-y border-white/10 bg-zinc-950 px-8 py-6 team-strip">
+    <div class="mx-auto max-w-7xl">
+      <div class="flex flex-wrap items-baseline gap-4">
+        <span class="text-[11px] uppercase tracking-[0.12em] text-zinc-500">Concept 01</span>
+        <span class="text-[20px] font-bold tracking-tight text-white">Margin &amp; Co.</span>
+        <span class="text-[12px] text-zinc-500">Brooklyn · "We make brands that whisper instead of shout."</span>
+      </div>
+      <div class="mt-3 grid grid-cols-1 gap-2 text-[12px] text-zinc-400 sm:grid-cols-3">
+        <div><span class="text-zinc-600">Designer ·</span> Niko Larsen, ex-Linear. Worships negative space.</div>
+        <div><span class="text-zinc-600">Copywriter ·</span> Eve Park, ex-NYT Magazine. Writes essays, not slogans.</div>
+        <div><span class="text-zinc-600">Marketer ·</span> Ben Solis. Believes word-of-mouth beats ads.</div>
+      </div>
+      <p class="mt-3 max-w-3xl text-[12px] text-zinc-500">
+        Pitch: Treat the page like a magazine essay. Calm, long-form,
+        confident. The CTA is a small inline link, not a billboard. People
+        who get it, get it.
+      </p>
+    </div>
+  </div>
+
+  <!-- The design -->
+  <section id="v1" style="background: #fbf9f4; color: #1a1a1a; font-family: 'Newsreader', Georgia, serif">
+    <div class="mx-auto max-w-3xl px-8 py-32">
+      <header class="mb-20 flex items-center justify-between text-[13px]" style="font-family: Inter, sans-serif">
+        <span class="font-semibold tracking-tight">Macaveli</span>
+        <nav class="flex gap-6 text-zinc-600">
+          <a href="#">Notes</a>
+          <a href="#">GitHub</a>
+        </nav>
+      </header>
+
+      <p class="text-[13px] uppercase tracking-[0.18em] text-zinc-500" style="font-family: Inter, sans-serif">
+        Issue 01 · A tiny Mac essential
+      </p>
+      <h1 class="mt-6 font-medium" style="font-size: clamp(2.5rem, 5.5vw, 4.5rem); line-height: 1.05; letter-spacing: -0.015em;">
+        The app you'll forget you installed.
+      </h1>
+
+      <div class="mt-12 space-y-7 text-[20px] leading-[1.7] text-zinc-800">
+        <p>
+          Most Mac apps want your attention. They live in your dock, your
+          menubar, your notifications. They ask you to open them. Macaveli
+          does the opposite. You install it once, give it accessibility
+          permission, and it disappears. After the first week you stop
+          noticing the icon at all.
+        </p>
+        <p>
+          What stays with you is the muscle memory. You stop reaching for
+          the title bar — you hold <span class="rounded bg-zinc-200 px-1.5 py-0.5 text-[16px]" style="font-family: 'JetBrains Mono', monospace">⌃⌘</span>
+          and drag the window from wherever your cursor happens to be. You
+          stop hunting for the corner — you hold <span class="rounded bg-zinc-200 px-1.5 py-0.5 text-[16px]" style="font-family: 'JetBrains Mono', monospace">⌘⇧</span>
+          and resize from anywhere on the surface. You snap halves with
+          <span class="rounded bg-zinc-200 px-1.5 py-0.5 text-[16px]" style="font-family: 'JetBrains Mono', monospace">⌃[</span>
+          and <span class="rounded bg-zinc-200 px-1.5 py-0.5 text-[16px]" style="font-family: 'JetBrains Mono', monospace">⌃]</span>.
+          You record screens with <span class="rounded bg-zinc-200 px-1.5 py-0.5 text-[16px]" style="font-family: 'JetBrains Mono', monospace">⌃⌘R</span>
+          without breaking flow. By month two it stops feeling like an app.
+          It feels like how your Mac works.
+        </p>
+        <p class="border-l-2 border-zinc-300 pl-6 text-[22px] italic" style="font-family: 'Cormorant Garamond', serif">
+          "macOS shipped without real window management. Macaveli is the
+          part Apple forgot to ship."
+        </p>
+      </div>
+
+      <div class="mt-14 flex items-baseline gap-6" style="font-family: Inter, sans-serif">
+        <a href="#" class="text-[15px] font-semibold underline decoration-2 underline-offset-4 hover:decoration-zinc-400">
+          Download for Mac →
+        </a>
+        <span class="text-[13px] text-zinc-500">Free · MIT · macOS 13+</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       V2 — LIQUID STEEL (Punchy / Manifesto)
+       ===================================================================== -->
+
+  <div class="border-y border-white/10 bg-zinc-950 px-8 py-6 team-strip">
+    <div class="mx-auto max-w-7xl">
+      <div class="flex flex-wrap items-baseline gap-4">
+        <span class="text-[11px] uppercase tracking-[0.12em] text-zinc-500">Concept 02</span>
+        <span class="text-[20px] font-bold tracking-tight text-white">Liquid Steel</span>
+        <span class="text-[12px] text-zinc-500">Berlin · "Marketing for things that have an attitude."</span>
+      </div>
+      <div class="mt-3 grid grid-cols-1 gap-2 text-[12px] text-zinc-400 sm:grid-cols-3">
+        <div><span class="text-zinc-600">Designer ·</span> Jude Carrera. Loud colors, brutalist grids, refuses to use Helvetica.</div>
+        <div><span class="text-zinc-600">Copywriter ·</span> Maxx Brenner. Writes manifestos. One line per breath.</div>
+        <div><span class="text-zinc-600">Marketer ·</span> Lina Wu. Believes the only good ad is an opinion.</div>
+      </div>
+      <p class="mt-3 max-w-3xl text-[12px] text-zinc-500">
+        Pitch: macOS is the villain. Macaveli is the answer. Loud display
+        type, stacked manifesto copy, single rainbow CTA. People download
+        it because they're angry at Apple, not because they think it's nice.
+      </p>
+    </div>
+  </div>
+
+  <section id="v2" class="relative overflow-hidden" style="background: #18171a; color: #fff5e6; font-family: Inter, sans-serif">
+    <!-- Decorative grid -->
+    <div class="pointer-events-none absolute inset-0 opacity-[0.06]"
+      style="background-image: linear-gradient(#fff5e6 1px, transparent 1px), linear-gradient(90deg, #fff5e6 1px, transparent 1px); background-size: 60px 60px;"></div>
+
+    <div class="relative mx-auto max-w-6xl px-8 py-28">
+      <header class="mb-20 flex items-center justify-between text-[13px]">
+        <span class="text-[14px] font-extrabold uppercase tracking-[0.2em]" style="color: #ffd166">★ Macaveli</span>
+        <a href="#" class="rounded-full border border-white/20 px-4 py-1.5 text-[12px] font-bold uppercase tracking-wider hover:border-white">
+          Github
+        </a>
+      </header>
+
+      <p class="mb-3 text-[13px] font-extrabold uppercase tracking-[0.3em]" style="color: #ff5e8a">A manifesto · 2026</p>
+
+      <!-- Manifesto headline, one line per breath -->
+      <h1 class="font-bold tracking-[-0.04em]" style="font-family: 'Anton', sans-serif; font-size: clamp(3rem, 11vw, 9rem); line-height: 0.9; letter-spacing: 0;">
+        <span class="block">macOS forgot</span>
+        <span class="block" style="color: #ffd166">how to move</span>
+        <span class="block" style="color: #ff5e8a">a window.</span>
+        <span class="block">we didn't.</span>
+      </h1>
+
+      <div class="mt-14 grid gap-8 sm:grid-cols-2">
+        <p class="text-[22px] font-medium leading-[1.5]">
+          You shouldn't have to find a 4-pixel title bar to move a window.
+          You shouldn't have to find a 4-pixel corner to resize one. Hold a
+          modifier. Drag anywhere. That's it.
+        </p>
+        <p class="text-[20px] leading-[1.55] text-zinc-300">
+          Macaveli is the window manager Apple should have shipped, ported
+          straight from how Linux desktops have worked for twenty years.
+          Free. Open source. No dock icon. No telemetry. No upsell.
+        </p>
+      </div>
+
+      <div class="mt-14 flex flex-wrap items-center gap-6">
+        <a href="#" class="rainbow-pill on-pink"><span>Download for Mac</span></a>
+        <span class="text-[16px] font-bold uppercase tracking-wider">— it's free, obviously</span>
+      </div>
+
+      <div class="mt-16 flex flex-wrap gap-3 text-[12px] font-bold uppercase tracking-[0.15em]">
+        <span class="rounded-full border border-white/15 px-4 py-2">⌃⌘ + DRAG = MOVE</span>
+        <span class="rounded-full border border-white/15 px-4 py-2">⌘⇧ + DRAG = RESIZE</span>
+        <span class="rounded-full border border-white/15 px-4 py-2">⌃[ ⌃] = HALVES</span>
+        <span class="rounded-full border border-white/15 px-4 py-2">⌃⌘R = RECORD</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       V3 — RENDER LAB (Tech Demo Showcase)
+       ===================================================================== -->
+
+  <div class="border-y border-white/10 bg-zinc-950 px-8 py-6 team-strip">
+    <div class="mx-auto max-w-7xl">
+      <div class="flex flex-wrap items-baseline gap-4">
+        <span class="text-[11px] uppercase tracking-[0.12em] text-zinc-500">Concept 03</span>
+        <span class="text-[20px] font-bold tracking-tight text-white">Render Lab</span>
+        <span class="text-[12px] text-zinc-500">San Francisco · "Show the product. Stop talking about it."</span>
+      </div>
+      <div class="mt-3 grid grid-cols-1 gap-2 text-[12px] text-zinc-400 sm:grid-cols-3">
+        <div><span class="text-zinc-600">Designer ·</span> Aria Chen, ex-Apple marketing pages. Pixel-precise mockups.</div>
+        <div><span class="text-zinc-600">Copywriter ·</span> Ethan Moore, ex-Stripe docs. Writes captions, not paragraphs.</div>
+        <div><span class="text-zinc-600">Marketer ·</span> Drew Patel, Product Hunt #1 specialist.</div>
+      </div>
+      <p class="mt-3 max-w-3xl text-[12px] text-zinc-500">
+        Pitch: A live, animated product demo at the top so you understand
+        the value in 3 seconds. Copy is short captions under each feature.
+        The page sells itself by showing.
+      </p>
+    </div>
+  </div>
+
+  <section id="v3" class="bg-[#070710] text-white" style="font-family: Inter, sans-serif">
+    <div class="mx-auto max-w-6xl px-8 py-24">
+      <header class="mb-16 flex items-center justify-between text-[13px]">
+        <span class="text-[15px] font-bold tracking-tight">▣ Macaveli</span>
+        <nav class="flex items-center gap-6 text-zinc-400">
+          <a href="#" class="hover:text-white">Features</a>
+          <a href="#" class="hover:text-white">Docs</a>
+          <a href="#" class="hover:text-white">GitHub</a>
+        </nav>
+      </header>
+
+      <div class="grid items-center gap-12 lg:grid-cols-[1fr_1.2fr]">
+        <div>
+          <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] font-medium">
+            <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
+            New · v0.25.1
+          </p>
+          <h1 class="font-bold tracking-[-0.03em]" style="font-size: clamp(2.5rem, 5.5vw, 4.5rem); line-height: 1.02;">
+            Window management,<br/>
+            <span style="background: linear-gradient(90deg, #67e8f9, #c084fc); -webkit-background-clip: text; background-clip: text; color: transparent;">
+              played back at 60fps.
+            </span>
+          </h1>
+          <p class="mt-8 max-w-md text-[20px] leading-[1.55] text-zinc-400">
+            Watch what <span class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[17px]">⌃[</span>
+            and <span class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[17px]">⌃]</span>
+            actually feel like on macOS — no install required.
+          </p>
+          <div class="mt-10 flex flex-wrap items-center gap-4">
+            <a href="#" class="rounded-lg bg-white px-6 py-3 text-[15px] font-bold text-black hover:bg-zinc-200">
+              Download for Mac
+            </a>
+            <a href="#" class="text-[15px] font-semibold text-zinc-400 hover:text-white">
+              View source →
+            </a>
+          </div>
+        </div>
+
+        <!-- Animated demo: a small "desktop" with a window that snaps in a loop -->
+        <div class="relative aspect-[16/11] overflow-hidden rounded-2xl border border-white/10"
+             style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);">
+          <div class="demo-window">
+            <!-- Inside-window content: pretend code editor -->
+            <div class="absolute top-9 left-3 right-3 space-y-1.5">
+              <div class="h-1.5 w-3/4 rounded bg-cyan-400/40"></div>
+              <div class="h-1.5 w-5/6 rounded bg-white/15"></div>
+              <div class="h-1.5 w-2/3 rounded bg-white/15"></div>
+              <div class="h-1.5 w-1/2 rounded bg-white/15"></div>
+              <div class="h-1.5 w-3/5 rounded bg-purple-400/40"></div>
+              <div class="h-1.5 w-4/5 rounded bg-white/15"></div>
+              <div class="h-1.5 w-1/3 rounded bg-white/15"></div>
+            </div>
+          </div>
+          <!-- Caption overlay -->
+          <div class="absolute bottom-3 right-3 rounded-md bg-black/60 px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-cyan-300 backdrop-blur">
+            ⌃[ / ⌃] loop
+          </div>
+        </div>
+      </div>
+
+      <!-- Below: 3 captioned features (the "showcase" style) -->
+      <div class="mt-28 grid gap-6 sm:grid-cols-3">
+        <div class="rounded-2xl border border-white/10 bg-white/[0.025] p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-400/15 font-mono text-[14px] font-bold text-cyan-300">⌃⌘</div>
+          <h3 class="mt-4 text-[17px] font-bold">Move from anywhere</h3>
+          <p class="mt-1.5 text-[14px] leading-relaxed text-zinc-400">No title-bar required.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/[0.025] p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-400/15 font-mono text-[14px] font-bold text-purple-300">⌘⇧</div>
+          <h3 class="mt-4 text-[17px] font-bold">Resize quadrant-aware</h3>
+          <p class="mt-1.5 text-[14px] leading-relaxed text-zinc-400">Corners pin opposite, edges resize one axis.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/[0.025] p-6">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-400/15 font-mono text-[14px] font-bold text-pink-300">⌃⌘R</div>
+          <h3 class="mt-4 text-[17px] font-bold">Record without leaving</h3>
+          <p class="mt-1.5 text-[14px] leading-relaxed text-zinc-400">Built-in. MP4 or MOV.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       V4 — DEVSTACK (Developer-First, README aesthetic)
+       ===================================================================== -->
+
+  <div class="border-y border-white/10 bg-zinc-950 px-8 py-6 team-strip">
+    <div class="mx-auto max-w-7xl">
+      <div class="flex flex-wrap items-baseline gap-4">
+        <span class="text-[11px] uppercase tracking-[0.12em] text-zinc-500">Concept 04</span>
+        <span class="text-[20px] font-bold tracking-tight text-white">Devstack</span>
+        <span class="text-[12px] text-zinc-500">Remote · "We market to people who can read a README."</span>
+      </div>
+      <div class="mt-3 grid grid-cols-1 gap-2 text-[12px] text-zinc-400 sm:grid-cols-3">
+        <div><span class="text-zinc-600">Designer ·</span> Kai Yoshida. GitHub-flavored dark mode, monospace pride.</div>
+        <div><span class="text-zinc-600">Copywriter ·</span> Sam Marrone, technical writer. Won't use the word "magic."</div>
+        <div><span class="text-zinc-600">Marketer ·</span> Rohan Mehta, HN launch specialist. Knows the difference between Show HN and Ask HN.</div>
+      </div>
+      <p class="mt-3 max-w-3xl text-[12px] text-zinc-500">
+        Pitch: The landing page IS the README. Install command at the top,
+        shortcuts as a spec table, no marketing prose, no hero illustration.
+        Developers smell BS instantly — give them facts they can scan.
+      </p>
+    </div>
+  </div>
+
+  <section id="v4" class="bg-[#0d1117] text-zinc-200" style="font-family: 'JetBrains Mono', ui-monospace, monospace">
+    <div class="mx-auto max-w-4xl px-8 py-20">
+      <header class="mb-12 flex items-center justify-between border-b border-white/10 pb-4 text-[13px]">
+        <span class="font-bold text-white">jaequery / macaveli</span>
+        <div class="flex gap-4 text-zinc-400">
+          <span>★ 1.2k</span>
+          <span>⑂ 87</span>
+          <a href="#" class="text-cyan-400 hover:text-cyan-300">Sponsor →</a>
+        </div>
+      </header>
+
+      <!-- Badges -->
+      <div class="mb-6 flex flex-wrap gap-2 text-[11px]">
+        <span class="rounded border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-green-300">build · passing</span>
+        <span class="rounded border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-300">license · MIT</span>
+        <span class="rounded border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-purple-300">version · 0.25.1</span>
+        <span class="rounded border border-zinc-600 bg-zinc-800/50 px-2 py-0.5 text-zinc-300">platform · macOS 13+</span>
+      </div>
+
+      <!-- # macaveli -->
+      <h1 class="font-extrabold text-white" style="font-size: clamp(2rem, 4.5vw, 3.25rem); line-height: 1.1;">
+        # macaveli
+      </h1>
+      <p class="mt-3 text-[20px] leading-[1.55] text-zinc-300" style="font-family: Inter, sans-serif">
+        Window management for people who live in their keyboard.
+        Hold-modifier-and-drag from anywhere. Snap, maximize, record. No
+        dock icon, no telemetry, no upsell.
+      </p>
+
+      <!-- ## install -->
+      <h2 class="mt-12 text-[14px] uppercase tracking-[0.15em] text-zinc-500">## install</h2>
+      <div class="mt-3 rounded-md border border-white/10 bg-black/40 p-4 text-[14px]">
+        <div class="flex items-center justify-between">
+          <span><span class="text-pink-400">brew</span> install <span class="text-cyan-300">--cask</span> macaveli</span>
+          <button class="rounded border border-white/15 px-2 py-0.5 text-[11px] text-zinc-400 hover:text-white">copy</button>
+        </div>
+        <div class="mt-2 text-[12px] text-zinc-500"># or grab the signed .app from releases ↓</div>
+      </div>
+
+      <!-- ## shortcuts -->
+      <h2 class="mt-12 text-[14px] uppercase tracking-[0.15em] text-zinc-500">## shortcuts</h2>
+      <table class="mt-3 w-full text-[14px]" style="font-family: 'JetBrains Mono', monospace">
+        <thead class="text-left text-zinc-500">
+          <tr class="border-b border-white/10">
+            <th class="py-2 font-medium">binding</th>
+            <th class="py-2 font-medium">action</th>
+          </tr>
+        </thead>
+        <tbody class="text-zinc-200">
+          <tr class="border-b border-white/5"><td class="py-2.5 text-cyan-300">⌃⌘ + drag</td><td class="py-2.5">move window under cursor</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2.5 text-cyan-300">⌘⇧ + drag</td><td class="py-2.5">resize window under cursor</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2.5 text-cyan-300">⌃[</td><td class="py-2.5">snap focused window left half</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2.5 text-cyan-300">⌃]</td><td class="py-2.5">snap focused window right half</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2.5 text-cyan-300">⌃⌘↑</td><td class="py-2.5">maximize</td></tr>
+          <tr class="border-b border-white/5"><td class="py-2.5 text-cyan-300">⌃⌘↓</td><td class="py-2.5">re-center</td></tr>
+          <tr><td class="py-2.5 text-cyan-300">⌃⌘R</td><td class="py-2.5">toggle screen recording</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ## get it -->
+      <h2 class="mt-12 text-[14px] uppercase tracking-[0.15em] text-zinc-500">## get it</h2>
+      <div class="mt-4 flex flex-wrap items-center gap-4">
+        <a href="#" class="rounded-md bg-white px-5 py-2.5 text-[14px] font-bold text-black hover:bg-zinc-200">
+          ↓ download .app
+        </a>
+        <a href="#" class="rounded-md border border-white/15 px-5 py-2.5 text-[14px] font-bold text-white hover:border-white/40">
+          $ git clone
+        </a>
+        <span class="text-[12px] text-zinc-500">MIT · free forever · self-host the appcast if you want</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       V5 — CUPERTINO (Apple-Style Product Marketing)
+       ===================================================================== -->
+
+  <div class="border-y border-white/10 bg-zinc-950 px-8 py-6 team-strip">
+    <div class="mx-auto max-w-7xl">
+      <div class="flex flex-wrap items-baseline gap-4">
+        <span class="text-[11px] uppercase tracking-[0.12em] text-zinc-500">Concept 05</span>
+        <span class="text-[20px] font-bold tracking-tight text-white">Cupertino</span>
+        <span class="text-[12px] text-zinc-500">Los Altos · "We make landing pages that feel like keynotes."</span>
+      </div>
+      <div class="mt-3 grid grid-cols-1 gap-2 text-[12px] text-zinc-400 sm:grid-cols-3">
+        <div><span class="text-zinc-600">Designer ·</span> Iris Tanaka, ex-Apple Marcomm. Soft gradients, generous air.</div>
+        <div><span class="text-zinc-600">Copywriter ·</span> Hugh Brown, ex-Apple keynote writer. "It changes everything. Again."</div>
+        <div><span class="text-zinc-600">Marketer ·</span> Carl Sato, hardware launch specialist. Sells emotion before features.</div>
+      </div>
+      <p class="mt-3 max-w-3xl text-[12px] text-zinc-500">
+        Pitch: Treat Macaveli like a flagship product. Polished hero copy,
+        big product visual, system-font typography, soft color gradients,
+        Apple-class whitespace. Premium feel, even for a free tool.
+      </p>
+    </div>
+  </div>
+
+  <section id="v5" class="apple-grad text-zinc-900" style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif">
+    <div class="mx-auto max-w-6xl px-8 py-24">
+      <header class="mb-20 flex items-center justify-between text-[13px]">
+        <span class="text-[15px] font-semibold tracking-tight">Macaveli</span>
+        <nav class="hidden gap-8 text-zinc-600 sm:flex">
+          <a href="#" class="hover:text-zinc-900">Overview</a>
+          <a href="#" class="hover:text-zinc-900">Features</a>
+          <a href="#" class="hover:text-zinc-900">Shortcuts</a>
+          <a href="#" class="hover:text-zinc-900">Download</a>
+        </nav>
+      </header>
+
+      <div class="text-center">
+        <p class="mb-5 text-[14px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Introducing Macaveli</p>
+        <h1 class="font-bold tracking-[-0.04em] text-zinc-900" style="font-size: clamp(2.75rem, 7.5vw, 6rem); line-height: 1;">
+          An entirely new way<br/>to move a window.
+        </h1>
+        <p class="mx-auto mt-8 max-w-2xl text-[22px] leading-[1.45] text-zinc-700">
+          Macaveli reimagines window management on macOS from the ground up.
+          Hold a modifier. Drag from anywhere. Snap, maximize, and record
+          without ever lifting your hands from the keyboard.
+        </p>
+        <p class="mx-auto mt-2 max-w-xl text-[17px] font-medium text-zinc-500">
+          Free. Pure Swift. Lives in your menu bar.
+        </p>
+        <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <a href="#" class="rounded-full bg-zinc-900 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-zinc-700">
+            Download for Mac
+          </a>
+          <a href="#" class="text-[15px] font-semibold text-blue-600 hover:text-blue-700">
+            Learn more →
+          </a>
+        </div>
+      </div>
+
+      <!-- Product showcase: stylized menu bar + window visual -->
+      <div class="mt-24">
+        <div class="relative mx-auto aspect-[16/9] max-w-5xl overflow-hidden rounded-3xl shadow-2xl"
+             style="background: linear-gradient(180deg, #2b2b34 0%, #16161c 100%);">
+          <!-- Fake menubar -->
+          <div class="absolute left-0 right-0 top-0 flex h-7 items-center gap-4 bg-white/8 px-4 backdrop-blur text-[11px] font-medium text-white/80">
+            <span class="font-semibold"></span>
+            <span>Finder</span>
+            <span>File</span>
+            <span>Edit</span>
+            <span>View</span>
+            <div class="ml-auto flex items-center gap-3">
+              <!-- The hero: the M mark -->
+              <svg width="14" height="14" viewBox="0 0 32 32"><path d="M5.5 26.5 L5.5 5.5 L16 19 L26.5 5.5 L26.5 26.5" fill="none" stroke="white" stroke-width="4" stroke-linejoin="miter" stroke-miterlimit="8"/></svg>
+              <span class="text-white/60">100%</span>
+              <span class="text-white/60">Wed 7:45 PM</span>
+            </div>
+          </div>
+          <!-- Two windows demonstrating half-snap -->
+          <div class="absolute left-[3%] top-[12%] flex h-[80%] w-[46%] flex-col overflow-hidden rounded-xl border border-white/10"
+               style="background: linear-gradient(180deg, #2c2c36 0%, #1c1c24 100%); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <div class="flex h-7 items-center gap-1.5 border-b border-white/5 bg-white/5 px-3">
+              <span class="h-2.5 w-2.5 rounded-full" style="background:#ff5f57"></span>
+              <span class="h-2.5 w-2.5 rounded-full" style="background:#febc2e"></span>
+              <span class="h-2.5 w-2.5 rounded-full" style="background:#28c840"></span>
+            </div>
+            <div class="flex-1 space-y-2 p-4">
+              <div class="h-2 w-2/3 rounded bg-cyan-400/40"></div>
+              <div class="h-2 w-5/6 rounded bg-white/15"></div>
+              <div class="h-2 w-4/5 rounded bg-white/15"></div>
+              <div class="h-2 w-3/4 rounded bg-white/15"></div>
+            </div>
+          </div>
+          <div class="absolute right-[3%] top-[12%] flex h-[80%] w-[46%] flex-col overflow-hidden rounded-xl border border-white/10"
+               style="background: linear-gradient(180deg, #2c2c36 0%, #1c1c24 100%); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+            <div class="flex h-7 items-center gap-1.5 border-b border-white/5 bg-white/5 px-3">
+              <span class="h-2.5 w-2.5 rounded-full" style="background:#ff5f57"></span>
+              <span class="h-2.5 w-2.5 rounded-full" style="background:#febc2e"></span>
+              <span class="h-2.5 w-2.5 rounded-full" style="background:#28c840"></span>
+            </div>
+            <div class="flex-1 space-y-2 p-4">
+              <div class="h-2 w-1/2 rounded bg-pink-400/40"></div>
+              <div class="h-2 w-4/5 rounded bg-white/15"></div>
+              <div class="h-2 w-2/3 rounded bg-white/15"></div>
+              <div class="h-2 w-5/6 rounded bg-white/15"></div>
+            </div>
+          </div>
+        </div>
+        <p class="mt-6 text-center text-[15px] text-zinc-500">
+          Two windows. One keystroke. <span class="font-mono">⌃[</span>, <span class="font-mono">⌃]</span>, done.
+        </p>
+      </div>
+
+      <!-- 3 marketing pillars -->
+      <div class="mt-32 grid gap-12 sm:grid-cols-3">
+        <div>
+          <p class="text-[13px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Effortless</p>
+          <h3 class="mt-2 text-[22px] font-bold tracking-tight">Drag from anywhere.</h3>
+          <p class="mt-3 text-[16px] leading-relaxed text-zinc-700">
+            Hold the modifier. Move the window. Your cursor doesn't have to
+            find anything. Title bars become optional.
+          </p>
+        </div>
+        <div>
+          <p class="text-[13px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Precise</p>
+          <h3 class="mt-2 text-[22px] font-bold tracking-tight">Snap in one stroke.</h3>
+          <p class="mt-3 text-[16px] leading-relaxed text-zinc-700">
+            Halves, maximize, re-center — every snap action is one keystroke
+            and entirely rebindable.
+          </p>
+        </div>
+        <div>
+          <p class="text-[13px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Quiet</p>
+          <h3 class="mt-2 text-[22px] font-bold tracking-tight">Lives in the menu bar.</h3>
+          <p class="mt-3 text-[16px] leading-relaxed text-zinc-700">
+            No dock icon. No window. Open the popover the first week to learn
+            the shortcuts, then forget it's there.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       FOOTER
+       ===================================================================== -->
+  <footer class="border-t border-white/10 bg-zinc-950 px-8 py-12 text-center">
+    <p class="team-strip text-[11px] uppercase tracking-[0.08em] text-zinc-500">
+      Say "go with Margin &amp; Co." / "Liquid Steel" / "Render Lab" / "Devstack" / "Cupertino" — I'll port it into web/app/page.tsx.
+    </p>
+  </footer>
+
+</body>
+</html>

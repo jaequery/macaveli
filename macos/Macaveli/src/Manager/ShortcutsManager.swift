@@ -51,7 +51,19 @@ class ShortcutsManager {
     
     private init() {
         seedDefaultShortcutsIfNeeded()
+        migrateClickModeIfNeeded()
         updateGlobalShortcuts()
+    }
+
+    /// One-shot migration for users who had the "Require click" preference on:
+    /// wipe any stored per-shortcut mouseButton so the click-handling code
+    /// path stays dormant now that the toggle is gone.
+    private func migrateClickModeIfNeeded() {
+        let key = "didMigrateClickModeRemoval"
+        if UserDefaults.standard.bool(forKey: key) { return }
+        removeClickActionsForAll()
+        UserDefaults.standard.removeObject(forKey: "requireMouseClick")
+        UserDefaults.standard.set(true, forKey: key)
     }
 
     private func seedDefaultShortcutsIfNeeded() {
