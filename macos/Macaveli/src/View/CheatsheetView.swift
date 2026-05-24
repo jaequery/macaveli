@@ -271,10 +271,10 @@ struct KeyCapsView: View {
 
     private func modifierGlyphs(_ flags: NSEvent.ModifierFlags) -> [String] {
         var out: [String] = []
-        if flags.contains(.control) { out.append("⌃") }
-        if flags.contains(.option)  { out.append("⌥") }
-        if flags.contains(.shift)   { out.append("⇧") }
-        if flags.contains(.command) { out.append("⌘") }
+        if flags.contains(.control) { out.append("ctrl") }
+        if flags.contains(.option)  { out.append("opt") }
+        if flags.contains(.shift)   { out.append("shift") }
+        if flags.contains(.command) { out.append("cmd") }
         return out
     }
 
