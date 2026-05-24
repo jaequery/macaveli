@@ -1,10 +1,24 @@
-.PHONY: build open-app run appcast generate-keys
+.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon
 
-build:
-	xcodebuild -scheme InitialX build SYMROOT=$(PWD)/build
+fetch-ffmpeg:
+	@bash scripts/fetch-ffmpeg.sh
+
+# Render the app icon PNGs + build a proper AppIcon.icns into Macaveli/AppIcon.icns.
+# Xcode's asset catalog drops half the size slots on its own; we overwrite the
+# bundle's .icns post-build with the full-fidelity one this script produces.
+render-icon:
+	@swift scripts/render-icon.swift
+
+build: fetch-ffmpeg render-icon
+	xcodebuild -scheme Macaveli build SYMROOT=$(PWD)/build
+	@if [ -f Macaveli/AppIcon.icns ]; then \
+		cp Macaveli/AppIcon.icns "build/Debug/Macaveli.app/Contents/Resources/AppIcon.icns"; \
+		echo "Overwrote bundle .icns with full-fidelity version"; \
+	fi
+	@touch "build/Debug/Macaveli.app"
 
 run-app:
-	open "./build/Debug/InitialX.app"
+	open "./build/Debug/Macaveli.app"
 
 run: build run-app
 

@@ -3,8 +3,8 @@
 export_folder=$1
 # remove trailing slash
 export_folder=${export_folder%/}
-app_name="InitialX"
-app_name_no_space="InitialX"
+app_name="Macaveli"
+app_name_no_space="Macaveli"
 
 if [[ -z "$export_folder" ]]; then
     echo "Usage: $0 <folder containing '$app_name.app'>"
@@ -28,7 +28,7 @@ zip -9 -y -r -q "${app_name_no_space}.zip" "$app_name.app"
 popd
 
 # find Sparkle's bin folder
-generate_appcast=$(find ~/Library/Developer/Xcode/DerivedData/InitialX* -type f -name "*generate_appcast")
+generate_appcast=$(find ~/Library/Developer/Xcode/DerivedData/Macaveli* -type f -name "*generate_appcast")
 bin_folder=$(dirname $generate_appcast)
 
 # generate appcast
@@ -40,7 +40,7 @@ echo "Signing update..."
 $bin_folder/sign_update "$export_folder/$app_name_no_space.zip"
 
 # modify appcast.xml to point to latest release ZIP in github
-sed -i '' 's|https://[^"<]*InitialX\.zip|https://github.com/jaequery/InitialX/releases/latest/download/InitialX.zip|g' $export_folder/appcast.xml
+sed -i '' 's|https://[^"<]*Macaveli\.zip|https://github.com/jaequery/Macaveli/releases/latest/download/Macaveli.zip|g' $export_folder/appcast.xml
 
 # copy appcast.xml back to repo
 cp $export_folder/appcast.xml .

@@ -1,10 +1,10 @@
-# InitialX
+# Macaveli
 
 > Sweet window management and screen recording for macOS
 
 ## Installation
 
-* Download the [latest release on Github](https://github.com/jaequery/InitialX/releases)
+* Download the [latest release on Github](https://github.com/jaequery/Macaveli/releases)
 * Clone it and build it yourself
 
 ## Features
@@ -27,11 +27,11 @@ make run
 
 ### Accessibility permissions running locally
 
-Make sure you don't have InitialX running already. If you have 2 versions of InitialX, only one will get
+Make sure you don't have Macaveli running already. If you have 2 versions of Macaveli, only one will get
 Accessibility permissions. To fix it:
 
-* Quit all InitialX instances
-* Remove InitialX from the System Preferences > Security & Privacy > Accessibility
+* Quit all Macaveli instances
+* Remove Macaveli from the System Preferences > Security & Privacy > Accessibility
 * Run the app you want to test
 * Enable Accessibility permissions
 

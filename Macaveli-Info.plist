@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/jaequery/Macaveli/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>RHEghrKn+wDkJUFgZYPOWvNOKZsRaYFIGkKkr/yKecA=</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Macaveli needs screen recording access to capture the primary display.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Macaveli needs microphone access to record audio alongside the screen.</string>
+</dict>
+</plist>
