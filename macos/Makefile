@@ -1,4 +1,4 @@
-.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon dmg upload publish-web release
+.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon dmg upload publish-web release bump-version
 
 fetch-ffmpeg:
 	@bash scripts/fetch-ffmpeg.sh
@@ -50,10 +50,21 @@ publish-web: upload
 	URL=$$(cat build/dmg-url.txt); \
 	printf '{"version":"%s","downloadUrl":"%s"}\n' "$$VERSION" "$$URL" > ../web/version.json; \
 	echo "✓ web/version.json → $$URL"; \
-	echo "  Commit it so the website's Download button picks up the new release."
+	echo; \
+	echo "  Next: commit the version bump + new download URL:"; \
+	echo "    git add Macaveli.xcodeproj/project.pbxproj ../web/version.json"; \
+	echo "    git commit -m \"release v$$VERSION\" && git push"
 
-# Full release: build DMG → upload to bucket → update web/version.json.
-release: dmg upload publish-web
+# Bump MARKETING_VERSION + CURRENT_PROJECT_VERSION in pbxproj.
+# Defaults to a patch bump; override with `make bump-version BUMP=minor` or
+# `make bump-version VERSION=1.0.0`. `BUMP=none` is a no-op.
+bump-version:
+	@new=$$(./scripts/bump-version.sh); \
+	echo "✓ Version → $$new"
+
+# Full release: bump version → build DMG → upload → update web/version.json.
+# To re-release the same version without bumping: `BUMP=none make release`.
+release: bump-version dmg upload publish-web
 
 generate-keys:
 	@$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
