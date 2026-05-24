@@ -43,6 +43,10 @@
 		BB001A010201000000001004 /* AnnotatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001004 /* AnnotatorView.swift */; };
 		BB001A010201000000001005 /* AnnotatorCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001005 /* AnnotatorCanvas.swift */; };
 		BB001A010201000000001006 /* AnnotatorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001006 /* AnnotatorToolbar.swift */; };
+		CC001A010201000000002001 /* PasteboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002001 /* PasteboardItem.swift */; };
+		CC001A010201000000002002 /* PasteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002002 /* PasteManager.swift */; };
+		CC001A010201000000002003 /* PasteWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002003 /* PasteWindow.swift */; };
+		CC001A010201000000002004 /* PasteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002004 /* PasteView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +84,10 @@
 		BB001A010202000000001004 /* AnnotatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorView.swift; sourceTree = "<group>"; };
 		BB001A010202000000001005 /* AnnotatorCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorCanvas.swift; sourceTree = "<group>"; };
 		BB001A010202000000001006 /* AnnotatorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorToolbar.swift; sourceTree = "<group>"; };
+		CC001A010202000000002001 /* PasteboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardItem.swift; sourceTree = "<group>"; };
+		CC001A010202000000002002 /* PasteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteManager.swift; sourceTree = "<group>"; };
+		CC001A010202000000002003 /* PasteWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteWindow.swift; sourceTree = "<group>"; };
+		CC001A010202000000002004 /* PasteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +119,8 @@
 				BB001A010202000000001004 /* AnnotatorView.swift */,
 				BB001A010202000000001005 /* AnnotatorCanvas.swift */,
 				BB001A010202000000001006 /* AnnotatorToolbar.swift */,
+				CC001A010202000000002003 /* PasteWindow.swift */,
+				CC001A010202000000002004 /* PasteView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -129,6 +139,7 @@
 				AA001A2C2C5F0001000AA001 /* RecordingExporter.swift */,
 				AA001A300102000000000001 /* LicenseManager.swift */,
 				BB001A010202000000001002 /* AnnotatorManager.swift */,
+				CC001A010202000000002002 /* PasteManager.swift */,
 			);
 			path = Manager;
 			sourceTree = "<group>";
@@ -137,6 +148,7 @@
 			isa = PBXGroup;
 			children = (
 				BB001A010202000000001001 /* Annotation.swift */,
+				CC001A010202000000002001 /* PasteboardItem.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -313,6 +325,10 @@
 				BB001A010201000000001004 /* AnnotatorView.swift in Sources */,
 				BB001A010201000000001005 /* AnnotatorCanvas.swift in Sources */,
 				BB001A010201000000001006 /* AnnotatorToolbar.swift in Sources */,
+				CC001A010201000000002001 /* PasteboardItem.swift in Sources */,
+				CC001A010201000000002002 /* PasteManager.swift in Sources */,
+				CC001A010201000000002003 /* PasteWindow.swift in Sources */,
+				CC001A010201000000002004 /* PasteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

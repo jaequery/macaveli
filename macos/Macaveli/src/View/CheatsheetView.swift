@@ -52,6 +52,14 @@ struct CheatsheetView: View {
                             rows: annotateRows,
                             settings: { AnnotateSettingsStrip() }
                         )
+                        SectionDivider()
+                        CheatSection(
+                            id: .paste,
+                            title: "Paste",
+                            openSection: $openSection,
+                            rows: pasteRows,
+                            settings: { PasteSettingsStrip() }
+                        )
                     }
                     .padding(.vertical, 6)
                 }
@@ -98,11 +106,16 @@ struct CheatsheetView: View {
             .init(type: .annotate, label: "Annotate", desc: "Annotate the clipboard image"),
         ]
     }
+    private var pasteRows: [CheatRowSpec] {
+        [
+            .init(type: .paste, label: "Show clipboard history", desc: "Browse and paste recent clipboard items"),
+        ]
+    }
 }
 
 // MARK: - Section primitives
 
-enum CheatSectionID: Hashable { case snap, drag, record, annotate }
+enum CheatSectionID: Hashable { case snap, drag, record, annotate, paste }
 
 struct CheatRowSpec: Identifiable {
     var id: ShortcutType { type }
@@ -608,6 +621,61 @@ struct AnnotateSettingsStrip: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             BindingEditorRow(type: .annotate, label: "Hotkey")
+        }
+    }
+}
+
+struct PasteSettingsStrip: View {
+    @AppStorage(PreferenceKey.pasteHistorySize.rawValue) private var historySize = 100
+    @ObservedObject private var manager = PasteManager.shared
+
+    private var formattedBytes: String {
+        let total = manager.items.reduce(0) { $0 + $1.byteSize }
+        if total < 1024 {
+            return "\(total) B"
+        } else if total < 1024 * 1024 {
+            return String(format: "%.1f KB", Double(total) / 1024)
+        } else {
+            return String(format: "%.1f MB", Double(total) / (1024 * 1024))
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            BindingEditorRow(type: .paste, label: "Hotkey")
+            HStack(spacing: 8) {
+                Text("History size")
+                    .font(.system(size: stripLabelFontSize))
+                    .foregroundStyle(.secondary)
+                    .frame(width: stripLabelWidth, alignment: .leading)
+                Stepper(
+                    value: $historySize,
+                    in: 25...500,
+                    step: 25
+                ) {
+                    Text("\(historySize) items")
+                        .font(.system(size: stripLabelFontSize))
+                        .monospacedDigit()
+                }
+                .controlSize(.mini)
+            }
+            HStack(spacing: 8) {
+                Text("")
+                    .frame(width: stripLabelWidth, alignment: .leading)
+                Button("Clear history") {
+                    PasteManager.shared.clearAll()
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.mini)
+                .foregroundStyle(.red)
+            }
+            HStack(spacing: 8) {
+                Text("")
+                    .frame(width: stripLabelWidth, alignment: .leading)
+                Text("\(manager.items.count) items · \(formattedBytes) used")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 }

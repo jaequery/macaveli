@@ -10,11 +10,12 @@ enum ShortcutType: String, CaseIterable {
     case rightHalf = "Right Half"
     case record = "Record"
     case annotate = "Annotate"
+    case paste = "Paste"
 
     var isMouseDriven: Bool {
         switch self {
         case .move, .resize: return true
-        case .maximize, .center, .leftHalf, .rightHalf, .record, .annotate: return false
+        case .maximize, .center, .leftHalf, .rightHalf, .record, .annotate, .paste: return false
         }
     }
 }
@@ -88,6 +89,7 @@ class ShortcutsManager {
         seedRecordShortcutIfNeeded()
         seedHalfShortcutsIfNeeded()
         seedAnnotateShortcutIfNeeded()
+        seedPasteShortcutIfNeeded()
     }
 
     private func seedHalfShortcutsIfNeeded() {
@@ -144,6 +146,19 @@ class ShortcutsManager {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
             let shortcut = Shortcut(code: .ansiA, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
             save(UserShortcut(type: .annotate, shortcut: shortcut, mouseButton: .none))
+        }
+
+        UserDefaults.standard.set(true, forKey: didSeedKey)
+    }
+
+    private func seedPasteShortcutIfNeeded() {
+        let didSeedKey = "didSeedPasteShortcut"
+        if UserDefaults.standard.bool(forKey: didSeedKey) { return }
+
+        if load(for: .paste) == nil {
+            let modifiers: NSEvent.ModifierFlags = [.command, .control]
+            let shortcut = Shortcut(code: .ansiP, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
+            save(UserShortcut(type: .paste, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
@@ -280,6 +295,7 @@ class ShortcutsManager {
                 case .rightHalf: WindowActions.rightHalf()
                 case .record: ScreenRecorder.shared.toggle()
                 case .annotate: AnnotatorManager.shared.openFromClipboard()
+                case .paste: PasteManager.shared.togglePanel()
                 case .move, .resize: break
                 }
             }

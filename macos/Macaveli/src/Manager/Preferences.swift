@@ -14,6 +14,7 @@ enum PreferenceKey: String {
     case recordingGifFps = "recordingGifFps"
     case recordingDemoMode = "recordingDemoMode"
     case recordingCountdownSeconds = "recordingCountdownSeconds"
+    case pasteHistorySize = "pasteHistorySize"
 }
 
 class PreferencesManager {
