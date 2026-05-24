@@ -39,17 +39,25 @@ struct AnnotatorCanvas: View {
     @FocusState private var textFieldFocused: Bool
 
     // Selection / manipulation state.
-    private enum ManipulationMode { case idle, move, rotate }
+    private enum ManipulationMode { case idle, move, rotate, resize }
     @State private var manipulation: ManipulationMode = .idle
     @State private var manipStartTranslation: CGSize = .zero
     @State private var manipStartRotation:    CGFloat = 0
+    @State private var manipStartScale:       CGFloat = 1
     @State private var manipStartLocation:    CGPoint = .zero
+    @State private var manipStartCenter:      CGPoint = .zero
+    @State private var manipStartHandleDist:  CGFloat = 1
 
     // The rect where the image is actually rendered inside the canvas bounds.
     @State private var displayedRect: CGRect = .zero
 
     private let rotateHandleOffset: CGFloat = 28
     private let rotateHandleRadius: CGFloat = 7
+    private let cornerHandleRadius: CGFloat = 5
+    /// Default point size used when committing a new text annotation.
+    /// Placed text is intentionally small so it doesn't dominate screenshots;
+    /// use the Select tool's corner handles to scale it up after placement.
+    private let defaultTextFontSize: CGFloat = 7
 
     var body: some View {
         GeometryReader { geo in
@@ -92,7 +100,7 @@ struct AnnotatorCanvas: View {
                 if activeTool == .text, let origin = textOverlayOrigin {
                     TextField("", text: $textOverlayValue)
                         .textFieldStyle(.plain)
-                        .font(.system(size: activeStyle.strokeWidth * 3 + 10, weight: .semibold))
+                        .font(.system(size: defaultTextFontSize, weight: .semibold))
                         .foregroundColor(activeStyle.color)
                         .frame(width: 200, alignment: .leading)
                         .focused($textFieldFocused)
@@ -171,24 +179,37 @@ struct AnnotatorCanvas: View {
 
     private func handleSelectGestureChanged(_ value: DragGesture.Value, imageRect: CGRect) {
         if manipulation == .idle {
-            // Decide what we're manipulating at gesture start.
             manipStartLocation = value.startLocation
-            if let id = state.selectedAnnotationID,
-               let annotation = annotations.first(where: { $0.id == id }),
-               let rotateHandle = rotateHandlePosition(for: annotation, imageRect: imageRect),
+            guard let id = state.selectedAnnotationID,
+                  let annotation = annotations.first(where: { $0.id == id }) else {
+                return
+            }
+            let center = transformedAnchorCenterCanvas(for: annotation, imageRect: imageRect)
+
+            // 1. Rotate handle (above bbox).
+            if let rotateHandle = rotateHandlePosition(for: annotation, imageRect: imageRect),
                distance(value.startLocation, rotateHandle) <= rotateHandleRadius + 4 {
                 manipulation = .rotate
                 manipStartRotation = annotation.rotation
-            } else if let id = state.selectedAnnotationID,
-                      let annotation = annotations.first(where: { $0.id == id }),
-                      transformedBoundingBox(for: annotation, imageRect: imageRect)
-                          .insetBy(dx: -4, dy: -4)
-                          .contains(value.startLocation) {
+                manipStartCenter = center
+            }
+            // 2. Any corner handle → resize.
+            else if cornerHandlePositions(for: annotation, imageRect: imageRect)
+                        .contains(where: { distance(value.startLocation, $0) <= cornerHandleRadius + 4 }) {
+                manipulation = .resize
+                manipStartScale = annotation.scale
+                manipStartCenter = center
+                manipStartHandleDist = max(distance(value.startLocation, center), 1)
+            }
+            // 3. Inside bbox → move.
+            else if transformedBoundingBox(for: annotation, imageRect: imageRect)
+                        .insetBy(dx: -4, dy: -4)
+                        .contains(value.startLocation) {
                 manipulation = .move
                 manipStartTranslation = annotation.translation
-            } else {
-                // Tap-or-drag empty area: defer selection change to .onEnded.
-                manipulation = .idle
+            }
+            // 4. Empty area: defer to .onEnded for click-to-deselect / click-to-select.
+            else {
                 return
             }
         }
@@ -207,10 +228,15 @@ struct AnnotatorCanvas: View {
                 height: manipStartTranslation.height + dy
             )
         case .rotate:
-            let center = transformedAnchorCenterCanvas(for: annotations[index], imageRect: imageRect)
-            let startAngle = atan2(manipStartLocation.y - center.y, manipStartLocation.x - center.x)
-            let currentAngle = atan2(value.location.y - center.y, value.location.x - center.x)
+            let startAngle = atan2(manipStartLocation.y - manipStartCenter.y,
+                                   manipStartLocation.x - manipStartCenter.x)
+            let currentAngle = atan2(value.location.y - manipStartCenter.y,
+                                     value.location.x - manipStartCenter.x)
             annotations[index].rotation = manipStartRotation + (currentAngle - startAngle)
+        case .resize:
+            let currentDist = max(distance(value.location, manipStartCenter), 1)
+            let raw = manipStartScale * currentDist / manipStartHandleDist
+            annotations[index].scale = min(max(raw, 0.1), 10)
         case .idle:
             break
         }
@@ -239,21 +265,20 @@ struct AnnotatorCanvas: View {
     // MARK: - Hit testing
 
     private func hitTest(_ annotation: Annotation, point: CGPoint, imageRect: CGRect) -> Bool {
-        // Map the canvas point back into the annotation's anchor coordinate
-        // space by applying the inverse of the annotation's transform.
+        // Map the canvas point back into the annotation's anchor space by
+        // applying the inverse of the annotation's transform
+        // (translation → rotation → scale, all around the anchor center).
         let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
-        // Inverse: translate then rotate around center.
         let dx = point.x - annotation.translation.width  - center.x
         let dy = point.y - annotation.translation.height - center.y
         let cosA = cos(-annotation.rotation)
         let sinA = sin(-annotation.rotation)
-        let rotated = CGPoint(
-            x: dx * cosA - dy * sinA + center.x,
-            y: dx * sinA + dy * cosA + center.y
-        )
-        // Now `rotated` is the equivalent canvas-space point as if the
-        // annotation had no transform. Convert to anchor (image-local) coords.
-        let anchorPoint = anchorCoords(rotated, imageRect: imageRect)
+        // Inverse rotate around (0,0), then inverse scale, then re-anchor at center.
+        let rx = dx * cosA - dy * sinA
+        let ry = dx * sinA + dy * cosA
+        let s = annotation.scale == 0 ? 1 : annotation.scale
+        let unrotated = CGPoint(x: rx / s + center.x, y: ry / s + center.y)
+        let anchorPoint = anchorCoords(unrotated, imageRect: imageRect)
         let bbox = annotation.anchorBoundingBox.insetBy(dx: -6, dy: -6)
         return bbox.contains(anchorPoint)
     }
@@ -341,7 +366,7 @@ struct AnnotatorCanvas: View {
     }
 
     /// Returns the canvas-space center of an annotation after applying its
-    /// translation (rotation is around this point, so it doesn't displace it).
+    /// translation (rotation/scale are around this point, so neither displaces it).
     private func transformedAnchorCenterCanvas(for annotation: Annotation, imageRect: CGRect) -> CGPoint {
         let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
         return CGPoint(
@@ -350,21 +375,39 @@ struct AnnotatorCanvas: View {
         )
     }
 
-    /// Axis-aligned bounding box in canvas space after applying transform.
-    private func transformedBoundingBox(for annotation: Annotation, imageRect: CGRect) -> CGRect {
+    /// The 4 corners of the (anchor-space) bounding box transformed into
+    /// canvas space — scale → rotate → translate, all around the anchor center.
+    private func transformedCorners(for annotation: Annotation, imageRect: CGRect) -> [CGPoint] {
         let anchorBox = annotation.anchorBoundingBox
         let canvasBox = canvasRect(forAnchor: anchorBox, imageRect: imageRect)
-        let center = transformedAnchorCenterCanvas(for: annotation, imageRect: imageRect)
-        let translatedBox = canvasBox.offsetBy(dx: annotation.translation.width,
-                                               dy: annotation.translation.height)
-        let corners: [CGPoint] = [
-            CGPoint(x: translatedBox.minX, y: translatedBox.minY),
-            CGPoint(x: translatedBox.maxX, y: translatedBox.minY),
-            CGPoint(x: translatedBox.maxX, y: translatedBox.maxY),
-            CGPoint(x: translatedBox.minX, y: translatedBox.maxY),
+        let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
+        let scale = annotation.scale
+        let rawCorners: [CGPoint] = [
+            CGPoint(x: canvasBox.minX, y: canvasBox.minY),
+            CGPoint(x: canvasBox.maxX, y: canvasBox.minY),
+            CGPoint(x: canvasBox.maxX, y: canvasBox.maxY),
+            CGPoint(x: canvasBox.minX, y: canvasBox.maxY),
         ]
-        let rotated = corners.map { rotate($0, around: center, by: annotation.rotation) }
-        return rotated.boundingRect
+        return rawCorners.map { corner in
+            // Scale around center, then rotate around center, then translate.
+            let sx = (corner.x - center.x) * scale + center.x
+            let sy = (corner.y - center.y) * scale + center.y
+            let rotated = rotate(CGPoint(x: sx, y: sy), around: center, by: annotation.rotation)
+            return CGPoint(
+                x: rotated.x + annotation.translation.width,
+                y: rotated.y + annotation.translation.height
+            )
+        }
+    }
+
+    /// Axis-aligned canvas-space bbox of the 4 transformed corners — used for
+    /// move-region hit testing.
+    private func transformedBoundingBox(for annotation: Annotation, imageRect: CGRect) -> CGRect {
+        transformedCorners(for: annotation, imageRect: imageRect).boundingRect
+    }
+
+    private func cornerHandlePositions(for annotation: Annotation, imageRect: CGRect) -> [CGPoint] {
+        transformedCorners(for: annotation, imageRect: imageRect)
     }
 
     private func rotate(_ point: CGPoint, around center: CGPoint, by angle: CGFloat) -> CGPoint {
@@ -376,24 +419,22 @@ struct AnnotatorCanvas: View {
     }
 
     private func rotateHandlePosition(for annotation: Annotation, imageRect: CGRect) -> CGPoint? {
-        // Place handle above the (rotated) top-center of the bounding box.
-        let anchorBox = annotation.anchorBoundingBox
-        let canvasBox = canvasRect(forAnchor: anchorBox, imageRect: imageRect)
-        let center = transformedAnchorCenterCanvas(for: annotation, imageRect: imageRect)
-        let translatedTopCenter = CGPoint(
-            x: canvasBox.midX + annotation.translation.width,
-            y: canvasBox.minY + annotation.translation.height
+        // Above the top-center of the transformed bounding box.
+        let corners = transformedCorners(for: annotation, imageRect: imageRect)
+        guard corners.count == 4 else { return nil }
+        let topCenter = CGPoint(
+            x: (corners[0].x + corners[1].x) / 2,
+            y: (corners[0].y + corners[1].y) / 2
         )
-        let rotatedTopCenter = rotate(translatedTopCenter, around: center, by: annotation.rotation)
-        // Push the handle further out from the center along the same direction.
-        let dx = rotatedTopCenter.x - center.x
-        let dy = rotatedTopCenter.y - center.y
+        let trCenter = transformedAnchorCenterCanvas(for: annotation, imageRect: imageRect)
+        let dx = topCenter.x - trCenter.x
+        let dy = topCenter.y - trCenter.y
         let len = sqrt(dx * dx + dy * dy)
         guard len > 0 else {
-            return CGPoint(x: center.x, y: center.y - rotateHandleOffset)
+            return CGPoint(x: trCenter.x, y: trCenter.y - rotateHandleOffset)
         }
-        let scale = (len + rotateHandleOffset) / len
-        return CGPoint(x: center.x + dx * scale, y: center.y + dy * scale)
+        let push = (len + rotateHandleOffset) / len
+        return CGPoint(x: trCenter.x + dx * push, y: trCenter.y + dy * push)
     }
 
     // MARK: - Text overlay commit
@@ -408,9 +449,8 @@ struct AnnotatorCanvas: View {
         guard !trimmed.isEmpty else { return }
 
         let localOrigin = anchorCoords(origin, imageRect: displayedRect)
-        let fontSize: CGFloat = activeStyle.strokeWidth * 3 + 10
         commitAnnotation(Annotation(
-            shape: .text(origin: localOrigin, string: trimmed, fontSize: fontSize),
+            shape: .text(origin: localOrigin, string: trimmed, fontSize: defaultTextFontSize),
             style: activeStyle
         ))
     }
@@ -454,6 +494,7 @@ struct AnnotatorCanvas: View {
             layer.translateBy(x: annotation.translation.width, y: annotation.translation.height)
             layer.translateBy(x: center.x, y: center.y)
             layer.rotate(by: Angle(radians: annotation.rotation))
+            layer.scaleBy(x: annotation.scale, y: annotation.scale)
             layer.translateBy(x: -center.x, y: -center.y)
             drawShape(annotation.shape, style: annotation.style, in: &layer, imageRect: imageRect)
         }
@@ -591,42 +632,47 @@ struct AnnotatorCanvas: View {
     private func drawSelectionOverlay(for annotation: Annotation,
                                       in context: inout GraphicsContext,
                                       imageRect: CGRect) {
-        let center = canvasPoint(forAnchor: annotation.anchorCenter, imageRect: imageRect)
-        let anchorBox = annotation.anchorBoundingBox
-        let canvasBox = canvasRect(forAnchor: anchorBox, imageRect: imageRect)
+        let corners = transformedCorners(for: annotation, imageRect: imageRect)
+        guard corners.count == 4 else { return }
 
-        // Draw the dashed bounding box + connector + rotate handle inside
-        // a layer that carries the annotation's transform, so the box
-        // rotates with the shape.
-        context.drawLayer { layer in
-            layer.translateBy(x: annotation.translation.width, y: annotation.translation.height)
-            layer.translateBy(x: center.x, y: center.y)
-            layer.rotate(by: Angle(radians: annotation.rotation))
-            layer.translateBy(x: -center.x, y: -center.y)
+        // Dashed bounding-box polygon connecting the 4 transformed corners.
+        var bboxPath = Path()
+        bboxPath.move(to: corners[0])
+        for c in corners.dropFirst() { bboxPath.addLine(to: c) }
+        bboxPath.closeSubpath()
+        context.stroke(bboxPath,
+                       with: .color(Color.accentColor),
+                       style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
 
-            let inset = canvasBox.insetBy(dx: -4, dy: -4)
-            let bboxPath = Path(roundedRect: inset, cornerRadius: 3)
-            layer.stroke(bboxPath,
-                         with: .color(Color.accentColor),
-                         style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
-
-            // Connector from top-center to rotate handle.
-            let topCenter = CGPoint(x: inset.midX, y: inset.minY)
-            let handleCenter = CGPoint(x: inset.midX, y: inset.minY - rotateHandleOffset)
+        // Rotate handle: above the (rotated) top edge.
+        if let rotateHandle = rotateHandlePosition(for: annotation, imageRect: imageRect) {
+            let topMid = CGPoint(x: (corners[0].x + corners[1].x) / 2,
+                                 y: (corners[0].y + corners[1].y) / 2)
             var connector = Path()
-            connector.move(to: topCenter)
-            connector.addLine(to: handleCenter)
-            layer.stroke(connector, with: .color(Color.accentColor), lineWidth: 1)
+            connector.move(to: topMid)
+            connector.addLine(to: rotateHandle)
+            context.stroke(connector, with: .color(Color.accentColor), lineWidth: 1)
 
-            // Rotate handle.
             let handleRect = CGRect(
-                x: handleCenter.x - rotateHandleRadius,
-                y: handleCenter.y - rotateHandleRadius,
+                x: rotateHandle.x - rotateHandleRadius,
+                y: rotateHandle.y - rotateHandleRadius,
                 width: rotateHandleRadius * 2,
                 height: rotateHandleRadius * 2
             )
-            layer.fill(Path(ellipseIn: handleRect), with: .color(Color.accentColor))
-            layer.stroke(Path(ellipseIn: handleRect), with: .color(.white), lineWidth: 1.5)
+            context.fill(Path(ellipseIn: handleRect), with: .color(Color.accentColor))
+            context.stroke(Path(ellipseIn: handleRect), with: .color(.white), lineWidth: 1.5)
+        }
+
+        // Corner resize handles.
+        for corner in corners {
+            let r = CGRect(
+                x: corner.x - cornerHandleRadius,
+                y: corner.y - cornerHandleRadius,
+                width: cornerHandleRadius * 2,
+                height: cornerHandleRadius * 2
+            )
+            context.fill(Path(ellipseIn: r), with: .color(Color.accentColor))
+            context.stroke(Path(ellipseIn: r), with: .color(.white), lineWidth: 1.2)
         }
     }
 }

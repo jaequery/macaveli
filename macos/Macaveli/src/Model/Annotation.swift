@@ -88,17 +88,22 @@ struct Annotation: Identifiable, Equatable {
     var translation: CGSize = .zero
     /// Rotation around the shape's geometric center, in radians.
     var rotation: CGFloat = 0
+    /// Uniform scale around the shape's geometric center. 1.0 = original size.
+    /// Clamped to [0.1, 10.0] at mutation sites.
+    var scale: CGFloat = 1.0
 
     init(id: UUID = UUID(),
          shape: AnnotationShape,
          style: AnnotationStyle,
          translation: CGSize = .zero,
-         rotation: CGFloat = 0) {
+         rotation: CGFloat = 0,
+         scale: CGFloat = 1.0) {
         self.id = id
         self.shape = shape
         self.style = style
         self.translation = translation
         self.rotation = rotation
+        self.scale = scale
     }
 
     /// The geometric center (in anchor coords, pre-translation) that

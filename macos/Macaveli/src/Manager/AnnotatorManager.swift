@@ -215,6 +215,7 @@ final class AnnotatorManager {
         ctx.translateBy(x: scaledTranslation.width, y: scaledTranslation.height)
         ctx.translateBy(x: scaledCenter.x, y: scaledCenter.y)
         ctx.rotate(by: annotation.rotation)
+        ctx.scaleBy(x: annotation.scale, y: annotation.scale)
         ctx.translateBy(x: -scaledCenter.x, y: -scaledCenter.y)
 
         switch annotation.shape {
