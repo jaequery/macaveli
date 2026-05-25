@@ -45,6 +45,8 @@
 		CC001A010201000000002002 /* PasteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002002 /* PasteManager.swift */; };
 		CC001A010201000000002003 /* PasteWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002003 /* PasteWindow.swift */; };
 		CC001A010201000000002004 /* PasteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002004 /* PasteView.swift */; };
+		SS001A010201000000003001 /* ScreenshotManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS001A010202000000003001 /* ScreenshotManager.swift */; };
+		SS001A010201000000003002 /* ScreenshotConfirmationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS001A010202000000003002 /* ScreenshotConfirmationOverlay.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -84,6 +86,8 @@
 		CC001A010202000000002002 /* PasteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteManager.swift; sourceTree = "<group>"; };
 		CC001A010202000000002003 /* PasteWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteWindow.swift; sourceTree = "<group>"; };
 		CC001A010202000000002004 /* PasteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteView.swift; sourceTree = "<group>"; };
+		SS001A010202000000003001 /* ScreenshotManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotManager.swift; sourceTree = "<group>"; };
+		SS001A010202000000003002 /* ScreenshotConfirmationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotConfirmationOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -134,6 +138,7 @@
 				AA001A2C2C5F0001000AA001 /* RecordingExporter.swift */,
 				BB001A010202000000001002 /* AnnotatorManager.swift */,
 				CC001A010202000000002002 /* PasteManager.swift */,
+				SS001A010202000000003001 /* ScreenshotManager.swift */,
 			);
 			path = Manager;
 			sourceTree = "<group>";
@@ -153,6 +158,7 @@
 				1751BFD32C19DBBC00559AC7 /* UIButton.swift */,
 				173C0E822C123CF700654527 /* DrawCircle.swift */,
 				CD0002002B31EE0000C0DD01 /* CountdownOverlay.swift */,
+				SS001A010202000000003002 /* ScreenshotConfirmationOverlay.swift */,
 			);
 			path = lib;
 			sourceTree = "<group>";
@@ -321,6 +327,8 @@
 				CC001A010201000000002002 /* PasteManager.swift in Sources */,
 				CC001A010201000000002003 /* PasteWindow.swift in Sources */,
 				CC001A010201000000002004 /* PasteView.swift in Sources */,
+				SS001A010201000000003001 /* ScreenshotManager.swift in Sources */,
+				SS001A010201000000003002 /* ScreenshotConfirmationOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

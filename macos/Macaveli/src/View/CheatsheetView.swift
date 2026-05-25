@@ -109,6 +109,7 @@ struct CheatsheetView: View {
     private var recordRows: [CheatRowSpec] {
         [
             .init(type: .record, label: "Toggle recording", desc: "Start or stop a screen capture"),
+            .init(type: .screenshot, label: "Screenshot to clipboard", desc: "Capture a region or window to the clipboard"),
         ]
     }
     private var annotateRows: [CheatRowSpec] {
