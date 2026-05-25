@@ -11,11 +11,12 @@ enum ShortcutType: String, CaseIterable {
     case record = "Record"
     case annotate = "Annotate"
     case paste = "Paste"
+    case screenshot = "Screenshot"
 
     var isMouseDriven: Bool {
         switch self {
         case .move, .resize: return true
-        case .maximize, .center, .leftHalf, .rightHalf, .record, .annotate, .paste: return false
+        case .maximize, .center, .leftHalf, .rightHalf, .record, .annotate, .paste, .screenshot: return false
         }
     }
 }
@@ -90,6 +91,7 @@ class ShortcutsManager {
         seedHalfShortcutsIfNeeded()
         seedAnnotateShortcutIfNeeded()
         seedPasteShortcutIfNeeded()
+        seedScreenshotShortcutIfNeeded()
     }
 
     private func seedHalfShortcutsIfNeeded() {
@@ -159,6 +161,19 @@ class ShortcutsManager {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
             let shortcut = Shortcut(code: .ansiP, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
             save(UserShortcut(type: .paste, shortcut: shortcut, mouseButton: .none))
+        }
+
+        UserDefaults.standard.set(true, forKey: didSeedKey)
+    }
+
+    private func seedScreenshotShortcutIfNeeded() {
+        let didSeedKey = "didSeedScreenshotShortcut"
+        if UserDefaults.standard.bool(forKey: didSeedKey) { return }
+
+        if load(for: .screenshot) == nil {
+            let modifiers: NSEvent.ModifierFlags = [.command, .control]
+            let shortcut = Shortcut(code: .ansi4, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
+            save(UserShortcut(type: .screenshot, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
@@ -296,6 +311,7 @@ class ShortcutsManager {
                 case .record: ScreenRecorder.shared.toggle()
                 case .annotate: AnnotatorManager.shared.openFromClipboard()
                 case .paste: PasteManager.shared.togglePanel()
+                case .screenshot: ScreenshotManager.shared.captureInteractiveToClipboard()
                 case .move, .resize: break
                 }
             }
