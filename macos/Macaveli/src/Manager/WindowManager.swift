@@ -19,6 +19,11 @@ class WindowManager {
     // Function to resize a specified window to a new size from a specific origin
     static func resize(window: AXUIElement, to newSize: CGSize, from origin: NSPoint) {
         move(window: window, to: origin)
+        setSize(window: window, to: newSize)
+    }
+
+    // Function to set just the size of a window
+    static func setSize(window: AXUIElement, to newSize: CGSize) {
         var mutableSize = newSize
         let sizeValue = AXValueCreate(AXValueType.cgSize, &mutableSize)!
         AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
