@@ -143,13 +143,16 @@ final class AnnotatorManager {
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
-        // CGContext has origin bottom-left; flip to top-left so annotation
-        // coordinates (top-left logical) map correctly.
+        // Draw the base image first, in the default bottom-left context where
+        // CGContextDrawImage renders a CGImage upright. Flipping before this
+        // (as the overlays need) would draw the image upside down.
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: pixelWidth, height: pixelHeight))
+
+        // Now flip to a top-left origin so annotation coordinates (top-left
+        // logical, matching the SwiftUI canvas) map correctly. Image pixels
+        // are already committed and unaffected by this transform.
         ctx.translateBy(x: 0, y: CGFloat(pixelHeight))
         ctx.scaleBy(x: 1, y: -1)
-
-        // Draw the base image.
-        ctx.draw(image, in: CGRect(x: 0, y: 0, width: pixelWidth, height: pixelHeight))
 
         // Draw each annotation scaled from logical → pixel coordinates.
         for annotation in annotations {
