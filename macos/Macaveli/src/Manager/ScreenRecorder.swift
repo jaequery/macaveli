@@ -1,5 +1,7 @@
 import AVFoundation
 import Cocoa
+import CoreImage
+import CoreImage.CIFilterBuiltins
 import ScreenCaptureKit
 import UserNotifications
 import os
@@ -11,9 +13,9 @@ private let mLog = Logger(subsystem: "com.jaequery.Macaveli", category: "recorde
 /// - Main thread (or `@MainActor` Tasks): `lifecycleState`, `isRecording`,
 ///   `isConverting`, `outputMP4URL`, `gifAutoStopItem`.
 /// - `writerQueue` (serial): `assetWriter`, `videoInput`, `systemAudioInput`,
-///   `sessionStarted`.
+///   `sessionStarted`, `videoAdaptor`, `discCache`.
 /// - SCStream callback queue (always `writerQueue` here): reads `assetWriter`,
-///   `*Input`, `sessionStarted`.
+///   `*Input`, `sessionStarted`, composites the camera overlay.
 ///
 /// New mutable state MUST be classified into one of these partitions and
 /// `teardown()` MUST clear it.
@@ -46,6 +48,15 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
     private var systemAudioInput: AVAssetWriterInput?
     private var sessionStarted = false
     private var outputMP4URL: URL?
+
+    // Camera overlay compositing (writerQueue partition). When the overlay is
+    // active, screen frames are routed through `videoAdaptor` after the camera
+    // bubble is drawn in; otherwise the raw sample buffer is appended directly.
+    private var videoAdaptor: AVAssetWriterInputPixelBufferAdaptor?
+    private lazy var ciContext = CIContext(options: [.useSoftwareRenderer: false])
+    /// Memoized circular white discs keyed by pixel diameter — reused as both
+    /// the ring backdrop and the camera clip mask across frames.
+    private var discCache: [CGFloat: CIImage] = [:]
 
     // P3: Work item for GIF max-duration auto-stop.
     private var gifAutoStopItem: DispatchWorkItem?
@@ -87,6 +98,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         case .countingDown:
             // Hotkey pressed during countdown → cancel.
             CountdownOverlay.shared.cancel()
+            cancelCameraOverlay()
             lifecycleState = .idle
         case .recording:
             stopRecording()
@@ -119,6 +131,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             return
         }
 
+        prepareCameraOverlayIfEnabled()
         lifecycleState = .countingDown
         CountdownOverlay.shared.show(seconds: countdownSeconds) { [weak self] in
             guard let self else { return }
@@ -161,6 +174,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             } catch {
                 // F6: Sanitize error messages to avoid leaking file paths.
                 postNotification(title: "Screen Recording Failed", body: sanitizedBody(for: error))
+                self.cancelCameraOverlay()
                 self.lifecycleState = .idle
             }
         }
@@ -255,6 +269,10 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
 
             self.lifecycleState = .recording
 
+            // Ensure the camera overlay is up (covers the countdown-disabled
+            // path); idempotent if it was already started during the countdown.
+            self.prepareCameraOverlayIfEnabled()
+
             // Demo Mode cursor sampling — accurate when the user picks the
             // entire screen; offset by the picked window's origin when they
             // pick a window (acceptable trade-off; the auto-zoom still tracks
@@ -285,6 +303,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         } catch {
             // F6: Sanitize error messages to avoid leaking file paths.
             postNotification(title: "Screen Recording Failed", body: sanitizedBody(for: error))
+            self.cancelCameraOverlay()
             self.lifecycleState = .idle
         }
     }
@@ -355,7 +374,15 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             self.assetWriter = nil
             self.videoInput = nil
             self.systemAudioInput = nil
+            self.videoAdaptor = nil
+            self.discCache.removeAll()
             self.sessionStarted = false
+        }
+
+        // Tear down the camera overlay regardless of how the recording ended.
+        await MainActor.run {
+            CameraOverlayWindow.shared.hide()
+            CameraManager.shared.stop()
         }
 
         // Decide whether to KEEP the output file.
@@ -516,6 +543,128 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         }
     }
 
+    // MARK: - Camera overlay
+
+    private static func cameraOverlayEnabled() -> Bool {
+        UserDefaults.standard.bool(forKey: PreferenceKey.recordingCameraOverlay.rawValue)
+    }
+
+    /// Whether composited frames should be produced for the current frame.
+    /// Read from the writer queue; UserDefaults access is thread-safe.
+    private func cameraOverlayActive() -> Bool {
+        Self.cameraOverlayEnabled()
+    }
+
+    /// If the user enabled the camera overlay, request access (if needed),
+    /// start the capture session, and show the draggable bubble. Idempotent —
+    /// safe to call at countdown start and again at stream start.
+    private func prepareCameraOverlayIfEnabled() {
+        guard Self.cameraOverlayEnabled() else { return }
+        CameraManager.requestAccess { [weak self] granted in
+            guard granted else {
+                self?.postNotification(
+                    title: "Camera Access Needed",
+                    body: "Grant camera access in System Settings to include your camera in recordings."
+                )
+                return
+            }
+            CameraManager.shared.start()
+            CameraOverlayWindow.shared.show()
+        }
+    }
+
+    /// Hides the bubble and stops the camera. Safe to call when inactive — used
+    /// on the cancel/error paths that bypass `teardown`.
+    private func cancelCameraOverlay() {
+        DispatchQueue.main.async {
+            CameraOverlayWindow.shared.hide()
+            CameraManager.shared.stop()
+        }
+    }
+
+    /// Composites the mirrored, circular camera bubble onto `screen` at the
+    /// persisted normalized position. Returns nil on any failure so the caller
+    /// can fall back to the untouched screen frame.
+    private func compositeCameraOverlay(screen sampleBuffer: CMSampleBuffer, camera: CVPixelBuffer) -> CVPixelBuffer? {
+        guard let screenBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
+              let pool = videoAdaptor?.pixelBufferPool else { return nil }
+
+        let width = CVPixelBufferGetWidth(screenBuffer)
+        let height = CVPixelBufferGetHeight(screenBuffer)
+        guard width > 0, height > 0 else { return nil }
+
+        let base = CIImage(cvPixelBuffer: screenBuffer)
+
+        let diameter = (CGFloat(min(width, height)) * CGFloat(CameraOverlayDefaults.diameterFraction)).rounded()
+        guard diameter >= 8, let bubble = cameraBubble(camera: camera, diameter: diameter) else { return nil }
+
+        // Normalized center (top-left origin) → CoreImage bottom-left origin.
+        let center = CameraOverlayDefaults.center()
+        let cx = CGFloat(center.x) * CGFloat(width)
+        let cyTop = CGFloat(center.y) * CGFloat(height)
+        let cyBottom = CGFloat(height) - cyTop
+        let tx = (cx - diameter / 2).rounded()
+        let ty = (cyBottom - diameter / 2).rounded()
+
+        let placed = bubble.transformed(by: CGAffineTransform(translationX: tx, y: ty))
+        let composed = placed.composited(over: base).cropped(to: base.extent)
+
+        var out: CVPixelBuffer?
+        guard CVPixelBufferPoolCreatePixelBuffer(nil, pool, &out) == kCVReturnSuccess,
+              let outBuffer = out else { return nil }
+        ciContext.render(composed, to: outBuffer)
+        return outBuffer
+    }
+
+    /// Builds the bubble: a white disc (ring) with the mirrored, aspect-filled,
+    /// circularly-clipped camera image centered on top. Extent is the disc at
+    /// origin (0, 0) so the caller only has to translate it into place.
+    private func cameraBubble(camera: CVPixelBuffer, diameter: CGFloat) -> CIImage? {
+        let ring = max(2, (diameter * 0.025).rounded())
+        let camDiameter = diameter - 2 * ring
+        guard camDiameter > 0 else { return nil }
+
+        var cam = CIImage(cvPixelBuffer: camera)
+        let cw = cam.extent.width, ch = cam.extent.height
+        guard cw > 0, ch > 0 else { return nil }
+
+        // Selfie mirror, then aspect-fill into a centered square of camDiameter.
+        cam = cam.transformed(by: CGAffineTransform(translationX: cw, y: 0).scaledBy(x: -1, y: 1))
+        let scale = camDiameter / min(cw, ch)
+        cam = cam.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let ext = cam.extent
+        let cropX = ext.minX + (ext.width - camDiameter) / 2
+        let cropY = ext.minY + (ext.height - camDiameter) / 2
+        cam = cam.cropped(to: CGRect(x: cropX, y: cropY, width: camDiameter, height: camDiameter))
+        cam = cam.transformed(by: CGAffineTransform(translationX: -cropX, y: -cropY))
+
+        // Clip to a circle, then sit it on the white ring backdrop.
+        let camMask = whiteDisc(diameter: camDiameter)
+        let clipped = cam.applyingFilter("CIBlendWithMask", parameters: [
+            kCIInputBackgroundImageKey: CIImage.empty(),
+            kCIInputMaskImageKey: camMask
+        ])
+        let camPlaced = clipped.transformed(by: CGAffineTransform(translationX: ring, y: ring))
+        let backdrop = whiteDisc(diameter: diameter)
+        return camPlaced.composited(over: backdrop)
+    }
+
+    /// A white, antialiased circle of `diameter` px on a transparent field,
+    /// extent (0, 0, diameter, diameter). Memoized for the recording.
+    private func whiteDisc(diameter: CGFloat) -> CIImage {
+        if let cached = discCache[diameter] { return cached }
+        let gradient = CIFilter.radialGradient()
+        gradient.center = CGPoint(x: diameter / 2, y: diameter / 2)
+        gradient.radius0 = Float(diameter / 2 - 1)
+        gradient.radius1 = Float(diameter / 2)
+        gradient.color0 = CIColor.white
+        gradient.color1 = CIColor(red: 1, green: 1, blue: 1, alpha: 0)
+        let disc = (gradient.outputImage ?? CIImage.empty())
+            .cropped(to: CGRect(x: 0, y: 0, width: diameter, height: diameter))
+        discCache[diameter] = disc
+        return disc
+    }
+
     // MARK: - Cursor sampling (Demo Mode)
 
     private func startCursorSampling() {
@@ -633,11 +782,26 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
 
         writer.add(vInput)
         writer.add(sysAudioInput)
+
+        // Pixel-buffer adaptor used only when the camera overlay is active —
+        // its pool supplies the destination buffers for composited frames.
+        let adaptorAttrs: [String: Any] = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferWidthKey as String: width,
+            kCVPixelBufferHeightKey as String: height,
+            kCVPixelBufferMetalCompatibilityKey as String: true
+        ]
+        let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+            assetWriterInput: vInput,
+            sourcePixelBufferAttributes: adaptorAttrs
+        )
+
         writer.startWriting()
 
         self.assetWriter = writer
         self.videoInput = vInput
         self.systemAudioInput = sysAudioInput
+        self.videoAdaptor = adaptor
         self.sessionStarted = false
     }
 
@@ -682,7 +846,17 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             }
 
             if videoInput?.isReadyForMoreMediaData == true {
-                videoInput?.append(sampleBuffer)
+                // Camera overlay: composite the bubble into the frame and append
+                // the result through the adaptor. Any failure falls back to the
+                // untouched screen frame so a recording is never lost.
+                if cameraOverlayActive(),
+                   let camera = CameraManager.shared.latestPixelBuffer(),
+                   let composited = compositeCameraOverlay(screen: sampleBuffer, camera: camera) {
+                    let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                    videoAdaptor?.append(composited, withPresentationTime: pts)
+                } else {
+                    videoInput?.append(sampleBuffer)
+                }
             }
 
         case .audio:
@@ -785,6 +959,10 @@ extension ScreenRecorder: SCContentSharingPickerObserver {
     func contentSharingPicker(_ picker: SCContentSharingPicker, didUpdateWith filter: SCContentFilter, for stream: SCStream?) {
         detachPicker()
 
+        // Warm up the camera + bubble now so it's visible during the countdown
+        // and the user can position it before frames hit disk.
+        prepareCameraOverlayIfEnabled()
+
         // filter.contentRect is in POINTS; multiply by pointPixelScale for the
         // SCStreamConfiguration pixel dimensions.
         let scale = Double(filter.pointPixelScale)
@@ -826,6 +1004,7 @@ extension ScreenRecorder: SCContentSharingPickerObserver {
 
     func contentSharingPicker(_ picker: SCContentSharingPicker, didCancelFor stream: SCStream?) {
         detachPicker()
+        cancelCameraOverlay()
         Task { @MainActor in
             self.lifecycleState = .idle
         }
@@ -833,6 +1012,7 @@ extension ScreenRecorder: SCContentSharingPickerObserver {
 
     func contentSharingPickerStartDidFailWithError(_ error: Error) {
         detachPicker()
+        cancelCameraOverlay()
         postNotification(title: "Screen Recording Failed", body: sanitizedBody(for: error))
         Task { @MainActor in
             self.lifecycleState = .idle
