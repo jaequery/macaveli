@@ -15,6 +15,8 @@
 		CD0002012B31EE0000C0DD01 /* CountdownOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0002002B31EE0000C0DD01 /* CountdownOverlay.swift */; };
 		AA001A2B2C5F0000000AA001 /* ScreenRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A2A2C5F0000000AA001 /* ScreenRecorder.swift */; };
 		AA001A2D2C5F0001000AA001 /* RecordingExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A2C2C5F0001000AA001 /* RecordingExporter.swift */; };
+		AA001A2F2C5F0002000AA001 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A2E2C5F0002000AA001 /* CameraManager.swift */; };
+		AA001A312C5F0003000AA001 /* CameraOverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA001A302C5F0003000AA001 /* CameraOverlayWindow.swift */; };
 		177FB2412B31F9B900B11BA3 /* PermissionsRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */; };
 		177FB24C2B31FF1E00B11BA3 /* ShortcutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB24B2B31FF1E00B11BA3 /* ShortcutView.swift */; };
 		177FB2512B32160B00B11BA3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177FB2502B32160B00B11BA3 /* AppDelegate.swift */; };
@@ -52,6 +54,8 @@
 		173C0E822C123CF700654527 /* DrawCircle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawCircle.swift; sourceTree = "<group>"; };
 		AA001A2A2C5F0000000AA001 /* ScreenRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenRecorder.swift; sourceTree = "<group>"; };
 		AA001A2C2C5F0001000AA001 /* RecordingExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingExporter.swift; sourceTree = "<group>"; };
+		AA001A2E2C5F0002000AA001 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
+		AA001A302C5F0003000AA001 /* CameraOverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraOverlayWindow.swift; sourceTree = "<group>"; };
 		174652CD2B33345200241CE6 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
 		0FD765C118D54A97ADA99DEE /* WindowActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowActions.swift; sourceTree = "<group>"; };
 		1751BFD32C19DBBC00559AC7 /* UIButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIButton.swift; sourceTree = "<group>"; };
@@ -132,6 +136,7 @@
 				0FD765C118D54A97ADA99DEE /* WindowActions.swift */,
 				AA001A2A2C5F0000000AA001 /* ScreenRecorder.swift */,
 				AA001A2C2C5F0001000AA001 /* RecordingExporter.swift */,
+				AA001A2E2C5F0002000AA001 /* CameraManager.swift */,
 				BB001A010202000000001002 /* AnnotatorManager.swift */,
 				CC001A010202000000002002 /* PasteManager.swift */,
 			);
@@ -153,6 +158,7 @@
 				1751BFD32C19DBBC00559AC7 /* UIButton.swift */,
 				173C0E822C123CF700654527 /* DrawCircle.swift */,
 				CD0002002B31EE0000C0DD01 /* CountdownOverlay.swift */,
+				AA001A302C5F0003000AA001 /* CameraOverlayWindow.swift */,
 			);
 			path = lib;
 			sourceTree = "<group>";
@@ -311,6 +317,8 @@
 				CD0002012B31EE0000C0DD01 /* CountdownOverlay.swift in Sources */,
 				AA001A2B2C5F0000000AA001 /* ScreenRecorder.swift in Sources */,
 				AA001A2D2C5F0001000AA001 /* RecordingExporter.swift in Sources */,
+				AA001A2F2C5F0002000AA001 /* CameraManager.swift in Sources */,
+				AA001A312C5F0003000AA001 /* CameraOverlayWindow.swift in Sources */,
 				BB001A010201000000001001 /* Annotation.swift in Sources */,
 				BB001A010201000000001002 /* AnnotatorManager.swift in Sources */,
 				BB001A010201000000001003 /* AnnotatorWindow.swift in Sources */,
