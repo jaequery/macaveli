@@ -1,6 +1,9 @@
 import AppKit
 import SwiftUI
 import ImageIO
+import os
+
+private let aLog = Logger(subsystem: "com.jaequery.Macaveli", category: "annotator")
 
 /// Manages the single annotator window.
 ///
@@ -9,8 +12,8 @@ import ImageIO
 ///   If not found, the window opens in a drop-zone / empty state.
 /// - Repeated calls while the window is alive bring it to front and
 ///   replace the current image if the clipboard content has changed.
-/// - `flattenToPNG` and `writePNGToClipboard` are the export surface
-///   called by the annotator view's "Copy" action.
+/// - `flattenToPNG`, `writePNGToClipboard`, and `writePNGToDisk` are the
+///   export surface called by the annotator view's "Copy" / "Save" actions.
 final class AnnotatorManager {
     static let shared = AnnotatorManager()
 
@@ -190,6 +193,19 @@ final class AnnotatorManager {
         }
 
         return pngOK
+    }
+
+    /// Writes PNG `data` to `url` atomically. Returns `true` on success.
+    @discardableResult
+    func writePNGToDisk(data: Data, to url: URL) -> Bool {
+        do {
+            try data.write(to: url, options: .atomic)
+            aLog.log("saved annotation to \(url.path, privacy: .public)")
+            return true
+        } catch {
+            aLog.error("failed to save annotation to \(url.path, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return false
+        }
     }
 
     // MARK: - CGContext drawing
