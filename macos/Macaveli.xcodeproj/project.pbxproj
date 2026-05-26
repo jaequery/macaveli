@@ -45,6 +45,7 @@
 		BB001A010201000000001006 /* AnnotatorToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB001A010202000000001006 /* AnnotatorToolbar.swift */; };
 		CC001A010201000000002001 /* PasteboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002001 /* PasteboardItem.swift */; };
 		CC001A010201000000002002 /* PasteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002002 /* PasteManager.swift */; };
+		CC001A010301000000002003 /* DisplaySleepManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010302000000002003 /* DisplaySleepManager.swift */; };
 		CC001A010201000000002003 /* PasteWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002003 /* PasteWindow.swift */; };
 		CC001A010201000000002004 /* PasteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002004 /* PasteView.swift */; };
 		SS001A010201000000003001 /* ScreenshotManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS001A010202000000003001 /* ScreenshotManager.swift */; };
@@ -88,6 +89,7 @@
 		BB001A010202000000001006 /* AnnotatorToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotatorToolbar.swift; sourceTree = "<group>"; };
 		CC001A010202000000002001 /* PasteboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardItem.swift; sourceTree = "<group>"; };
 		CC001A010202000000002002 /* PasteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteManager.swift; sourceTree = "<group>"; };
+		CC001A010302000000002003 /* DisplaySleepManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplaySleepManager.swift; sourceTree = "<group>"; };
 		CC001A010202000000002003 /* PasteWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteWindow.swift; sourceTree = "<group>"; };
 		CC001A010202000000002004 /* PasteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteView.swift; sourceTree = "<group>"; };
 		SS001A010202000000003001 /* ScreenshotManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotManager.swift; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 				AA001A2E2C5F0002000AA001 /* CameraManager.swift */,
 				BB001A010202000000001002 /* AnnotatorManager.swift */,
 				CC001A010202000000002002 /* PasteManager.swift */,
+				CC001A010302000000002003 /* DisplaySleepManager.swift */,
 				SS001A010202000000003001 /* ScreenshotManager.swift */,
 			);
 			path = Manager;
@@ -333,6 +336,7 @@
 				BB001A010201000000001006 /* AnnotatorToolbar.swift in Sources */,
 				CC001A010201000000002001 /* PasteboardItem.swift in Sources */,
 				CC001A010201000000002002 /* PasteManager.swift in Sources */,
+				CC001A010301000000002003 /* DisplaySleepManager.swift in Sources */,
 				CC001A010201000000002003 /* PasteWindow.swift in Sources */,
 				CC001A010201000000002004 /* PasteView.swift in Sources */,
 				SS001A010201000000003001 /* ScreenshotManager.swift in Sources */,
