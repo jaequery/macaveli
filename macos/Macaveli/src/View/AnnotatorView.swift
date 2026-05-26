@@ -84,6 +84,7 @@ struct AnnotatorView: View {
                     canRedo: !state.redoStack.isEmpty,
                     onUndo: { state.undo() },
                     onRedo: { state.redo() },
+                    onSave: saveToDisk,
                     onCopy: copyAndClose,
                     onClose: closeWindow
                 )
@@ -229,6 +230,46 @@ struct AnnotatorView: View {
             return
         }
         closeWindow()
+    }
+
+    private func saveToDisk() {
+        guard let cgImage = state.cgImage else {
+            closeWindow()
+            return
+        }
+        let canvasSize = state.displayedSize
+        guard let data = AnnotatorManager.shared.flattenToPNG(
+            image: cgImage,
+            annotations: state.annotations,
+            canvasSize: canvasSize
+        ) else {
+            showCopyError("Could not render image for export.")
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.png]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = suggestedFileName()
+        if let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first {
+            panel.directoryURL = desktop
+        }
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            // User cancelled — leave the window open.
+            return
+        }
+        guard AnnotatorManager.shared.writePNGToFile(data: data, to: url) else {
+            showCopyError("Could not save image to disk.")
+            return
+        }
+        closeWindow()
+    }
+
+    private func suggestedFileName() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return "Macaveli-Annotated-\(formatter.string(from: Date())).png"
     }
 
     private func showCopyError(_ message: String) {

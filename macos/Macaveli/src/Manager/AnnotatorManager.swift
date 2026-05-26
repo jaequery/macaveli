@@ -192,6 +192,17 @@ final class AnnotatorManager {
         return pngOK
     }
 
+    /// Writes PNG data to a file on disk. Returns `true` on success.
+    @discardableResult
+    func writePNGToFile(data: Data, to url: URL) -> Bool {
+        do {
+            try data.write(to: url, options: .atomic)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     // MARK: - CGContext drawing
 
     private func drawAnnotation(_ annotation: Annotation,

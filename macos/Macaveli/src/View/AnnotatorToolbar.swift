@@ -12,6 +12,7 @@ struct AnnotatorToolbar: View {
     let canRedo: Bool
     let onUndo: () -> Void
     let onRedo: () -> Void
+    let onSave: () -> Void
     let onCopy: () -> Void
     let onClose: () -> Void
 
@@ -43,8 +44,8 @@ struct AnnotatorToolbar: View {
 
             Spacer(minLength: 8)
 
-            // Cluster 5: Copy / close (right-aligned)
-            ActionCluster(onCopy: onCopy, onClose: onClose)
+            // Cluster 5: Save / copy / close (right-aligned)
+            ActionCluster(onSave: onSave, onCopy: onCopy, onClose: onClose)
         }
         .padding(.horizontal, 10)
         .frame(height: 40)
@@ -299,14 +300,37 @@ private struct IconActionButton: View {
     }
 }
 
-// MARK: - Action cluster (Copy / Close)
+// MARK: - Action cluster (Save / Copy / Close)
 
 private struct ActionCluster: View {
+    let onSave: () -> Void
     let onCopy: () -> Void
     let onClose: () -> Void
 
     var body: some View {
         HStack(spacing: 6) {
+            // Save to disk — quiet secondary button
+            Button(action: onSave) {
+                HStack(spacing: 4) {
+                    Text("Save")
+                        .font(.system(size: 12))
+                    Text("⌘S")
+                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                        .opacity(0.6)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .foregroundStyle(Color.primary.opacity(0.75))
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.primary.opacity(0.07))
+                )
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("s", modifiers: .command)
+            .help("Save annotated image to disk (⌘S)")
+            .accessibilityLabel("Save annotated image to disk")
+
             // Copy — default/primary button
             Button(action: onCopy) {
                 HStack(spacing: 4) {
@@ -368,6 +392,7 @@ private struct AnnotatorToolbarPreviewWrapper: View {
             canRedo: false,
             onUndo: {},
             onRedo: {},
+            onSave: {},
             onCopy: {},
             onClose: {}
         )
