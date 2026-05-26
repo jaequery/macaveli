@@ -26,7 +26,7 @@ enum AnnotatorWindow {
             defer: false
         )
 
-        window.title = "Annotate"
+        window.title = AnnotatorManager.windowTitle
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.managed, .fullScreenAuxiliary]
         // Prevent state restoration.
