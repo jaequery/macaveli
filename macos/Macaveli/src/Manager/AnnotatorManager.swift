@@ -1,6 +1,10 @@
 import AppKit
 import SwiftUI
 import ImageIO
+import ApplicationServices
+import os
+
+private let aLog = Logger(subsystem: "com.jaequery.Macaveli", category: "annotator")
 
 /// Manages the single annotator window.
 ///
@@ -9,10 +13,15 @@ import ImageIO
 ///   If not found, the window opens in a drop-zone / empty state.
 /// - Repeated calls while the window is alive bring it to front and
 ///   replace the current image if the clipboard content has changed.
-/// - `flattenToPNG` and `writePNGToClipboard` are the export surface
-///   called by the annotator view's "Copy" action.
+/// - `flattenToPNG`, `writePNGToClipboard`, and `writePNGToDisk` are the
+///   export surface called by the annotator view's "Copy" / "Save" actions.
 final class AnnotatorManager {
     static let shared = AnnotatorManager()
+
+    /// Title shown in the annotator window's titlebar. Shared with
+    /// `AnnotatorWindow` (which sets it) and `WindowManager` (which uses it
+    /// to recognize the Annotate window — see `isAnnotatorWindow(_:)`).
+    static let windowTitle = "Annotate"
 
     private var windowController: NSWindowController?
     /// Weak reference to the live `AnnotatorState` inside the hosted view.
@@ -59,6 +68,26 @@ final class AnnotatorManager {
     @MainActor
     func clearWindowReference() {
         windowController = nil
+    }
+
+    // MARK: - Window identity
+
+    /// Reports whether `axWindow` is the live annotator window.
+    ///
+    /// `WindowManager.getCurrentWindow()` normally drops every window owned
+    /// by Macaveli so the move/resize gesture never grabs the menubar
+    /// popover. This lets it carve out an exception for the Annotate window:
+    /// it returns `true` only while an annotator window is actually open and
+    /// the AX element's title matches `windowTitle`.
+    func isAnnotatorWindow(_ axWindow: AXUIElement) -> Bool {
+        guard windowController?.window != nil else { return false }
+
+        var titleRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(axWindow, kAXTitleAttribute as CFString, &titleRef) == .success,
+              let title = titleRef as? String else {
+            return false
+        }
+        return title == AnnotatorManager.windowTitle
     }
 
     // MARK: - Clipboard image reading
@@ -190,6 +219,19 @@ final class AnnotatorManager {
         }
 
         return pngOK
+    }
+
+    /// Writes PNG `data` to `url` atomically. Returns `true` on success.
+    @discardableResult
+    func writePNGToDisk(data: Data, to url: URL) -> Bool {
+        do {
+            try data.write(to: url, options: .atomic)
+            aLog.log("saved annotation to \(url.path, privacy: .public)")
+            return true
+        } catch {
+            aLog.error("failed to save annotation to \(url.path, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return false
+        }
     }
 
     // MARK: - CGContext drawing

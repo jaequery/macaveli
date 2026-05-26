@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 // MARK: - AnnotatorToolbar
 
 /// Horizontal toolbar strip rendered above the annotation canvas.
-/// Clusters (left → right): tool picker | color swatches | stroke width | undo/redo | copy/close.
+/// Clusters (left → right): tool picker | color swatches | stroke width | undo/redo | save/copy/close.
 struct AnnotatorToolbar: View {
     @Binding var tool: AnnotationTool
     @Binding var style: AnnotationStyle
@@ -13,6 +13,7 @@ struct AnnotatorToolbar: View {
     let onUndo: () -> Void
     let onRedo: () -> Void
     let onCopy: () -> Void
+    let onSave: () -> Void
     let onClose: () -> Void
 
     var body: some View {
@@ -43,8 +44,8 @@ struct AnnotatorToolbar: View {
 
             Spacer(minLength: 8)
 
-            // Cluster 5: Copy / close (right-aligned)
-            ActionCluster(onCopy: onCopy, onClose: onClose)
+            // Cluster 5: Save / copy / close (right-aligned)
+            ActionCluster(onCopy: onCopy, onSave: onSave, onClose: onClose)
         }
         .padding(.horizontal, 10)
         .frame(height: 40)
@@ -299,14 +300,37 @@ private struct IconActionButton: View {
     }
 }
 
-// MARK: - Action cluster (Copy / Close)
+// MARK: - Action cluster (Save / Copy / Close)
 
 private struct ActionCluster: View {
     let onCopy: () -> Void
+    let onSave: () -> Void
     let onClose: () -> Void
 
     var body: some View {
         HStack(spacing: 6) {
+            // Save — quiet secondary button (writes a PNG to disk)
+            Button(action: onSave) {
+                HStack(spacing: 4) {
+                    Text("Save")
+                        .font(.system(size: 12))
+                    Text("⌘S")
+                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                        .opacity(0.6)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .foregroundStyle(Color.primary.opacity(0.75))
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.primary.opacity(0.07))
+                )
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("s", modifiers: .command)
+            .help("Save annotated image to disk (⌘S)")
+            .accessibilityLabel("Save annotated image to disk")
+
             // Copy — default/primary button
             Button(action: onCopy) {
                 HStack(spacing: 4) {
@@ -369,6 +393,7 @@ private struct AnnotatorToolbarPreviewWrapper: View {
             onUndo: {},
             onRedo: {},
             onCopy: {},
+            onSave: {},
             onClose: {}
         )
         .frame(width: 760)
