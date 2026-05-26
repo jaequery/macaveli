@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import ImageIO
+import ApplicationServices
 
 /// Manages the single annotator window.
 ///
@@ -13,6 +14,11 @@ import ImageIO
 ///   called by the annotator view's "Copy" action.
 final class AnnotatorManager {
     static let shared = AnnotatorManager()
+
+    /// Title shown in the annotator window's titlebar. Shared with
+    /// `AnnotatorWindow` (which sets it) and `WindowManager` (which uses it
+    /// to recognize the Annotate window — see `isAnnotatorWindow(_:)`).
+    static let windowTitle = "Annotate"
 
     private var windowController: NSWindowController?
     /// Weak reference to the live `AnnotatorState` inside the hosted view.
@@ -59,6 +65,26 @@ final class AnnotatorManager {
     @MainActor
     func clearWindowReference() {
         windowController = nil
+    }
+
+    // MARK: - Window identity
+
+    /// Reports whether `axWindow` is the live annotator window.
+    ///
+    /// `WindowManager.getCurrentWindow()` normally drops every window owned
+    /// by Macaveli so the move/resize gesture never grabs the menubar
+    /// popover. This lets it carve out an exception for the Annotate window:
+    /// it returns `true` only while an annotator window is actually open and
+    /// the AX element's title matches `windowTitle`.
+    func isAnnotatorWindow(_ axWindow: AXUIElement) -> Bool {
+        guard windowController?.window != nil else { return false }
+
+        var titleRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(axWindow, kAXTitleAttribute as CFString, &titleRef) == .success,
+              let title = titleRef as? String else {
+            return false
+        }
+        return title == AnnotatorManager.windowTitle
     }
 
     // MARK: - Clipboard image reading
