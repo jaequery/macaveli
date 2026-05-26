@@ -59,6 +59,7 @@ class AnnotatorState: ObservableObject {
 ///   ⌘Z      — undo the most recent annotation
 ///   ⇧⌘Z     — redo
 ///   ⌘↩      — copy flattened PNG to clipboard, close window
+///   ⌘S      — save flattened PNG to disk via a save panel, close window
 ///   ⎋       — close without writing
 ///   1–5     — switch active tool (pencil/circle/rectangle/arrow/text)
 ///   S       — switch to the select tool
@@ -66,7 +67,7 @@ class AnnotatorState: ObservableObject {
 struct AnnotatorView: View {
     @StateObject private var state: AnnotatorState
     @State private var isDragTargeted = false
-    @State private var copyError: String? = nil
+    @State private var actionError: String? = nil
 
     init(initialImage: CGImage?) {
         let s = AnnotatorState()
@@ -84,8 +85,8 @@ struct AnnotatorView: View {
                     canRedo: !state.redoStack.isEmpty,
                     onUndo: { state.undo() },
                     onRedo: { state.redo() },
-                    onSave: saveToDisk,
                     onCopy: copyAndClose,
+                    onSave: saveToDisk,
                     onClose: closeWindow
                 )
 
@@ -112,8 +113,8 @@ struct AnnotatorView: View {
                 loadDroppedImage(providers: providers)
             }
 
-            // Transient error banner — appears when copy fails.
-            if let errorMsg = copyError {
+            // Transient error banner — appears when copy or save fails.
+            if let errorMsg = actionError {
                 Text(errorMsg)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.white)
@@ -222,60 +223,67 @@ struct AnnotatorView: View {
             annotations: state.annotations,
             canvasSize: canvasSize
         ) else {
-            showCopyError("Could not render image for export.")
+            showError("Could not render image for export.")
             return
         }
         guard AnnotatorManager.shared.writePNGToClipboard(data: data) else {
-            showCopyError("Could not write image to clipboard.")
+            showError("Could not write image to clipboard.")
             return
         }
         closeWindow()
     }
 
+    /// Flattens the annotations and prompts for a file path via `NSSavePanel`,
+    /// then writes the PNG to disk. Cancelling the panel leaves the window open;
+    /// a successful save closes it, mirroring the Copy action.
     private func saveToDisk() {
-        guard let cgImage = state.cgImage else {
-            closeWindow()
-            return
-        }
+        guard let cgImage = state.cgImage else { return }
         let canvasSize = state.displayedSize
         guard let data = AnnotatorManager.shared.flattenToPNG(
             image: cgImage,
             annotations: state.annotations,
             canvasSize: canvasSize
         ) else {
-            showCopyError("Could not render image for export.")
+            showError("Could not render image for export.")
             return
         }
 
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.png]
         panel.canCreateDirectories = true
-        panel.nameFieldStringValue = suggestedFileName()
+        panel.title = "Save Annotated Image"
+        panel.nameFieldStringValue = Self.suggestedFileName()
         if let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first {
             panel.directoryURL = desktop
         }
 
-        guard panel.runModal() == .OK, let url = panel.url else {
-            // User cancelled — leave the window open.
-            return
+        let handle: (NSApplication.ModalResponse) -> Void = { response in
+            guard response == .OK, let url = panel.url else { return }
+            guard AnnotatorManager.shared.writePNGToDisk(data: data, to: url) else {
+                showError("Could not save image to disk.")
+                return
+            }
+            closeWindow()
         }
-        guard AnnotatorManager.shared.writePNGToFile(data: data, to: url) else {
-            showCopyError("Could not save image to disk.")
-            return
+
+        if let window = NSApp.keyWindow {
+            panel.beginSheetModal(for: window, completionHandler: handle)
+        } else {
+            handle(panel.runModal())
         }
-        closeWindow()
     }
 
-    private func suggestedFileName() -> String {
+    /// A timestamped default filename, e.g. `Macaveli-Annotation-20260526-094210.png`.
+    private static func suggestedFileName() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd-HHmmss"
-        return "Macaveli-Annotated-\(formatter.string(from: Date())).png"
+        return "Macaveli-Annotation-\(formatter.string(from: Date())).png"
     }
 
-    private func showCopyError(_ message: String) {
-        copyError = message
+    private func showError(_ message: String) {
+        actionError = message
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            copyError = nil
+            actionError = nil
         }
     }
 

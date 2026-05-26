@@ -8,5 +8,7 @@
 	<string>RHEghrKn+wDkJUFgZYPOWvNOKZsRaYFIGkKkr/yKecA=</string>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>Macaveli needs screen recording access to capture the primary display.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Macaveli needs camera access to include your camera as an overlay in screen recordings.</string>
 </dict>
 </plist>

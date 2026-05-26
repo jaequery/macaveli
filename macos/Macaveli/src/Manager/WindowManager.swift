@@ -61,6 +61,11 @@ class WindowManager {
             if pid != NSRunningApplication.current.processIdentifier {
                 return window
             }
+            // ...except the Annotate window: users expect to move/resize it
+            // like any other window. The menubar popover stays excluded.
+            if AnnotatorManager.shared.isAnnotatorWindow(window) {
+                return window
+            }
         } else {
             // Fallback using CGWindowListCopyWindowInfo
             return getTopWindowAtCursorUsingCGWindowList(mouseLocation: mouseLocation)

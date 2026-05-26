@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 // MARK: - AnnotatorToolbar
 
 /// Horizontal toolbar strip rendered above the annotation canvas.
-/// Clusters (left → right): tool picker | color swatches | stroke width | undo/redo | copy/close.
+/// Clusters (left → right): tool picker | color swatches | stroke width | undo/redo | save/copy/close.
 struct AnnotatorToolbar: View {
     @Binding var tool: AnnotationTool
     @Binding var style: AnnotationStyle
@@ -12,8 +12,8 @@ struct AnnotatorToolbar: View {
     let canRedo: Bool
     let onUndo: () -> Void
     let onRedo: () -> Void
-    let onSave: () -> Void
     let onCopy: () -> Void
+    let onSave: () -> Void
     let onClose: () -> Void
 
     var body: some View {
@@ -45,7 +45,7 @@ struct AnnotatorToolbar: View {
             Spacer(minLength: 8)
 
             // Cluster 5: Save / copy / close (right-aligned)
-            ActionCluster(onSave: onSave, onCopy: onCopy, onClose: onClose)
+            ActionCluster(onCopy: onCopy, onSave: onSave, onClose: onClose)
         }
         .padding(.horizontal, 10)
         .frame(height: 40)
@@ -303,13 +303,13 @@ private struct IconActionButton: View {
 // MARK: - Action cluster (Save / Copy / Close)
 
 private struct ActionCluster: View {
-    let onSave: () -> Void
     let onCopy: () -> Void
+    let onSave: () -> Void
     let onClose: () -> Void
 
     var body: some View {
         HStack(spacing: 6) {
-            // Save to disk — quiet secondary button
+            // Save — quiet secondary button (writes a PNG to disk)
             Button(action: onSave) {
                 HStack(spacing: 4) {
                     Text("Save")
@@ -392,8 +392,8 @@ private struct AnnotatorToolbarPreviewWrapper: View {
             canRedo: false,
             onUndo: {},
             onRedo: {},
-            onSave: {},
             onCopy: {},
+            onSave: {},
             onClose: {}
         )
         .frame(width: 760)
