@@ -253,6 +253,9 @@ struct AnnotatorView: View {
         panel.canCreateDirectories = true
         panel.title = "Save Annotated Image"
         panel.nameFieldStringValue = Self.suggestedFileName()
+        if let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first {
+            panel.directoryURL = desktop
+        }
 
         let handle: (NSApplication.ModalResponse) -> Void = { response in
             guard response == .OK, let url = panel.url else { return }

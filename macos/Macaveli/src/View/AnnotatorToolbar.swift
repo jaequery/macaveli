@@ -300,7 +300,7 @@ private struct IconActionButton: View {
     }
 }
 
-// MARK: - Action cluster (Copy / Close)
+// MARK: - Action cluster (Save / Copy / Close)
 
 private struct ActionCluster: View {
     let onCopy: () -> Void
