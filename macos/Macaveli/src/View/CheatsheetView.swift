@@ -109,6 +109,7 @@ struct CheatsheetView: View {
     private var recordRows: [CheatRowSpec] {
         [
             .init(type: .record, label: "Toggle recording", desc: "Start or stop a screen capture"),
+            .init(type: .screenshot, label: "Screenshot to clipboard", desc: "Capture a region or window to the clipboard"),
         ]
     }
     private var annotateRows: [CheatRowSpec] {
@@ -532,6 +533,7 @@ struct RecordSettingsStrip: View {
     @AppStorage(PreferenceKey.recordingFps.rawValue) private var fps = RecordingFps.defaultValue.rawValue
     @AppStorage(PreferenceKey.recordingDemoMode.rawValue) private var demoMode = false
     @AppStorage(PreferenceKey.recordingCountdownSeconds.rawValue) private var countdownSeconds = 3
+    @AppStorage(PreferenceKey.recordingCameraOverlay.rawValue) private var cameraOverlay = false
 
     private var folderDisplayName: String {
         let resolved = saveFolder.isEmpty
@@ -564,6 +566,18 @@ struct RecordSettingsStrip: View {
                               options: [(0, "Off"), (3, "3 s"), (5, "5 s")])
             StripSegmentedRow(title: "Mode", selection: $demoMode,
                               options: [(false, "Default"), (true, "Product demo")])
+            StripSegmentedRow(title: "Camera", selection: $cameraOverlay,
+                              options: [(false, "Off"), (true, "On")])
+            if cameraOverlay {
+                HStack(spacing: 8) {
+                    Text("")
+                        .frame(width: stripLabelWidth, alignment: .leading)
+                    Text("Drag the camera bubble to reposition it while recording.")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
 
             HStack(spacing: 8) {
                 Text("Save to")

@@ -14,7 +14,38 @@ enum PreferenceKey: String {
     case recordingGifFps = "recordingGifFps"
     case recordingDemoMode = "recordingDemoMode"
     case recordingCountdownSeconds = "recordingCountdownSeconds"
+    case recordingCameraOverlay = "recordingCameraOverlay"
+    case recordingCameraX = "recordingCameraX"
+    case recordingCameraY = "recordingCameraY"
     case pasteHistorySize = "pasteHistorySize"
+}
+
+/// Camera overlay geometry shared by the on-screen positioning bubble and the
+/// recorder's compositor. Coordinates are a normalized **center** (top-left
+/// origin, 0…1) so they survive resolution changes and map cleanly onto the
+/// recorded video's pixel space.
+enum CameraOverlayDefaults {
+    /// Default center — bottom-right, with margin for the bubble radius.
+    static let centerX: Double = 0.82
+    static let centerY: Double = 0.82
+    /// Bubble diameter as a fraction of the shorter canvas dimension.
+    static let diameterFraction: Double = 0.20
+
+    /// Reads the persisted center, falling back to the bottom-right default
+    /// when the keys were never set (UserDefaults returns 0 for an absent
+    /// Double, which would otherwise pin the bubble to the top-left corner).
+    static func center() -> (x: Double, y: Double) {
+        let d = UserDefaults.standard
+        let x = d.object(forKey: PreferenceKey.recordingCameraX.rawValue) as? Double ?? centerX
+        let y = d.object(forKey: PreferenceKey.recordingCameraY.rawValue) as? Double ?? centerY
+        return (x, y)
+    }
+
+    static func setCenter(x: Double, y: Double) {
+        let d = UserDefaults.standard
+        d.set(min(1, max(0, x)), forKey: PreferenceKey.recordingCameraX.rawValue)
+        d.set(min(1, max(0, y)), forKey: PreferenceKey.recordingCameraY.rawValue)
+    }
 }
 
 class PreferencesManager {
