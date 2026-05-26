@@ -15,6 +15,7 @@ enum PreferenceKey: String {
     case recordingDemoMode = "recordingDemoMode"
     case recordingCountdownSeconds = "recordingCountdownSeconds"
     case pasteHistorySize = "pasteHistorySize"
+    case keepDisplayAwakeOnLidClose = "keepDisplayAwakeOnLidClose"
 }
 
 class PreferencesManager {

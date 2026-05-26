@@ -415,6 +415,7 @@ enum KeyCodeGlyph {
 
 struct CheatBrandBar: View {
     @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) private var showMenuBarIcon = true
+    @ObservedObject private var displaySleep = DisplaySleepManager.shared
 
     var body: some View {
         HStack(spacing: 10) {
@@ -427,6 +428,13 @@ struct CheatBrandBar: View {
                 Toggle(isOn: $showMenuBarIcon) {
                     Text("Show menu bar icon")
                 }
+                Toggle(isOn: Binding(
+                    get: { displaySleep.keepDisplayAwake },
+                    set: { displaySleep.setKeepDisplayAwake($0) }
+                )) {
+                    Text("Keep external display on when lid is closed")
+                }
+                .help("Prevents the Mac from sleeping when the lid closes so an external display stays on. Also disables idle sleep, which can drain battery and increase heat. Requires your password.")
                 Divider()
                 CheckUpdatesButton(label: "Check for Updates…")
                 Button("About Macaveli") {
