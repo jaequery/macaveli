@@ -418,6 +418,7 @@ struct CheatBrandBar: View {
     @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) private var showMenuBarIcon = true
     @AppStorage(PreferenceKey.keyPressWaitInterval.rawValue) private var keyPressWaitInterval = KeyPressDelay.defaultValue.rawValue
     @ObservedObject private var displaySleep = DisplaySleepManager.shared
+    @State private var menuHover = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -453,12 +454,24 @@ struct CheatBrandBar: View {
                 Button("Quit Macaveli") { NSApp.terminate(nil) }
                     .keyboardShortcut("Q", modifiers: .command)
             } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 13, weight: .medium))
+                // Ghost-button treatment that mirrors the per-section gear
+                // buttons: clear at rest, a soft rounded background on hover.
+                // Gives the trigger a real, tappable affordance instead of a
+                // bare floating glyph.
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(menuHover ? Color.primary : Color.secondary)
+                    .frame(width: 28, height: 22)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(menuHover ? Color.primary.opacity(0.08) : Color.clear)
+                    )
+                    .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
+            .onHover { menuHover = $0 }
             .help("More")
         }
         .padding(.horizontal, 12)
