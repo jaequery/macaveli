@@ -54,7 +54,7 @@ extension AnnotationStyle {
         .annotationWhite,
     ]
 
-    static let defaultStyle = AnnotationStyle(color: .annotationRed, strokeWidth: 8)
+    static let defaultStyle = AnnotationStyle(color: .annotationRed, strokeWidth: 8, fontSize: 32)
 }
 
 extension Color {

@@ -87,3 +87,12 @@ Declared in `Macaveli.xcodeproj/project.pbxproj`:
 ## Preferences
 
 All settings live in `UserDefaults` via plain string keys. The canonical list is `PreferenceKey` in `src/Manager/Preferences.swift` (`focusOnApp`, `showMenuBarIcon`, `useQuadrants`, `requireMouseClick`). Per-shortcut state is stored separately by `ShortcutsManager` under `"<ShortcutType>"` (archived `Shortcut`) and `"<ShortcutType>_mouseButton"`.
+
+## Design System
+
+Always read `DESIGN.md` (repo root) before making any visual or UI decision, in the
+macOS app **and** the web landing page — they share one system. Font choices, color
+tokens, spacing, layout, and aesthetic direction are defined there. North star:
+"one install, your Mac is ready" (Apple-native minimalism; SF Pro + JetBrains Mono
+signature; cyan→pink aurora wash for hero/first-run only). Do not deviate without
+explicit user approval. In QA mode, flag any UI that doesn't match `DESIGN.md`.

@@ -1,30 +1,76 @@
 @import "tailwindcss";
 
+/* Macaveli design system — see /DESIGN.md. North star: "one install, your Mac
+   is ready." Apple-native minimalism, SF Pro (system) + JetBrains Mono signature,
+   one cyan→pink aurora wash for hero only. */
+
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "SF Pro Text", "Helvetica Neue", Inter, system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
-    monospace;
+  /* SF Pro via the system stack: renders real SF on every Apple device (the whole
+     audience) and reinforces "belongs on your Mac." Principled, not a default. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Helvetica Neue", Inter, system-ui, sans-serif;
+  /* Mono signature — JetBrains Mono loaded via next/font (--font-jetbrains). */
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", "Cascadia Mono",
+    Menlo, monospace;
+}
+
+:root {
+  --canvas: #fafaf9;
+  --surface: #ffffff;
+  --surface-2: #f2f1ee;
+  --ink: #18181b;
+  --ink-muted: #6b6b70;
+  --ink-faint: #9a9aa0;
+  --line: rgba(0, 0, 0, 0.09);
+  --accent: #2563eb;
+  --accent-press: #1d4ed8;
+  --success: #16a34a;
+  --warning: #d97706;
+  --error: #dc2626;
+  --cap-bg: rgba(0, 0, 0, 0.06);
+  --cap-line: rgba(0, 0, 0, 0.11);
+  --shadow: 0 30px 80px rgba(0, 0, 0, 0.16);
+  /* aurora signature — hero only, never behind body text */
+  --aurora: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(125, 211, 252, 0.22), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(244, 114, 182, 0.12), transparent 60%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #0e0e10;
+    --surface: #17171a;
+    --surface-2: #1e1e22;
+    --ink: #f4f4f5;
+    --ink-muted: #a1a1aa;
+    --ink-faint: #71717a;
+    --line: rgba(255, 255, 255, 0.1);
+    --accent: #3b82f6;
+    --accent-press: #60a5fa;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --error: #f87171;
+    --cap-bg: rgba(255, 255, 255, 0.08);
+    --cap-line: rgba(255, 255, 255, 0.13);
+    --shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    --aurora: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(125, 211, 252, 0.13), transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(244, 114, 182, 0.09), transparent 60%);
+  }
 }
 
 html,
 body {
-  background: #fafafa;
-  color: #18181b;
+  background: var(--canvas);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: rgba(37, 99, 235, 0.18);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-/* Soft Apple-style multi-stop wash for the hero. Subtle — never competes
-   with the headline. */
-.apple-wash {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(125, 211, 252, 0.22), transparent 60%),
-    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(244, 114, 182, 0.12), transparent 60%),
-    #fafafa;
+/* the one decorative move — aurora atmosphere behind the hero */
+.aurora-wash {
+  background: var(--aurora), var(--canvas);
 }
