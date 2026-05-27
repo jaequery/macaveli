@@ -26,10 +26,16 @@ struct CheckUpdatesButton: View {
         Button {
             UpdatesManager.shared.checkForUpdates()
         } label: {
-            Image(systemName: "arrow.counterclockwise")
-                .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
-            if label != nil {
-                Text(label!)
+            // When a text label is supplied (the in-popover dropdown), render
+            // text only. A leading SF Symbol would make the menu item the only
+            // imaged row, shifting its text right of the plain-text rows
+            // (About, Quit, the toggles) and breaking column alignment.
+            // With no label (the app-menu command), keep the icon-only look.
+            if let label {
+                Text(label)
+            } else {
+                Image(systemName: "arrow.counterclockwise")
+                    .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
             }
         }
     }
