@@ -416,6 +416,7 @@ enum KeyCodeGlyph {
 
 struct CheatBrandBar: View {
     @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) private var showMenuBarIcon = true
+    @AppStorage(PreferenceKey.keyPressWaitInterval.rawValue) private var keyPressWaitInterval = KeyPressDelay.defaultValue.rawValue
     @ObservedObject private var displaySleep = DisplaySleepManager.shared
 
     var body: some View {
@@ -436,6 +437,12 @@ struct CheatBrandBar: View {
                     Text("Keep external display on when lid is closed")
                 }
                 .help("Prevents the Mac from sleeping when the lid closes so an external display stays on. Also disables idle sleep, which can drain battery and increase heat. Requires your password.")
+                Picker("Key press delay", selection: $keyPressWaitInterval) {
+                    ForEach(KeyPressDelay.allCases, id: \.rawValue) { delay in
+                        Text(delay.label).tag(delay.rawValue)
+                    }
+                }
+                .help("Wait this long after a keyboard shortcut fires before running its action.")
                 Divider()
                 CheckUpdatesButton(label: "Check for Updates…")
                 Button("About Macaveli") {
