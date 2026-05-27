@@ -297,7 +297,12 @@ class ShortcutsManager {
         let type = userShortcut.type
 
         let action = ShortcutAction(shortcut: shortcut) { _ in
-            DispatchQueue.main.async {
+            // Karabiner-style wait interval: hold the action for the configured
+            // delay before executing. 0 ms (the default) makes this identical
+            // to a plain `DispatchQueue.main.async`.
+            let delayMs = UserDefaults.standard.integer(forKey: PreferenceKey.keyPressWaitInterval.rawValue)
+            let deadline: DispatchTime = delayMs > 0 ? .now() + .milliseconds(delayMs) : .now()
+            DispatchQueue.main.asyncAfter(deadline: deadline) {
                 // Kill any in-flight modifier-only tracker first — the user's
                 // modifiers (e.g. ⌃⌘) likely already started .move tracking,
                 // and we don't want a stray mouse-jitter to undo this action.
