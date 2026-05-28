@@ -2,5 +2,13 @@
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>Macaveli</title>
+        <item>
+            <title>0.25.3</title>
+            <pubDate>Thu, 28 May 2026 12:15:08 -0700</pubDate>
+            <sparkle:version>0.25.3</sparkle:version>
+            <sparkle:shortVersionString>0.25.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/jaequery/Macaveli/releases/latest/download/Macaveli.zip" length="49732786" type="application/octet-stream" sparkle:edSignature="uEsssylAx/ePmEJ23nOHwZ2wY540obnHNn6JFfDhRvxl1iCr3uYSJNlxONgH0BBwn9to3qqrUB0Bogr5FSIlCg=="/>
+        </item>
     </channel>
 </rss>
