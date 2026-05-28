@@ -1,10 +1,14 @@
 import SwiftUI
+import AppKit
 import ShortcutRecorder
 import LaunchAtLogin
 
 // MARK: - Top-level cheatsheet view
 
 struct CheatsheetView: View {
+    enum Tab: Hashable { case shortcuts, tweaks }
+
+    @State private var tab: Tab = .shortcuts
     @State private var openSection: CheatSectionID? = nil
     @State private var hasAXPermission = PermissionsManager.hasAccessibilityPermission()
     @State private var hasScreenRecordingPermission = PermissionsManager.hasScreenRecordingPermission()
@@ -16,64 +20,14 @@ struct CheatsheetView: View {
             Divider()
 
             if hasAXPermission {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        CheatSection(
-                            id: .snap,
-                            title: "Snap",
-                            openSection: $openSection,
-                            rows: snapRows,
-                            settings: { SnapSettingsStrip() }
-                        )
-                        SectionDivider()
-                        CheatSection(
-                            id: .drag,
-                            title: "Drag",
-                            openSection: $openSection,
-                            rows: dragRows,
-                            settings: { DragSettingsStrip() }
-                        )
-                        SectionDivider()
-                        CheatSection(
-                            id: .record,
-                            title: "Record",
-                            openSection: $openSection,
-                            rows: recordRows,
-                            rowsDisabled: !hasScreenRecordingPermission,
-                            permissionPrompt: hasScreenRecordingPermission ? nil : CheatPermissionPrompt(
-                                message: "Screen Recording permission is required.",
-                                buttonLabel: "Allow…",
-                                action: {
-                                    // Same TCC dance as the mic button in
-                                    // PermissionRequestView: the app must
-                                    // touch the API before Settings will
-                                    // list it. Open Settings only after that
-                                    // registration call completes.
-                                    PermissionsManager.requestScreenRecordingPermission {
-                                        PermissionsManager.openPreferences(at: .screenRecording)
-                                    }
-                                }
-                            ),
-                            settings: { RecordSettingsStrip() }
-                        )
-                        SectionDivider()
-                        CheatSection(
-                            id: .annotate,
-                            title: "Annotate",
-                            openSection: $openSection,
-                            rows: annotateRows,
-                            settings: { AnnotateSettingsStrip() }
-                        )
-                        SectionDivider()
-                        CheatSection(
-                            id: .paste,
-                            title: "Paste",
-                            openSection: $openSection,
-                            rows: pasteRows,
-                            settings: { PasteSettingsStrip() }
-                        )
-                    }
-                    .padding(.vertical, 6)
+                TabSwitcher(tab: $tab)
+                Divider().opacity(0.5)
+
+                switch tab {
+                case .shortcuts:
+                    shortcutsList
+                case .tweaks:
+                    TweaksTabView()
                 }
             } else {
                 PermissionRequestView()
@@ -87,6 +41,74 @@ struct CheatsheetView: View {
         .onReceive(permissionTimer) { _ in
             hasAXPermission = PermissionsManager.hasAccessibilityPermission()
             hasScreenRecordingPermission = PermissionsManager.hasScreenRecordingPermission()
+        }
+        // MenuBarExtra(.window) keeps this view alive between popover opens, so
+        // `tab` would otherwise persist. Reset to Shortcuts whenever the popover
+        // window becomes key — that guarantees "always opens on Shortcuts".
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            tab = .shortcuts
+        }
+    }
+
+    private var shortcutsList: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                CheatSection(
+                    id: .snap,
+                    title: "Snap",
+                    openSection: $openSection,
+                    rows: snapRows,
+                    settings: { SnapSettingsStrip() }
+                )
+                SectionDivider()
+                CheatSection(
+                    id: .drag,
+                    title: "Drag",
+                    openSection: $openSection,
+                    rows: dragRows,
+                    settings: { DragSettingsStrip() }
+                )
+                SectionDivider()
+                CheatSection(
+                    id: .record,
+                    title: "Record",
+                    openSection: $openSection,
+                    rows: recordRows,
+                    rowsDisabled: !hasScreenRecordingPermission,
+                    permissionPrompt: hasScreenRecordingPermission ? nil : CheatPermissionPrompt(
+                        message: "Screen Recording permission is required.",
+                        buttonLabel: "Allow…",
+                        action: {
+                            // Same TCC dance as the mic button in
+                            // PermissionRequestView: the app must
+                            // touch the API before Settings will
+                            // list it. Open Settings only after that
+                            // registration call completes.
+                            PermissionsManager.requestScreenRecordingPermission {
+                                PermissionsManager.openPreferences(at: .screenRecording)
+                            }
+                        }
+                    ),
+                    settings: { RecordSettingsStrip() }
+                )
+                SectionDivider()
+                CheatSection(
+                    id: .annotate,
+                    title: "Annotate",
+                    openSection: $openSection,
+                    rows: annotateRows,
+                    settings: { AnnotateSettingsStrip() }
+                )
+                SectionDivider()
+                CheatSection(
+                    id: .paste,
+                    title: "Paste",
+                    openSection: $openSection,
+                    rows: pasteRows,
+                    settings: { PasteSettingsStrip() }
+                )
+            }
+            .padding(.vertical, 6)
         }
     }
 
@@ -121,6 +143,151 @@ struct CheatsheetView: View {
         [
             .init(type: .paste, label: "Show clipboard history", desc: "Browse and paste recent clipboard items"),
         ]
+    }
+}
+
+// MARK: - Tab switcher
+
+/// Two-segment switcher under the brand bar: Shortcuts (the hotkey cheatsheet)
+/// and Tweaks (Mac behavior adjustments). The selected segment lifts on a light
+/// track; selection itself conveys which tab is active.
+struct TabSwitcher: View {
+    @Binding var tab: CheatsheetView.Tab
+
+    var body: some View {
+        HStack {
+            Spacer(minLength: 0)
+            HStack(spacing: 2) {
+                segment(.shortcuts, "Shortcuts")
+                segment(.tweaks, "Tweaks")
+            }
+            .padding(2)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.primary.opacity(0.05))
+            )
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
+    }
+
+    @ViewBuilder
+    private func segment(_ value: CheatsheetView.Tab, _ title: String) -> some View {
+        let selected = tab == value
+        Button {
+            withAnimation(.easeInOut(duration: 0.14)) { tab = value }
+        } label: {
+            Text(title)
+                .font(.system(size: 12, weight: selected ? .semibold : .medium))
+                .foregroundStyle(selected ? Color.primary : Color.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(selected ? Color(nsColor: .controlBackgroundColor) : Color.clear)
+                        .shadow(color: selected ? Color.black.opacity(0.10) : .clear, radius: 1, y: 0.5)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Tweaks tab
+
+/// Mac behavior tweaks macOS doesn't expose, grouped by domain. Unlike the
+/// Shortcuts sections, the control is the content here — there's nothing to
+/// hide behind a gear, so groups are plain labels and rows are self-describing.
+struct TweaksTabView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                TweakGroup(title: "Power") {
+                    LidCloseTweakRow()
+                }
+                SectionDivider()
+                TweakGroup(title: "Keyboard") {
+                    TriggerDelayTweakRow()
+                }
+            }
+            .padding(.vertical, 6)
+        }
+    }
+}
+
+/// Plain group header (same tracked-caps treatment as a Shortcuts section
+/// header) plus its rows. Deliberately gearless.
+struct TweakGroup<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(1.0)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+            content()
+                .padding(.horizontal, 12)
+                .padding(.bottom, 10)
+        }
+    }
+}
+
+/// Keep an external display on when the lid closes. The room a dedicated tab
+/// gives us is the whole point — the trade-off can finally be explained.
+struct LidCloseTweakRow: View {
+    @ObservedObject private var displaySleep = DisplaySleepManager.shared
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Display on lid close")
+                    .font(.system(size: 12.5))
+                Text("Keeps an external display on when you shut the lid. Disables all sleep, including idle — may drain battery and add heat. Asks for your password.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            Toggle("", isOn: Binding(
+                get: { displaySleep.keepDisplayAwake },
+                set: { displaySleep.setKeepDisplayAwake($0) }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
+            .controlSize(.small)
+        }
+    }
+}
+
+/// Global, Karabiner-style delay applied to every non-drag hotkey before its
+/// action fires. Lives here (not in the Drag gear) because it is global and
+/// does not affect Drag at all.
+struct TriggerDelayTweakRow: View {
+    @AppStorage(PreferenceKey.keyPressWaitInterval.rawValue) private var keyPressWaitInterval = KeyPressDelay.defaultValue.rawValue
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Trigger delay")
+                .font(.system(size: 12.5))
+            Picker("", selection: $keyPressWaitInterval) {
+                ForEach(KeyPressDelay.allCases, id: \.rawValue) { delay in
+                    Text(delay.label).tag(delay.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .controlSize(.small)
+            .labelsHidden()
+            Text("Wait this long after a keyboard shortcut fires before running it. Helps when an action triggers before your hand is ready.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
@@ -416,8 +583,6 @@ enum KeyCodeGlyph {
 
 struct CheatBrandBar: View {
     @AppStorage(PreferenceKey.showMenuBarIcon.rawValue) private var showMenuBarIcon = true
-    @AppStorage(PreferenceKey.keyPressWaitInterval.rawValue) private var keyPressWaitInterval = KeyPressDelay.defaultValue.rawValue
-    @ObservedObject private var displaySleep = DisplaySleepManager.shared
     @State private var menuHover = false
 
     var body: some View {
@@ -431,19 +596,6 @@ struct CheatBrandBar: View {
                 Toggle(isOn: $showMenuBarIcon) {
                     Text("Show menu bar icon")
                 }
-                Toggle(isOn: Binding(
-                    get: { displaySleep.keepDisplayAwake },
-                    set: { displaySleep.setKeepDisplayAwake($0) }
-                )) {
-                    Text("Keep external display on when lid is closed")
-                }
-                .help("Prevents the Mac from sleeping when the lid closes so an external display stays on. Also disables idle sleep, which can drain battery and increase heat. Requires your password.")
-                Picker("Key press delay", selection: $keyPressWaitInterval) {
-                    ForEach(KeyPressDelay.allCases, id: \.rawValue) { delay in
-                        Text(delay.label).tag(delay.rawValue)
-                    }
-                }
-                .help("Wait this long after a keyboard shortcut fires before running its action.")
                 Divider()
                 CheckUpdatesButton(label: "Check for Updates…")
                 Button("About Macaveli") {
