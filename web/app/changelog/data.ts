@@ -1,7 +1,7 @@
 // Release history for the public changelog page.
 //
-// v0.25.2 is the authoritative current release (matches version.json and the
-// `release v0.25.2` tag commit). Earlier entries are reconstructed from git
+// v0.25.3 is the authoritative current release (matches version.json and the
+// `release v0.25.3` tag commit). Earlier entries are reconstructed from git
 // history grouped by date — their exact version boundaries are inferred, so
 // verify/adjust version numbers here when cutting future releases.
 
@@ -22,6 +22,16 @@ export interface Release {
 
 // Newest first.
 export const releases: Release[] = [
+  {
+    version: "0.25.3",
+    date: "2026-05-28",
+    summary: "Never Sleep — keep your Mac awake on your terms.",
+    changes: [
+      { type: "feature", text: "New Never Sleep control with three levels: off, awake while the lid is open, or awake even when the lid is closed to keep an external display on." },
+      { type: "improvement", text: "The lid-open level needs no password and switches off automatically when you quit Macaveli; the lid-closed level asks you to confirm before changing a system-wide setting." },
+      { type: "fix", text: "More reliable switching, clearer error messages, and sturdier reading of the system sleep state." },
+    ],
+  },
   {
     version: "0.25.2",
     date: "2026-05-27",
