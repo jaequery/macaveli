@@ -133,3 +133,99 @@ final class DisplaySleepManager: ObservableObject {
         return nil
     }
 }
+
+// MARK: - KeyRepeatManager
+
+/// Owns macOS's global key-repeat timing — finer-grained than the System
+/// Settings → Keyboard slider, Karabiner-style. Writes `KeyRepeat` and
+/// `InitialKeyRepeat` to `NSGlobalDomain` via `defaults write -g` (no admin
+/// needed — per-user defaults).
+///
+/// `defaults` writes take effect on next app launch; full system-wide effect
+/// after logout/login. Unlike Karabiner, Macaveli does not ship a system
+/// extension to apply changes instantly. The UI surfaces this caveat.
+final class KeyRepeatManager: ObservableObject {
+
+    static let shared = KeyRepeatManager()
+
+    /// macOS defaults if unset: KeyRepeat=6, InitialKeyRepeat=68.
+    @Published private(set) var keyRepeat: Int
+    @Published private(set) var initialKeyRepeat: Int
+
+    private let workQueue = DispatchQueue(label: "com.macaveli.keyrepeat", qos: .userInitiated)
+
+    private init() {
+        keyRepeat = KeyRepeatManager.readInt(key: "KeyRepeat") ?? 6
+        initialKeyRepeat = KeyRepeatManager.readInt(key: "InitialKeyRepeat") ?? 68
+    }
+
+    func setKeyRepeat(_ value: Int) {
+        guard value != keyRepeat else { return }
+        workQueue.async { [weak self] in
+            let ok = KeyRepeatManager.writeInt(key: "KeyRepeat", value: value)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if ok { self.keyRepeat = value }
+                else { self.objectWillChange.send() }
+            }
+        }
+    }
+
+    func setInitialKeyRepeat(_ value: Int) {
+        guard value != initialKeyRepeat else { return }
+        workQueue.async { [weak self] in
+            let ok = KeyRepeatManager.writeInt(key: "InitialKeyRepeat", value: value)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if ok { self.initialKeyRepeat = value }
+                else { self.objectWillChange.send() }
+            }
+        }
+    }
+
+    /// Sync from live system values — call at launch in case the user changed
+    /// them outside Macaveli (System Settings or another tool).
+    func refreshFromSystem() {
+        workQueue.async { [weak self] in
+            let k = KeyRepeatManager.readInt(key: "KeyRepeat")
+            let i = KeyRepeatManager.readInt(key: "InitialKeyRepeat")
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let k, k != self.keyRepeat { self.keyRepeat = k }
+                if let i, i != self.initialKeyRepeat { self.initialKeyRepeat = i }
+            }
+        }
+    }
+
+    // MARK: - defaults plumbing
+
+    private static func readInt(key: String) -> Int? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        process.arguments = ["read", "-g", key]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        do { try process.run() } catch { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0,
+              let output = String(data: data, encoding: .utf8) else { return nil }
+        return Int(output.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    private static func writeInt(key: String, value: Int) -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        process.arguments = ["write", "-g", key, "-int", String(value)]
+        process.standardOutput = Pipe()
+        process.standardError = Pipe()
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        } catch {
+            return false
+        }
+    }
+}
