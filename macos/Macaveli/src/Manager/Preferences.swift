@@ -18,7 +18,7 @@ enum PreferenceKey: String {
     case recordingCameraX = "recordingCameraX"
     case recordingCameraY = "recordingCameraY"
     case pasteHistorySize = "pasteHistorySize"
-    case keepDisplayAwakeOnLidClose = "keepDisplayAwakeOnLidClose"
+    case neverSleepMode = "neverSleepMode"
 }
 
 /// Camera overlay geometry shared by the on-screen positioning bubble and the

@@ -47,6 +47,9 @@ struct CheatsheetView: View {
         // window becomes key — that guarantees "always opens on Shortcuts".
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             tab = .shortcuts
+            // Re-sync the Never Sleep control in case `disablesleep` changed
+            // outside Macaveli while the popover was closed (read-only, no prompt).
+            DisplaySleepManager.shared.refreshFromSystem()
         }
     }
 
@@ -205,7 +208,7 @@ struct TweaksTabView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 TweakGroup(title: "Power") {
-                    LidCloseTweakRow()
+                    NeverSleepRow()
                 }
                 SectionDivider()
                 TweakGroup(title: "Keyboard") {
@@ -238,29 +241,30 @@ struct TweakGroup<Content: View>: View {
     }
 }
 
-/// Keep an external display on when the lid closes. The room a dedicated tab
-/// gives us is the whole point — the trade-off can finally be explained.
-struct LidCloseTweakRow: View {
+/// "Never Sleep" — three rungs of keeping the Mac awake, from off to
+/// lid-closed. The dedicated tab is the whole point: each rung's trade-off is
+/// spelled out under the control. See `NeverSleepMode` for the mechanisms.
+struct NeverSleepRow: View {
     @ObservedObject private var displaySleep = DisplaySleepManager.shared
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Display on lid close")
-                    .font(.system(size: 12.5))
-                Text("Keeps an external display on when you shut the lid. Disables all sleep, including idle — may drain battery and add heat. Asks for your password.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Never Sleep")
+                .font(.system(size: 12.5))
+            Picker("", selection: Binding(
+                get: { displaySleep.mode },
+                set: { displaySleep.setMode($0) }
+            )) {
+                Text("Off").tag(NeverSleepMode.off)
+                Text("When lid is on").tag(NeverSleepMode.whileLidOpen)
+                Text("Even when lid is off").tag(NeverSleepMode.evenLidClosed)
             }
-            Spacer(minLength: 8)
-            Toggle("", isOn: Binding(
-                get: { displaySleep.keepDisplayAwake },
-                set: { displaySleep.setKeepDisplayAwake($0) }
-            ))
+            .pickerStyle(.segmented)
             .labelsHidden()
-            .toggleStyle(.switch)
-            .controlSize(.small)
+            Text(displaySleep.mode.explanation)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
