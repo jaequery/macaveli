@@ -19,22 +19,6 @@ enum PreferenceKey: String {
     case recordingCameraY = "recordingCameraY"
     case pasteHistorySize = "pasteHistorySize"
     case keepDisplayAwakeOnLidClose = "keepDisplayAwakeOnLidClose"
-    case keyPressWaitInterval = "keyPressWaitInterval"
-}
-
-/// Delay (Karabiner-style) between a keyboard shortcut firing and its one-shot
-/// action executing, in milliseconds. `instant` (0) preserves the snappy
-/// default; absent UserDefaults reads back as 0, so no migration is needed.
-enum KeyPressDelay: Int, CaseIterable {
-    case instant = 0
-    case ms100 = 100
-    case ms200 = 200
-    case ms300 = 300
-    case ms500 = 500
-
-    var label: String { self == .instant ? "Instant" : "\(rawValue) ms" }
-
-    static var defaultValue: KeyPressDelay { .instant }
 }
 
 /// Camera overlay geometry shared by the on-screen positioning bubble and the
