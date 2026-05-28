@@ -1,7 +1,7 @@
 // Release history for the public changelog page.
 //
-// v0.25.3 is the authoritative current release (matches version.json and the
-// `release v0.25.3` tag commit). Earlier entries are reconstructed from git
+// v0.25.4 is the authoritative current release (matches version.json and the
+// `release v0.25.4` tag commit). Earlier entries are reconstructed from git
 // history grouped by date — their exact version boundaries are inferred, so
 // verify/adjust version numbers here when cutting future releases.
 
@@ -22,6 +22,13 @@ export interface Release {
 
 // Newest first.
 export const releases: Release[] = [
+  {
+    version: "0.25.4",
+    date: "2026-05-28",
+    changes: [
+      { type: "improvement", text: "Removed the keyboard repeat-rate tweak — it changed a system-wide setting that only applied after logout, so it never reliably worked." },
+    ],
+  },
   {
     version: "0.25.3",
     date: "2026-05-28",
