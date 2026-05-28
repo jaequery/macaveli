@@ -39,6 +39,9 @@ function Nav() {
         <a href="#shortcuts" className="transition hover:text-[var(--ink)]">
           Shortcuts
         </a>
+        <a href="/changelog" className="transition hover:text-[var(--ink)]">
+          Changelog
+        </a>
         <a href={REPO_URL} target="_blank" rel="noreferrer" className="transition hover:text-[var(--ink)]">
           GitHub
         </a>
@@ -437,6 +440,9 @@ function Footer() {
           <span>Macaveli · MIT · macOS 13+ · v{VERSION}</span>
         </div>
         <div className="flex gap-6">
+          <a href="/changelog" className="hover:text-[var(--ink)]">
+            Changelog
+          </a>
           <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-[var(--ink)]">
             Source
           </a>
