@@ -210,10 +210,6 @@ struct TweaksTabView: View {
                 TweakGroup(title: "Power") {
                     NeverSleepRow()
                 }
-                SectionDivider()
-                TweakGroup(title: "Keyboard") {
-                    KeyRepeatTweakRow()
-                }
             }
             .padding(.vertical, 6)
         }
@@ -268,68 +264,6 @@ struct NeverSleepRow: View {
         }
     }
 }
-
-/// Karabiner-style global key-repeat tweak. Writes to NSGlobalDomain via
-/// `defaults -g`, so the change is system-wide (affects all typing, not just
-/// Macaveli's shortcuts) but takes effect on next app launch — full effect
-/// after logout/login, because Macaveli does not ship a system extension.
-struct KeyRepeatTweakRow: View {
-    @ObservedObject private var manager = KeyRepeatManager.shared
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Repeat rate")
-                    .font(.system(size: 12.5))
-                Picker("", selection: Binding(
-                    get: { Self.snap(manager.keyRepeat, to: Self.rateOptions) },
-                    set: { manager.setKeyRepeat($0) }
-                )) {
-                    Text("Off").tag(300000)
-                    Text("Slow").tag(90)
-                    Text("Normal").tag(30)
-                    Text("Fast").tag(6)
-                    Text("Fastest").tag(2)
-                }
-                .pickerStyle(.segmented)
-                .controlSize(.small)
-                .labelsHidden()
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Delay until repeat")
-                    .font(.system(size: 12.5))
-                Picker("", selection: Binding(
-                    get: { Self.snap(manager.initialKeyRepeat, to: Self.delayOptions) },
-                    set: { manager.setInitialKeyRepeat($0) }
-                )) {
-                    Text("Short").tag(15)
-                    Text("Normal").tag(35)
-                    Text("Long").tag(68)
-                    Text("Longer").tag(90)
-                }
-                .pickerStyle(.segmented)
-                .controlSize(.small)
-                .labelsHidden()
-            }
-
-            Text("Finer control than the macOS Keyboard slider — affects all typing system-wide. Takes effect on next app launch; full effect after logout.")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // The system may hold a non-preset value (set via System Settings or another
-    // tool). Snap to the nearest preset so the segmented picker always shows
-    // a selected segment.
-    private static let rateOptions = [2, 6, 30, 90, 300000]
-    private static let delayOptions = [15, 35, 68, 90]
-    private static func snap(_ value: Int, to presets: [Int]) -> Int {
-        presets.min(by: { abs($0 - value) < abs($1 - value) }) ?? value
-    }
-}
-
 // MARK: - Section primitives
 
 enum CheatSectionID: Hashable { case snap, drag, record, annotate, paste }
