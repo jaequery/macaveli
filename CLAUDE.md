@@ -25,10 +25,11 @@ The Makefile is the canonical way to build outside of Xcode (Xcode signing is fi
 
 - `make build` — `xcodebuild -scheme Macaveli build SYMROOT=$PWD/build`, drops the app at `./build/Debug/Macaveli.app`.
 - `make run` — build + open the debug app.
-- `make dmg` — runs `scripts/build-dmg.sh`: archives Release, exports a Developer-ID-signed `.app`, re-signs the bundled `ffmpeg` (Xcode misses it because it's a plain Resource, not an "Embed & Sign" build-phase output), builds a DMG with a `/Applications` symlink, signs it, then notarizes + staples via `notarytool`. Outputs `build/Macaveli-<version>.dmg` plus a stable-named `build/Macaveli.dmg` for the website.
-- `make publish-web` — copies `build/Macaveli.dmg` into `../web/public/Macaveli.dmg`. The landing-page Download CTAs link to `/Macaveli.dmg`, so this is the bridge from build artifact to live site.
-- `make release` — `dmg` + `publish-web`.
-- `make appcast <export-folder>` — runs `scripts/generate-appcast.sh`: zips the exported `.app`, runs Sparkle's `generate_appcast` (found under `~/Library/Developer/Xcode/DerivedData/Macaveli*`), signs the zip, and rewrites the appcast URL to the GitHub releases download. Copies the updated `appcast.xml` back into the repo.
+- `make dmg` — runs `scripts/build-dmg.sh`: archives Release, exports a Developer-ID-signed `.app`, re-signs the bundled `ffmpeg` (Xcode misses it because it's a plain Resource, not an "Embed & Sign" build-phase output), builds a DMG with a `/Applications` symlink, signs it, then notarizes + staples via `notarytool`. Outputs `build/Macaveli-<version>.dmg` plus a stable-named `build/Macaveli.dmg`.
+- `make upload` — runs `scripts/upload-dmg.sh`: uploads `build/Macaveli-<version>.dmg` to the DO Spaces CDN bucket (creds from repo-root `.env`) and writes the versioned CDN URL to `build/dmg-url.txt`.
+- `make publish-web` — writes `../web/version.json` = `{"version","downloadUrl"}` using the just-uploaded CDN URL. The bucket hosts the DMG (nothing is copied into `web/public/`); the landing page and changelog import `version.json` and point the Download CTA at `downloadUrl` (`web/app/page.tsx`, `web/app/changelog/page.tsx`).
+- `make release` — full pipeline: `bump-version → dmg → upload → publish-web → appcast-release → upload-appcast → commit-release`. The final commit+push of `version.json` triggers a Vercel redeploy, so the website download link updates to the new version automatically. **Changelog release notes (`web/app/changelog/data.ts`) are NOT auto-written — add the entry by hand.**
+- `make appcast <export-folder>` — runs `scripts/generate-appcast.sh`: zips the exported `.app`, runs Sparkle's `generate_appcast` (found under `~/Library/Developer/Xcode/DerivedData/Macaveli*`), signs the zip, and rewrites each enclosure URL to the CDN zip (`<S3_CDN_URL>/Macaveli.zip`). Copies the updated `appcast.xml` back to the repo root. `make upload-appcast` then pushes `appcast.xml` + the signed zip to the CDN.
 - `make generate-keys` — wraps `scripts/generate-keys.sh` (Sparkle EdDSA keypair).
 
 ### One-time setup for `make dmg`
