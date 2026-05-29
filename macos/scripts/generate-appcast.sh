@@ -18,8 +18,9 @@ if [[ ! -d "$export_folder/$app_name.app" ]]; then
     exit 1
 fi
 
-# move current appcast.xml to export folder
-cp ./appcast.xml $export_folder
+# move current appcast.xml to export folder (canonical copy lives at repo root,
+# one level up from macos/, because Sparkle's SUFeedURL points there)
+cp ../appcast.xml $export_folder
 
 # zip app
 echo "Generating zip file..."
@@ -47,6 +48,6 @@ echo "Signing update..."
 # modify appcast.xml to point to latest release ZIP in github
 sed -i '' 's|https://[^"<]*Macaveli\.zip|https://github.com/jaequery/Macaveli/releases/latest/download/Macaveli.zip|g' "$export_folder/appcast.xml"
 
-# copy appcast.xml back to repo
-cp "$export_folder/appcast.xml" .
+# copy appcast.xml back to repo root (one level up from macos/)
+cp "$export_folder/appcast.xml" ..
 

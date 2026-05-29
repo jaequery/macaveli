@@ -64,7 +64,7 @@ bump-version:
 # `main` — `git push` goes to the current branch's upstream.
 commit-release: publish-web
 	@VERSION=$$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/export/Macaveli.app/Contents/Info.plist); \
-	git add Macaveli.xcodeproj/project.pbxproj ../web/version.json appcast.xml; \
+	git add Macaveli.xcodeproj/project.pbxproj ../web/version.json ../appcast.xml; \
 	if git diff --cached --quiet; then \
 		echo "  Nothing new to commit (same version re-released)"; \
 	else \

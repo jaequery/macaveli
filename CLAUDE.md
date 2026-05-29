@@ -8,7 +8,10 @@ Monorepo with two apps, no monorepo tooling — each app builds independently.
 
 - `macos/` — the macOS menubar app (Swift, Xcode, Sparkle auto-updates). All
   paths in this doc that begin with `Macaveli/` or refer to `Makefile`,
-  `appcast.xml`, `scripts/`, etc. live under `macos/`.
+  `scripts/`, etc. live under `macos/`. **Exception: `appcast.xml` lives at the
+  monorepo root**, because Sparkle's `SUFeedURL` (baked into already-shipped
+  binaries) points at `…/main/appcast.xml`. The `make appcast`/`make release`
+  scripts read and write it one level up from `macos/`.
 - `web/` — the marketing landing page (Next.js 15, TypeScript, Tailwind v4).
   See `web/README.md`.
 
