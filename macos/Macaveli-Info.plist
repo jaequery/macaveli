@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>SUFeedURL</key>
-	<string>https://raw.githubusercontent.com/jaequery/Macaveli/main/appcast.xml</string>
+	<string>https://macaveli.sfo3.cdn.digitaloceanspaces.com/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>RHEghrKn+wDkJUFgZYPOWvNOKZsRaYFIGkKkr/yKecA=</string>
 	<key>NSScreenCaptureUsageDescription</key>

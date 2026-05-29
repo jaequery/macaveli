@@ -18,6 +18,15 @@ if [[ ! -d "$export_folder/$app_name.app" ]]; then
     exit 1
 fi
 
+# Resolve the public CDN base. The appcast + zip are served from the CDN (not
+# GitHub releases) so updates keep working even if the repo goes private.
+# Prefer ../.env (single source of truth, shared with upload-dmg.sh); fall back
+# to the known DO Spaces URL so `make appcast` still works standalone.
+if [[ -f ../.env ]]; then
+    set -a; source ../.env; set +a
+fi
+CDN_BASE="${S3_CDN_URL:-https://macaveli.sfo3.cdn.digitaloceanspaces.com}"
+
 # move current appcast.xml to export folder (canonical copy lives at repo root,
 # one level up from macos/, because Sparkle's SUFeedURL points there)
 cp ../appcast.xml $export_folder
@@ -45,8 +54,8 @@ echo "Generating appcast.xml..."
 echo "Signing update..."
 "$bin_folder/sign_update" "$export_folder/$app_name_no_space.zip"
 
-# modify appcast.xml to point to latest release ZIP in github
-sed -i '' 's|https://[^"<]*Macaveli\.zip|https://github.com/jaequery/Macaveli/releases/latest/download/Macaveli.zip|g' "$export_folder/appcast.xml"
+# modify appcast.xml so every enclosure points at the CDN-hosted zip
+sed -i '' "s|https://[^\"<]*Macaveli\.zip|${CDN_BASE}/Macaveli.zip|g" "$export_folder/appcast.xml"
 
 # copy appcast.xml back to repo root (one level up from macos/)
 cp "$export_folder/appcast.xml" ..

@@ -1,4 +1,4 @@
-.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon dmg upload publish-web appcast-release commit-release release bump-version
+.PHONY: build open-app run appcast generate-keys fetch-ffmpeg render-icon render-menubar-icon dmg upload publish-web appcast-release upload-appcast commit-release release bump-version
 
 fetch-ffmpeg:
 	@bash scripts/fetch-ffmpeg.sh
@@ -79,11 +79,19 @@ commit-release: publish-web
 appcast-release:
 	./scripts/generate-appcast.sh build/export
 
+# Push the regenerated appcast.xml + signed Macaveli.zip to the CDN bucket so
+# Sparkle (whose SUFeedURL points at the CDN, not GitHub) can serve them — works
+# whether the repo is public or private. Run after appcast-release.
+upload-appcast:
+	./scripts/upload-appcast.sh
+
 # Full release in ONE command: bump version → build + notarize DMG → upload DMG
-# to the CDN → update web/version.json → regenerate Sparkle appcast → commit +
-# push. Vercel auto-deploys the site; pushing the GitHub release feeds existing
-# users via appcast.xml. Re-release same version without bumping: `BUMP=none make release`.
-release: bump-version dmg upload publish-web appcast-release commit-release
+# to the CDN → update web/version.json → regenerate Sparkle appcast → upload the
+# appcast + signed zip to the CDN → commit + push. Vercel auto-deploys the site;
+# Sparkle's feed is served from the CDN (works even if the repo goes private), and
+# the committed appcast.xml is the source of truth. Re-release same version
+# without bumping: `BUMP=none make release`.
+release: bump-version dmg upload publish-web appcast-release upload-appcast commit-release
 
 generate-keys:
 	@$(eval ARGS := $(filter-out $@,$(MAKECMDGOALS)))
