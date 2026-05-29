@@ -562,6 +562,10 @@ struct CheatBrandBar: View {
         HStack(spacing: 10) {
             Text("Macaveli")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
+            Text("v\(Bundle.main.buildNumber)")
+                .font(.system(size: 11, design: .monospaced))
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
             Spacer(minLength: 4)
 
             Menu {
