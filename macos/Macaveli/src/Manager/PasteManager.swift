@@ -323,6 +323,19 @@ final class PasteManager: ObservableObject {
         }
     }
 
+    // MARK: - Labels
+
+    /// Sets, edits, or removes the custom label on the item with `id`.
+    /// Whitespace is trimmed; an empty result removes the label (sets it to `nil`).
+    func setLabel(_ label: String?, for id: UUID) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        let trimmed = label?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalized = (trimmed?.isEmpty ?? true) ? nil : trimmed
+        guard items[index].label != normalized else { return }
+        items[index].label = normalized
+        scheduleSave()
+    }
+
     // MARK: - Delete / clear
 
     func delete(_ item: PasteboardItem) {

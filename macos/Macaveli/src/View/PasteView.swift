@@ -21,6 +21,11 @@ struct PasteView: View {
     @FocusState private var searchFocused: Bool
     @State private var showClearConfirm = false
 
+    // Inline label editing: the id of the item whose label is being edited
+    // (nil = not editing) plus the working text for that field.
+    @State private var editingItemID: UUID? = nil
+    @State private var editingText: String = ""
+
     // MARK: - Derived state
 
     private var filteredItems: [PasteboardItem] {
@@ -28,6 +33,7 @@ struct PasteView: View {
         let q = query.lowercased()
         return manager.items.filter { item in
             if item.preview.lowercased().contains(q) { return true }
+            if let label = item.label, label.lowercased().contains(q) { return true }
             if case .image = item.kind, "image".contains(q) { return true }
             return false
         }
@@ -55,14 +61,16 @@ struct PasteView: View {
         .onChangeCompat(of: manager.items.count) { clampSelection() }
         // Global key monitor for full keyboard control.
         .background(KeyboardHandler(
+            isEditing:   { editingItemID != nil },
             onUp:        { moveSelection(-1) },
             onDown:      { moveSelection(1)  },
             onReturn:    { activateSelected() },
-            onEscape:    { PasteManager.shared.hidePanel() },
+            onEscape:    { handleEscape() },
             onCmdNumber: { n in activateAtNumber(n) },
             onCmdF:      { searchFocused = true },
             onCmdDelete: { deleteSelected() },
-            onCmdShiftDelete: { showClearConfirm = true }
+            onCmdShiftDelete: { showClearConfirm = true },
+            onCmdL:      { beginEditingSelected() }
         ))
         .confirmationDialog(
             "Clear all clipboard history? This cannot be undone.",
@@ -142,16 +150,20 @@ struct PasteView: View {
                             PasteRowView(
                                 item: item,
                                 position: index + 1,
-                                isSelected: index == selectedIndex
+                                isSelected: index == selectedIndex,
+                                isEditing: editingItemID == item.id,
+                                editingText: $editingText,
+                                onCommitLabel: commitEditing,
+                                onCancelLabel: cancelEditing
                             )
                             .id(item.id)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 selectedIndex = index
-                                activateSelected()
+                                if editingItemID == nil { activateSelected() }
                             }
                             .onHover { hovering in
-                                if hovering { selectedIndex = index }
+                                if hovering, editingItemID == nil { selectedIndex = index }
                             }
                         }
                     }
@@ -209,6 +221,7 @@ struct PasteView: View {
             FooterHint(keys: "↑↓", label: "navigate")
             FooterHint(keys: "↵", label: "paste")
             FooterHint(keys: "⌘1–9", label: "quick")
+            FooterHint(keys: "⌘L", label: "label")
             FooterHint(keys: "⌘⌫", label: "delete")
             Spacer(minLength: 0)
             FooterHint(keys: "⎋", label: "close")
@@ -253,6 +266,37 @@ struct PasteView: View {
             selectedIndex = min(selectedIndex, count - 1)
         }
     }
+
+    // MARK: - Label editing
+
+    private func beginEditingSelected() {
+        let items = filteredItems
+        guard !items.isEmpty, selectedIndex < items.count else { return }
+        let item = items[selectedIndex]
+        editingText = item.label ?? ""
+        editingItemID = item.id
+    }
+
+    private func commitEditing() {
+        guard let id = editingItemID else { return }
+        manager.setLabel(editingText, for: id)
+        editingItemID = nil
+        editingText = ""
+    }
+
+    private func cancelEditing() {
+        editingItemID = nil
+        editingText = ""
+    }
+
+    /// Escape cancels an in-progress label edit; otherwise it closes the panel.
+    private func handleEscape() {
+        if editingItemID != nil {
+            cancelEditing()
+        } else {
+            PasteManager.shared.hidePanel()
+        }
+    }
 }
 
 // MARK: - PasteRowView
@@ -263,9 +307,14 @@ struct PasteRowView: View {
     let item: PasteboardItem
     let position: Int
     let isSelected: Bool
+    var isEditing: Bool = false
+    var editingText: Binding<String> = .constant("")
+    var onCommitLabel: () -> Void = {}
+    var onCancelLabel: () -> Void = {}
 
     @State private var isHovering = false
     @State private var imageDimensions: String? = nil
+    @FocusState private var labelFieldFocused: Bool
 
     private var isImage: Bool {
         if case .image = item.kind { return true }
@@ -302,6 +351,31 @@ struct PasteRowView: View {
                     .truncationMode(.tail)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Custom label: inline editor while editing, otherwise a compact pill.
+            // Stays on the same row — no extra line is added per item.
+            if isEditing {
+                TextField("Label", text: editingText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, weight: .medium))
+                    .frame(width: 140)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .fill(Color.accentColor.opacity(0.14))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .stroke(Color.accentColor.opacity(0.5), lineWidth: 1)
+                    )
+                    .focused($labelFieldFocused)
+                    .onAppear { DispatchQueue.main.async { labelFieldFocused = true } }
+                    .onSubmit { onCommitLabel() }
+                    .accessibilityLabel("Edit label")
+            } else if let label = item.label, !label.isEmpty {
+                LabelTag(text: label)
+            }
 
             // Quick-paste badge for positions 1–9
             if position <= 9 {
@@ -354,10 +428,11 @@ struct PasteRowView: View {
     }
 
     private var accessibilityRowLabel: String {
+        let labelPart = item.label.map { ", labeled \($0)" } ?? ""
         if isImage {
-            return "Image item \(position): \(displayText)"
+            return "Image item \(position): \(displayText)\(labelPart)"
         }
-        return "Text item \(position): \(item.preview)"
+        return "Text item \(position): \(item.preview)\(labelPart)"
     }
 
     /// Reads image pixel dimensions without decoding the full PNG payload.
@@ -377,6 +452,34 @@ struct PasteRowView: View {
             let desc = "\(w)×\(h)"
             DispatchQueue.main.async { imageDimensions = desc }
         }
+    }
+}
+
+// MARK: - LabelTag
+
+/// Compact inline pill showing an item's custom label. One line, tail-truncated.
+private struct LabelTag: View {
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "tag.fill")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+            Text(text)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Color.accentColor)
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 2)
+        .background(
+            Capsule(style: .continuous)
+                .fill(Color.accentColor.opacity(0.14))
+        )
+        .frame(maxWidth: 160, alignment: .trailing)
+        .accessibilityHidden(true)
     }
 }
 
@@ -408,6 +511,7 @@ private struct FooterHint: View {
 /// The monitor fires first for any key-down in the panel's key window context.
 private struct KeyboardHandler: NSViewRepresentable {
 
+    var isEditing:         () -> Bool
     var onUp:              () -> Void
     var onDown:            () -> Void
     var onReturn:          () -> Void
@@ -416,6 +520,7 @@ private struct KeyboardHandler: NSViewRepresentable {
     var onCmdF:            () -> Void
     var onCmdDelete:       () -> Void
     var onCmdShiftDelete:  () -> Void
+    var onCmdL:            () -> Void
 
     func makeNSView(context: Context) -> NSView {
         let view = KeyHandlerView()
@@ -458,6 +563,17 @@ private struct KeyboardHandler: NSViewRepresentable {
             let shift  = event.modifierFlags.contains(.shift)
             let keyCode = event.keyCode
 
+            // While editing a label, the focused TextField owns the keyboard.
+            // Only intercept Escape (to cancel); pass everything else through so
+            // typing, cursor keys, and Return (→ commit via onSubmit) reach it.
+            if h.isEditing() {
+                if keyCode == 53 {
+                    h.onEscape()
+                    return nil
+                }
+                return event
+            }
+
             // ↑
             if keyCode == 126 && !cmd {
                 h.onUp()
@@ -492,6 +608,11 @@ private struct KeyboardHandler: NSViewRepresentable {
             // ⌘F (keyCode 3 = ANSI F)
             if cmd && keyCode == 3 && !shift {
                 h.onCmdF()
+                return nil
+            }
+            // ⌘L (keyCode 37 = ANSI L) — add/edit the selected item's label
+            if cmd && keyCode == 37 && !shift {
+                h.onCmdL()
                 return nil
             }
             // ⌘⇧⌫ before ⌘⌫ (forward delete = 117, delete = 51)
