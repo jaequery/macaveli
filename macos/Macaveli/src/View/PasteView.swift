@@ -21,6 +21,13 @@ struct PasteView: View {
     @FocusState private var searchFocused: Bool
     @State private var showClearConfirm = false
 
+    // Whether the most recent selection change came from keyboard navigation.
+    // Hover-driven changes must NOT auto-scroll: scrolling slides a different
+    // row under the stationary cursor → onHover → another scroll → an endless
+    // loop that makes item selection impossible. Every non-hover path sets this
+    // true; only `onHover` sets it false.
+    @State private var selectionViaKeyboard = true
+
     // MARK: - Derived state
 
     private var filteredItems: [PasteboardItem] {
@@ -50,7 +57,10 @@ struct PasteView: View {
                 .stroke(Color.primary.opacity(0.10), lineWidth: 0.5)
         )
         // Reset selection when query changes.
-        .onChangeCompat(of: query) { selectedIndex = 0 }
+        .onChangeCompat(of: query) {
+            selectionViaKeyboard = true
+            selectedIndex = 0
+        }
         // Clamp selection when item count changes.
         .onChangeCompat(of: manager.items.count) { clampSelection() }
         // Global key monitor for full keyboard control.
@@ -151,19 +161,28 @@ struct PasteView: View {
                                 activateSelected()
                             }
                             .onHover { hovering in
-                                if hovering { selectedIndex = index }
+                                if hovering {
+                                    selectionViaKeyboard = false
+                                    selectedIndex = index
+                                }
                             }
                         }
                     }
                     .padding(.vertical, 4)
                 }
                 .frame(maxHeight: .infinity)
-                // Auto-scroll selected row into view whenever selection changes.
+                // Auto-scroll selected row into view on keyboard navigation only.
                 .onChangeCompat(of: selectedIndex) { newValue in
+                    // Skip hover-driven changes: scrolling would slide another
+                    // row under the cursor and re-trigger onHover → scroll loop.
+                    guard selectionViaKeyboard else { return }
                     let bounded = max(0, min(newValue, items.count - 1))
                     if bounded < items.count {
                         withAnimation(.easeInOut(duration: 0.12)) {
-                            proxy.scrollTo(items[bounded].id, anchor: .center)
+                            // anchor: nil scrolls the minimum needed to reveal an
+                            // off-screen row and does nothing when it is already
+                            // visible — no constant re-centering on every keypress.
+                            proxy.scrollTo(items[bounded].id, anchor: nil)
                         }
                     }
                 }
@@ -222,6 +241,7 @@ struct PasteView: View {
     private func moveSelection(_ delta: Int) {
         let count = filteredItems.count
         guard count > 0 else { return }
+        selectionViaKeyboard = true
         selectedIndex = max(0, min(selectedIndex + delta, count - 1))
     }
 
@@ -247,6 +267,7 @@ struct PasteView: View {
 
     private func clampSelection() {
         let count = filteredItems.count
+        selectionViaKeyboard = true
         if count == 0 {
             selectedIndex = 0
         } else {
