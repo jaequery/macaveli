@@ -9,10 +9,11 @@ import IOKit.pwr_mgt
 enum NeverSleepMode: String, CaseIterable {
     /// Normal macOS behavior — the Mac sleeps as configured.
     case off
-    /// Stay awake while the lid is open (battery or power), via an IOKit power
-    /// assertion. No root, and it is released when the app quits, so it leaves
-    /// nothing behind. Closing the lid still sleeps — assertions do not survive
-    /// a lid-close; use `.evenLidClosed` for that.
+    /// Keep the screen on while the lid is open (battery or power), via an IOKit
+    /// display-sleep assertion — it disables the automatic screen timeout. No
+    /// root, and it is released when the app quits, so it leaves nothing behind.
+    /// Closing the lid still sleeps — assertions do not survive a lid-close; use
+    /// `.evenLidClosed` for that.
     case whileLidOpen = "whileLidOpen"
     /// Stay awake even with the lid shut, on any power source, via
     /// `pmset disablesleep`. Needs root (one password prompt) and persists in
@@ -28,9 +29,9 @@ enum NeverSleepMode: String, CaseIterable {
         case .off:
             return "Your Mac sleeps normally."
         case .whileLidOpen:
-            return "Stays awake while the lid is open — battery or power. Closing the lid still sleeps. Turns off when you quit Macaveli."
+            return "Keeps the screen on — no screen timeout, on battery or power. Closing the lid still sleeps. Turns off when you quit Macaveli."
         case .evenLidClosed:
-            return "Stays awake even with the lid closed, on battery too — keeps an external display on. Drains battery and adds heat if closed in a bag. Stays on after you quit, until set to Off. Asks for your password."
+            return "Keeps the screen on, and stays awake even with the lid closed, on battery too — keeps an external display on. Drains battery and adds heat if closed in a bag. Stays on after you quit, until set to Off. Asks for your password."
         }
     }
 }
@@ -158,18 +159,23 @@ final class DisplaySleepManager: ObservableObject {
         UserDefaults.standard.set(newMode.rawValue, forKey: PreferenceKey.neverSleepMode.rawValue)
     }
 
-    /// Hold the assertion only for `.whileLidOpen`; release it otherwise.
-    /// `.evenLidClosed` leans on `disablesleep`, which already blocks all sleep.
+    /// Hold the display assertion for any non-`off` mode; release it for `.off`.
+    /// `.evenLidClosed` also leans on `disablesleep` for the lid-closed case, but
+    /// holding the assertion keeps the screen lit while the lid is open too.
     private func applyAssertion(for mode: NeverSleepMode) {
-        if mode == .whileLidOpen { createAssertion() } else { releaseAssertion() }
+        if mode == .off { releaseAssertion() } else { createAssertion() }
     }
 
     private func createAssertion() {
         guard !hasAssertion else { return }
+        // Prevent *display* idle sleep, not just system sleep — this disables the
+        // automatic screen timeout (the `caffeinate -d` lever) on any power
+        // source, battery included, with no root. Keeping the display lit keeps
+        // the system awake too, so this one assertion covers both.
         let result = IOPMAssertionCreateWithName(
-            kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
+            kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "Macaveli: Never Sleep (lid open)" as CFString,
+            "Macaveli: Keep screen on" as CFString,
             &assertionID
         )
         hasAssertion = (result == kIOReturnSuccess)
