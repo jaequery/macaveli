@@ -31,22 +31,26 @@ struct PasteboardItem: Identifiable, Codable, Equatable {
     /// SHA-256 of the canonical content bytes (UTF-8 text or PNG image data).
     /// Computed once at capture time and persisted so de-dup never re-reads disk.
     let contentHash: String
+    /// Optional short user-assigned label for quick identification.
+    /// `nil` means no label. Mutable so the manager can edit/remove it in place.
+    var label: String?
 
     // MARK: - Init
 
-    init(id: UUID, kind: Kind, preview: String, byteSize: Int, createdAt: Date, contentHash: String) {
+    init(id: UUID, kind: Kind, preview: String, byteSize: Int, createdAt: Date, contentHash: String, label: String? = nil) {
         self.id = id
         self.kind = kind
         self.preview = preview
         self.byteSize = byteSize
         self.createdAt = createdAt
         self.contentHash = contentHash
+        self.label = label
     }
 
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {
-        case id, kind, preview, byteSize, createdAt, contentHash
+        case id, kind, preview, byteSize, createdAt, contentHash, label
     }
 
     init(from decoder: Decoder) throws {
@@ -56,6 +60,8 @@ struct PasteboardItem: Identifiable, Codable, Equatable {
         preview   = try c.decode(String.self, forKey: .preview)
         byteSize  = try c.decode(Int.self,    forKey: .byteSize)
         createdAt = try c.decode(Date.self,   forKey: .createdAt)
+        // Legacy manifests predate labels — absent key decodes to nil.
+        label     = try c.decodeIfPresent(String.self, forKey: .label)
         // Legacy manifests (pre-hash-caching) don't carry contentHash. Synthesise
         // a stable per-id hash so legacy items remain unique under de-dup — they
         // won't collide with each other, and a fresh copy of the same content
