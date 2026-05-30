@@ -12,7 +12,7 @@ export default function Page() {
       <Hero />
       <Inside />
       <FounderNote />
-      <Shortcuts />
+      <Hotkeys />
       <CallToAction />
       <Footer />
     </main>
@@ -36,8 +36,8 @@ function Nav() {
         <a href="#inside" className="transition hover:text-[var(--ink)]">
           What&rsquo;s inside
         </a>
-        <a href="#shortcuts" className="transition hover:text-[var(--ink)]">
-          Shortcuts
+        <a href="#hotkeys" className="transition hover:text-[var(--ink)]">
+          Hotkeys
         </a>
         <a href="/changelog" className="transition hover:text-[var(--ink)]">
           Changelog
@@ -254,7 +254,7 @@ function Inside() {
     {
       label: "Screen recording",
       title: "Record from a hotkey.",
-      body: "One shortcut starts and stops a recording of your display. MP4 or GIF, optional optimization pass. No dialogs, no countdown nag, no upload.",
+      body: "One hotkey starts and stops a recording of your display. MP4 or GIF, optional optimization pass. No dialogs, no countdown nag, no upload.",
       replaces: "Loom · CleanShot X · QuickTime",
     },
   ];
@@ -335,10 +335,10 @@ function FounderNote() {
 }
 
 // ---------------------------------------------------------------------------
-// Shortcuts — spec table, left-aligned header (breaks the centered rhythm)
+// Hotkeys — spec table, left-aligned header (breaks the centered rhythm)
 // ---------------------------------------------------------------------------
 
-function Shortcuts() {
+function Hotkeys() {
   const rows: Array<[string, string]> = [
     ["ctrl + cmd + drag", "Move the window under the cursor"],
     ["cmd + shift + drag", "Resize the window under the cursor"],
@@ -350,10 +350,10 @@ function Shortcuts() {
   ];
 
   return (
-    <section id="shortcuts" className="border-t border-[var(--line)] bg-[var(--surface-2)] px-8 py-32">
+    <section id="hotkeys" className="border-t border-[var(--line)] bg-[var(--surface-2)] px-8 py-32">
       <div className="mx-auto max-w-3xl">
         <p className="mb-4 font-mono text-[13px] font-medium tracking-[0.02em] text-[var(--accent)]">
-          // default shortcuts
+          // default hotkeys
         </p>
         <h2
           className="font-bold tracking-[-0.035em] text-[var(--ink)]"

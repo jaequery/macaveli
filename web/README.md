@@ -27,7 +27,7 @@ For Vercel: `vercel deploy` from this folder.
 
 ## Files
 
-- `app/page.tsx` — the landing page (Hero / Features / Shortcuts / Footer).
+- `app/page.tsx` — the landing page (Hero / Features / Hotkeys / Footer).
 - `app/layout.tsx` — root layout + `<head>` metadata.
 - `app/globals.css` — Tailwind v4 entry + design tokens in `@theme`.
 - `postcss.config.mjs` — wires `@tailwindcss/postcss`.

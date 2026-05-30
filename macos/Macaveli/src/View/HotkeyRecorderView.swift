@@ -1,10 +1,10 @@
-// ShortcutView.swift
+// HotkeyRecorderView.swift
 import SwiftUI
 import ShortcutRecorder
 
 /// Thin SwiftUI wrapper around `RecorderControl` so a `Shortcut?` binding
 /// drives the recorder UI. Used inline in the per-section bindings strips.
-struct ShortcutNSView: NSViewRepresentable {
+struct HotkeyRecorderView: NSViewRepresentable {
     @Binding var shortcut: Shortcut?
 
     func makeNSView(context: Context) -> RecorderControl {
@@ -28,8 +28,8 @@ struct ShortcutNSView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     class Coordinator: NSObject, RecorderControlDelegate {
-        var parent: ShortcutNSView
-        init(_ parent: ShortcutNSView) { self.parent = parent }
+        var parent: HotkeyRecorderView
+        init(_ parent: HotkeyRecorderView) { self.parent = parent }
 
         func shortcutRecorderDidEndRecording(_ recorder: RecorderControl) {
             parent.shortcut = recorder.objectValue
