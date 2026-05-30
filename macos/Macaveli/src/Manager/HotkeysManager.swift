@@ -1,7 +1,7 @@
 import ShortcutRecorder
 import CGEventSupervisor
 
-enum ShortcutType: String, CaseIterable {
+enum HotkeyType: String, CaseIterable {
     case move = "Move"
     case resize = "Resize"
     case maximize = "Maximize"
@@ -36,30 +36,30 @@ enum MouseButton: String, CaseIterable {
     }
 }
 
-struct UserShortcut {
-    var type: ShortcutType
+struct UserHotkey {
+    var type: HotkeyType
     var shortcut: Shortcut?
     var mouseButton: MouseButton
-    
-    init(type: ShortcutType, shortcut: Shortcut? = nil, mouseButton: MouseButton) {
+
+    init(type: HotkeyType, shortcut: Shortcut? = nil, mouseButton: MouseButton) {
         self.type = type
         self.shortcut = shortcut
         self.mouseButton = mouseButton
     }
 }
 
-class ShortcutsManager {
-    static let shared = ShortcutsManager()
+class HotkeysManager {
+    static let shared = HotkeysManager()
     var globalMonitors: [Any] = []
-    
+
     private init() {
-        seedDefaultShortcutsIfNeeded()
+        seedDefaultHotkeysIfNeeded()
         migrateClickModeIfNeeded()
-        updateGlobalShortcuts()
+        updateGlobalHotkeys()
     }
 
     /// One-shot migration for users who had the "Require click" preference on:
-    /// wipe any stored per-shortcut mouseButton so the click-handling code
+    /// wipe any stored per-hotkey mouseButton so the click-handling code
     /// path stays dormant now that the toggle is gone.
     private func migrateClickModeIfNeeded() {
         let key = "didMigrateClickModeRemoval"
@@ -69,214 +69,214 @@ class ShortcutsManager {
         UserDefaults.standard.set(true, forKey: key)
     }
 
-    private func seedDefaultShortcutsIfNeeded() {
+    private func seedDefaultHotkeysIfNeeded() {
         let didSeedKey = "didSeedWindowManagementDefaults"
         if !UserDefaults.standard.bool(forKey: didSeedKey) {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
 
             if load(for: .maximize) == nil {
                 let shortcut = Shortcut(code: .upArrow, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-                save(UserShortcut(type: .maximize, shortcut: shortcut, mouseButton: .none))
+                save(UserHotkey(type: .maximize, shortcut: shortcut, mouseButton: .none))
             }
             if load(for: .center) == nil {
                 let shortcut = Shortcut(code: .downArrow, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-                save(UserShortcut(type: .center, shortcut: shortcut, mouseButton: .none))
+                save(UserHotkey(type: .center, shortcut: shortcut, mouseButton: .none))
             }
 
             UserDefaults.standard.set(true, forKey: didSeedKey)
         }
 
-        seedMouseShortcutsIfNeeded()
-        seedRecordShortcutIfNeeded()
-        seedHalfShortcutsIfNeeded()
-        seedAnnotateShortcutIfNeeded()
-        seedPasteShortcutIfNeeded()
-        seedScreenshotShortcutIfNeeded()
+        seedMouseHotkeysIfNeeded()
+        seedRecordHotkeyIfNeeded()
+        seedHalfHotkeysIfNeeded()
+        seedAnnotateHotkeyIfNeeded()
+        seedPasteHotkeyIfNeeded()
+        seedScreenshotHotkeyIfNeeded()
     }
 
-    private func seedHalfShortcutsIfNeeded() {
+    private func seedHalfHotkeysIfNeeded() {
         let didSeedKey = "didSeedHalfShortcuts"
         if UserDefaults.standard.bool(forKey: didSeedKey) { return }
 
         let modifiers: NSEvent.ModifierFlags = [.control]
         if load(for: .leftHalf) == nil {
             let shortcut = Shortcut(code: .ansiLeftBracket, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .leftHalf, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .leftHalf, shortcut: shortcut, mouseButton: .none))
         }
         if load(for: .rightHalf) == nil {
             let shortcut = Shortcut(code: .ansiRightBracket, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .rightHalf, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .rightHalf, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
     }
 
-    private func seedMouseShortcutsIfNeeded() {
+    private func seedMouseHotkeysIfNeeded() {
         let didSeedKey = "didSeedMouseShortcuts"
         if UserDefaults.standard.bool(forKey: didSeedKey) { return }
 
         if load(for: .move) == nil {
             let shortcut = Shortcut(code: .none, modifierFlags: [.command, .control], characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .move, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .move, shortcut: shortcut, mouseButton: .none))
         }
         if load(for: .resize) == nil {
             let shortcut = Shortcut(code: .none, modifierFlags: [.command, .shift], characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .resize, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .resize, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
     }
 
-    private func seedRecordShortcutIfNeeded() {
+    private func seedRecordHotkeyIfNeeded() {
         let didSeedKey = "didSeedRecordShortcut"
         if UserDefaults.standard.bool(forKey: didSeedKey) { return }
 
         if load(for: .record) == nil {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
             let shortcut = Shortcut(code: .ansiR, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .record, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .record, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
     }
 
-    private func seedAnnotateShortcutIfNeeded() {
+    private func seedAnnotateHotkeyIfNeeded() {
         let didSeedKey = "didSeedAnnotateShortcut"
         if UserDefaults.standard.bool(forKey: didSeedKey) { return }
 
         if load(for: .annotate) == nil {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
             let shortcut = Shortcut(code: .ansiA, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .annotate, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .annotate, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
     }
 
-    private func seedPasteShortcutIfNeeded() {
+    private func seedPasteHotkeyIfNeeded() {
         let didSeedKey = "didSeedPasteShortcut"
         if UserDefaults.standard.bool(forKey: didSeedKey) { return }
 
         if load(for: .paste) == nil {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
             let shortcut = Shortcut(code: .ansiP, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .paste, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .paste, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
     }
 
-    private func seedScreenshotShortcutIfNeeded() {
+    private func seedScreenshotHotkeyIfNeeded() {
         let didSeedKey = "didSeedScreenshotShortcut"
         if UserDefaults.standard.bool(forKey: didSeedKey) { return }
 
         if load(for: .screenshot) == nil {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
             let shortcut = Shortcut(code: .ansi4, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
-            save(UserShortcut(type: .screenshot, shortcut: shortcut, mouseButton: .none))
+            save(UserHotkey(type: .screenshot, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
     }
-    
-    func save(_ userShortcut: UserShortcut) {
+
+    func save(_ userHotkey: UserHotkey) {
         do {
-            if let shortcut = userShortcut.shortcut {
+            if let shortcut = userHotkey.shortcut {
                 let data = try NSKeyedArchiver.archivedData(withRootObject: shortcut, requiringSecureCoding: false)
-                UserDefaults.standard.set(data, forKey: userShortcut.type.rawValue)
-                UserDefaults.standard.set(userShortcut.mouseButton.rawValue, forKey: "\(userShortcut.type.rawValue)_mouseButton")
+                UserDefaults.standard.set(data, forKey: userHotkey.type.rawValue)
+                UserDefaults.standard.set(userHotkey.mouseButton.rawValue, forKey: "\(userHotkey.type.rawValue)_mouseButton")
             }
         } catch {
             print("Error: \(error)")
         }
-        updateGlobalShortcuts()
+        updateGlobalHotkeys()
     }
-    
-    func load(for type: ShortcutType) -> UserShortcut? {
+
+    func load(for type: HotkeyType) -> UserHotkey? {
         guard let data = UserDefaults.standard.data(forKey: type.rawValue) else { return nil }
         do {
             let shortcut = try NSKeyedUnarchiver.unarchivedObject(ofClass: Shortcut.self, from: data)
             let mouseButton = MouseButton.parse(rawValue: UserDefaults.standard.string(forKey: "\(type.rawValue)_mouseButton"))
-            return UserShortcut(type: type, shortcut: shortcut, mouseButton: mouseButton)
+            return UserHotkey(type: type, shortcut: shortcut, mouseButton: mouseButton)
         } catch {
             print("Error unarchiving data: \(error.localizedDescription)")
             return nil
         }
     }
-    
-    func delete(for type: ShortcutType) {
+
+    func delete(for type: HotkeyType) {
         UserDefaults.standard.removeObject(forKey: type.rawValue)
-        updateGlobalShortcuts()
+        updateGlobalHotkeys()
     }
-    
+
     func removeClickActionsForAll() {
-        for type in ShortcutType.allCases {
-            if var userShortcut = load(for: type) {
-                userShortcut.mouseButton = .none
-                self.save(userShortcut)
+        for type in HotkeyType.allCases {
+            if var userHotkey = load(for: type) {
+                userHotkey.mouseButton = .none
+                self.save(userHotkey)
             }
         }
     }
-    
+
     private func clearActionsAndMonitors() {
         removeAllActions()
         removeGlobalMonitors()
     }
-    
+
     private func removeAllActions() {
-        AppDelegate.shared.shortcutMonitor?.removeAllActions()
+        AppDelegate.shared.hotkeyMonitor?.removeAllActions()
     }
-    
+
     private func removeGlobalMonitors() {
         for monitor in self.globalMonitors {
             NSEvent.removeMonitor(monitor)
         }
         self.globalMonitors = []
     }
-    
-    // Regular shortcuts that should work fine except for modifier-only shortcuts on key-up
-    private func addActions(mouseAction: MouseAction, for userShortcut: UserShortcut) {
-        guard let shortcut = userShortcut.shortcut else { return }
+
+    // Regular hotkeys that should work fine except for modifier-only hotkeys on key-up
+    private func addActions(mouseAction: MouseAction, for userHotkey: UserHotkey) {
+        guard let shortcut = userHotkey.shortcut else { return }
 
         let keydownAction = ShortcutAction(shortcut: shortcut) { _ in
-            self.startTracking(userShortcut, mouseAction)
+            self.startTracking(userHotkey, mouseAction)
             return true
         }
         let keyupAction = ShortcutAction(shortcut: shortcut) { _ in
-            self.stopTracking(userShortcut, mouseAction)
+            self.stopTracking(userHotkey, mouseAction)
             return true
         }
-        
-        AppDelegate.shared.shortcutMonitor?.addAction(keydownAction, forKeyEvent: .down)
-        AppDelegate.shared.shortcutMonitor?.addAction(keyupAction, forKeyEvent: .up)
+
+        AppDelegate.shared.hotkeyMonitor?.addAction(keydownAction, forKeyEvent: .down)
+        AppDelegate.shared.hotkeyMonitor?.addAction(keyupAction, forKeyEvent: .up)
     }
-    
+
     // Workaround to get those f**kers to work on key-up
-    private func addGlobalMonitors(mouseAction: MouseAction, for userShortcut: UserShortcut) {
-        guard let shortcut = userShortcut.shortcut else { return }
+    private func addGlobalMonitors(mouseAction: MouseAction, for userHotkey: UserHotkey) {
+        guard let shortcut = userHotkey.shortcut else { return }
 
         // Global events
         if let eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: { (event) in
-            self.handleFlagsChanged(userShortcut, shortcut, event, mouseAction)
+            self.handleFlagsChanged(userHotkey, shortcut, event, mouseAction)
         }) {
             self.globalMonitors.append(eventMonitor)
         }
         // Local events (https://github.com/jaequery/Macaveli/issues/10#issuecomment-1872524489)
         if let eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyUp, .keyDown, .flagsChanged], handler: {(event) in
-            self.handleFlagsChanged(userShortcut, shortcut, event, mouseAction)
+            self.handleFlagsChanged(userHotkey, shortcut, event, mouseAction)
             return event
         }) {
             self.globalMonitors.append(eventMonitor)
         }
     }
-    
-    private func updateGlobalShortcuts() {
+
+    private func updateGlobalHotkeys() {
         clearActionsAndMonitors()
 
-        for type in ShortcutType.allCases {
-            if let userShortcut = load(for: type), let shortcut = userShortcut.shortcut {
+        for type in HotkeyType.allCases {
+            if let userHotkey = load(for: type), let shortcut = userHotkey.shortcut {
                 if !type.isMouseDriven {
-                    addOneShotAction(for: userShortcut)
+                    addOneShotAction(for: userHotkey)
                     continue
                 }
 
@@ -284,17 +284,17 @@ class ShortcutsManager {
                 let isModifierOnlyShortcut = shortcut.charactersIgnoringModifiers == nil
 
                 if isModifierOnlyShortcut {
-                    addGlobalMonitors(mouseAction: mouseAction, for: userShortcut)
+                    addGlobalMonitors(mouseAction: mouseAction, for: userHotkey)
                 } else {
-                    addActions(mouseAction: mouseAction, for: userShortcut)
+                    addActions(mouseAction: mouseAction, for: userHotkey)
                 }
             }
         }
     }
 
-    private func addOneShotAction(for userShortcut: UserShortcut) {
-        guard let shortcut = userShortcut.shortcut else { return }
-        let type = userShortcut.type
+    private func addOneShotAction(for userHotkey: UserHotkey) {
+        guard let shortcut = userHotkey.shortcut else { return }
+        let type = userHotkey.type
 
         let action = ShortcutAction(shortcut: shortcut) { _ in
             DispatchQueue.main.async {
@@ -317,35 +317,35 @@ class ShortcutsManager {
             }
             return true
         }
-        AppDelegate.shared.shortcutMonitor?.addAction(action, forKeyEvent: .down)
+        AppDelegate.shared.hotkeyMonitor?.addAction(action, forKeyEvent: .down)
     }
-    
-    private func handleFlagsChanged(_ userShortcut: UserShortcut, _ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
+
+    private func handleFlagsChanged(_ userHotkey: UserHotkey, _ shortcut: Shortcut, _ event: NSEvent, _ action: MouseAction) {
         let eventFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        
+
         // Sometimes the tracking doesn't stop, so we force it to stop in every flag change
-        stopTracking(userShortcut, action)
+        stopTracking(userHotkey, action)
 
         if eventFlags == shortcut.modifierFlags {
-            startTracking(userShortcut, action)
+            startTracking(userHotkey, action)
         }
     }
 
-    private func startTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
-        if userShortcut.mouseButton == .none {
+    private func startTracking(_ userHotkey: UserHotkey, _ action: MouseAction) {
+        if userHotkey.mouseButton == .none {
             MouseTracker.shared.startTracking(for: action, button: .none)
             return
         }
 
-        let downEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseDown : .rightMouseDown
-        let upEvent: CGEventType = userShortcut.mouseButton == .left ? .leftMouseUp : .rightMouseUp
+        let downEvent: CGEventType = userHotkey.mouseButton == .left ? .leftMouseDown : .rightMouseDown
+        let upEvent: CGEventType = userHotkey.mouseButton == .left ? .leftMouseUp : .rightMouseUp
 
         CGEventSupervisor.shared.subscribe(
             as: "\(action.rawValue)_mouseDown",
             to: .cgEvents(downEvent),
             using: {(event) in
                 event.cancel()
-                MouseTracker.shared.startTracking(for: action, button: userShortcut.mouseButton)
+                MouseTracker.shared.startTracking(for: action, button: userHotkey.mouseButton)
             });
 
         CGEventSupervisor.shared.subscribe(
@@ -357,7 +357,7 @@ class ShortcutsManager {
             });
     }
 
-    private func stopTracking(_ userShortcut: UserShortcut, _ action: MouseAction) {
+    private func stopTracking(_ userHotkey: UserHotkey, _ action: MouseAction) {
         MouseTracker.shared.stopTracking(for: action)
         CGEventSupervisor.shared.cancel(subscriber: "\(action.rawValue)_mouseDown")
         CGEventSupervisor.shared.cancel(subscriber: "\(action.rawValue)_mouseUp")

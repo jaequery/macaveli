@@ -6,9 +6,9 @@ import LaunchAtLogin
 // MARK: - Top-level cheatsheet view
 
 struct CheatsheetView: View {
-    enum Tab: Hashable { case shortcuts, tweaks }
+    enum Tab: Hashable { case hotkeys, tweaks }
 
-    @State private var tab: Tab = .shortcuts
+    @State private var tab: Tab = .hotkeys
     @State private var openSection: CheatSectionID? = nil
     @State private var hasAXPermission = PermissionsManager.hasAccessibilityPermission()
     @State private var hasScreenRecordingPermission = PermissionsManager.hasScreenRecordingPermission()
@@ -24,8 +24,8 @@ struct CheatsheetView: View {
                 Divider().opacity(0.5)
 
                 switch tab {
-                case .shortcuts:
-                    shortcutsList
+                case .hotkeys:
+                    hotkeysList
                 case .tweaks:
                     TweaksTabView()
                 }
@@ -43,17 +43,17 @@ struct CheatsheetView: View {
             hasScreenRecordingPermission = PermissionsManager.hasScreenRecordingPermission()
         }
         // MenuBarExtra(.window) keeps this view alive between popover opens, so
-        // `tab` would otherwise persist. Reset to Shortcuts whenever the popover
-        // window becomes key — that guarantees "always opens on Shortcuts".
+        // `tab` would otherwise persist. Reset to Hotkeys whenever the popover
+        // window becomes key — that guarantees "always opens on Hotkeys".
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
-            tab = .shortcuts
+            tab = .hotkeys
             // Re-sync the Never Sleep control in case `disablesleep` changed
             // outside Macaveli while the popover was closed (read-only, no prompt).
             DisplaySleepManager.shared.refreshFromSystem()
         }
     }
 
-    private var shortcutsList: some View {
+    private var hotkeysList: some View {
         ScrollView {
             VStack(spacing: 0) {
                 CheatSection(
@@ -151,7 +151,7 @@ struct CheatsheetView: View {
 
 // MARK: - Tab switcher
 
-/// Two-segment switcher under the brand bar: Shortcuts (the hotkey cheatsheet)
+/// Two-segment switcher under the brand bar: Hotkeys (the hotkey cheatsheet)
 /// and Tweaks (Mac behavior adjustments). The selected segment lifts on a light
 /// track; selection itself conveys which tab is active.
 struct TabSwitcher: View {
@@ -161,7 +161,7 @@ struct TabSwitcher: View {
         HStack {
             Spacer(minLength: 0)
             HStack(spacing: 2) {
-                segment(.shortcuts, "Shortcuts")
+                segment(.hotkeys, "Hotkeys")
                 segment(.tweaks, "Tweaks")
             }
             .padding(2)
@@ -201,7 +201,7 @@ struct TabSwitcher: View {
 // MARK: - Tweaks tab
 
 /// Mac behavior tweaks macOS doesn't expose, grouped by domain. Unlike the
-/// Shortcuts sections, the control is the content here — there's nothing to
+/// Hotkeys sections, the control is the content here — there's nothing to
 /// hide behind a gear, so groups are plain labels and rows are self-describing.
 struct TweaksTabView: View {
     var body: some View {
@@ -216,7 +216,7 @@ struct TweaksTabView: View {
     }
 }
 
-/// Plain group header (same tracked-caps treatment as a Shortcuts section
+/// Plain group header (same tracked-caps treatment as a Hotkeys section
 /// header) plus its rows. Deliberately gearless.
 struct TweakGroup<Content: View>: View {
     let title: String
@@ -269,8 +269,8 @@ struct NeverSleepRow: View {
 enum CheatSectionID: Hashable { case snap, drag, record, annotate, paste }
 
 struct CheatRowSpec: Identifiable {
-    var id: ShortcutType { type }
-    let type: ShortcutType
+    var id: HotkeyType { type }
+    let type: HotkeyType
     let label: String
     let desc: String?
 }
@@ -392,18 +392,18 @@ struct SectionDivider: View {
 struct CheatRow: View {
     let spec: CheatRowSpec
     @State private var hovering = false
-    @State private var userShortcut: UserShortcut
+    @State private var userHotkey: UserHotkey
 
     init(spec: CheatRowSpec) {
         self.spec = spec
-        let loaded = ShortcutsManager.shared.load(for: spec.type)
-            ?? UserShortcut(type: spec.type, mouseButton: .none)
-        self._userShortcut = State(initialValue: loaded)
+        let loaded = HotkeysManager.shared.load(for: spec.type)
+            ?? UserHotkey(type: spec.type, mouseButton: .none)
+        self._userHotkey = State(initialValue: loaded)
     }
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            KeyCapsView(userShortcut: userShortcut)
+            KeyCapsView(userHotkey: userHotkey)
                 .frame(width: 130, alignment: .leading)
             VStack(alignment: .leading, spacing: 1) {
                 Text(spec.label)
@@ -430,8 +430,8 @@ struct CheatRow: View {
     }
 
     private func reload() {
-        if let loaded = ShortcutsManager.shared.load(for: spec.type) {
-            userShortcut = loaded
+        if let loaded = HotkeysManager.shared.load(for: spec.type) {
+            userHotkey = loaded
         }
     }
 }
@@ -439,22 +439,22 @@ struct CheatRow: View {
 // MARK: - Key-cap rendering
 
 struct KeyCapsView: View {
-    let userShortcut: UserShortcut
+    let userHotkey: UserHotkey
 
     var body: some View {
         HStack(spacing: 3) {
-            if let shortcut = userShortcut.shortcut {
+            if let shortcut = userHotkey.shortcut {
                 ForEach(modifierGlyphs(shortcut.modifierFlags), id: \.self) { g in
                     KeyCap(text: g)
                 }
                 if let key = keyGlyph(for: shortcut) {
                     KeyCap(text: key)
-                } else if userShortcut.type.isMouseDriven {
+                } else if userHotkey.type.isMouseDriven {
                     Text("·")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 1)
-                    KeyCap(text: dragGlyph(for: userShortcut), style: .pill)
+                    KeyCap(text: dragGlyph(for: userHotkey), style: .pill)
                 }
             } else {
                 Text("—")
@@ -476,7 +476,7 @@ struct KeyCapsView: View {
     private func keyGlyph(for shortcut: Shortcut) -> String? {
         // Mouse-driven actions intentionally have no main key — the drag is
         // the "key". We surface this elsewhere as a pill cap.
-        if userShortcut.type.isMouseDriven { return nil }
+        if userHotkey.type.isMouseDriven { return nil }
         // Prefer the keyCode → glyph mapping for special keys. ShortcutRecorder
         // populates `charactersIgnoringModifiers` with Cocoa private-use
         // codepoints for arrows/function keys (NSUpArrowFunctionKey = 0xF700,
@@ -491,7 +491,7 @@ struct KeyCapsView: View {
         return nil
     }
 
-    private func dragGlyph(for user: UserShortcut) -> String {
+    private func dragGlyph(for user: UserHotkey) -> String {
         switch user.mouseButton {
         case .none:  return "drag"
         case .left:  return "click+drag"
@@ -881,16 +881,16 @@ struct StripStepperRow: View {
 /// One row of the per-section bindings editor — action label on the left,
 /// ShortcutRecorder control on the right.
 struct BindingEditorRow: View {
-    let type: ShortcutType
+    let type: HotkeyType
     let label: String
-    @State private var userShortcut: UserShortcut
+    @State private var userHotkey: UserHotkey
 
-    init(type: ShortcutType, label: String) {
+    init(type: HotkeyType, label: String) {
         self.type = type
         self.label = label
-        let loaded = ShortcutsManager.shared.load(for: type)
-            ?? UserShortcut(type: type, mouseButton: .none)
-        self._userShortcut = State(initialValue: loaded)
+        let loaded = HotkeysManager.shared.load(for: type)
+            ?? UserHotkey(type: type, mouseButton: .none)
+        self._userHotkey = State(initialValue: loaded)
     }
 
     var body: some View {
@@ -899,12 +899,12 @@ struct BindingEditorRow: View {
                 .font(.system(size: stripLabelFontSize))
                 .foregroundStyle(.secondary)
                 .frame(width: stripLabelWidth, alignment: .leading)
-            ShortcutNSView(shortcut: $userShortcut.shortcut)
-                .onChange(of: userShortcut.shortcut) { newValue in
+            HotkeyRecorderView(shortcut: $userHotkey.shortcut)
+                .onChange(of: userHotkey.shortcut) { newValue in
                     if newValue == nil {
-                        ShortcutsManager.shared.delete(for: type)
+                        HotkeysManager.shared.delete(for: type)
                     } else {
-                        ShortcutsManager.shared.save(userShortcut)
+                        HotkeysManager.shared.save(userHotkey)
                     }
                 }
         }

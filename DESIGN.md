@@ -25,7 +25,7 @@ adds noise or fights the platform, cut it.
 - **Mood:** Calm, premium, native. The product gets out of the way.
 - **Three brand signatures** (carry all distinctiveness so the native SF type can stay neutral):
   1. The **chevron logomark** (the `M`-stroke: `M5.5 26.5 L5.5 5.5 L16 19 L26.5 5.5 L26.5 26.5`).
-  2. The **mono keycap motif** — monospace for keycaps, shortcut glyphs, version tags, eyebrow labels.
+  2. The **mono keycap motif** — monospace for keycaps, hotkey glyphs, version tags, eyebrow labels.
   3. The **aurora wash** — a low-opacity cyan→pink radial, hero + first-run only.
 
 ## Typography
@@ -37,7 +37,7 @@ adds noise or fights the platform, cut it.
 - **Signature / keycaps / labels / data:** **JetBrains Mono** (free; or **Berkeley Mono** if
   licensed). Load on web via Google Fonts (`JetBrains+Mono:wght@400;500;600`). In the macOS
   app, `Font.system(.body, design: .monospaced)` (SF Mono) is the native equivalent — keep
-  the same role (keycaps, shortcut glyphs, version tags, mono eyebrow labels).
+  the same role (keycaps, hotkey glyphs, version tags, mono eyebrow labels).
   - *Risk (deliberate):* mono is pushed past keycaps into section labels and hero eyebrows.
     Keep it for short strings only — never body copy.
 - **Code:** JetBrains Mono / SF Mono.
@@ -67,7 +67,7 @@ adds noise or fights the platform, cut it.
 - **Approach:** hybrid — calm HIG surface hierarchy in-app; composition-first
   ("first viewport as poster") on marketing.
 - **Risk (deliberate):** marketing breaks the centered-everything pattern — use an
-  asymmetric / left-aligned editorial moment for the pillars + shortcuts (avoids the
+  asymmetric / left-aligned editorial moment for the pillars + hotkeys (avoids the
   AI-slop centered grid flagged in the design review).
 - **Max content width (web):** ~1080–1152px.
 - **Border radius:** sm 6px (keycaps) · md 9–11px (inputs/cards) · lg 14–18px (windows/heroes) · full 9999px (pills/buttons).

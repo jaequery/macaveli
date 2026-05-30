@@ -4,12 +4,12 @@ import LaunchAtLogin
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate!
-    var shortcutMonitor: GlobalShortcutMonitor?
+    var hotkeyMonitor: GlobalShortcutMonitor?
 
     override init() {
         super.init()
         AppDelegate.shared = self
-        self.shortcutMonitor = GlobalShortcutMonitor()
+        self.hotkeyMonitor = GlobalShortcutMonitor()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -28,7 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             UserDefaults.standard.set(true, forKey: didApplyKey)
         }
 
-        let _ = ShortcutsManager.shared // immediately register shortcuts so we won't wait for the UI
+        let _ = HotkeysManager.shared // immediately register hotkeys so we won't wait for the UI
         let _ = PasteManager.shared // start clipboard monitor before the first hotkey press
         PasteWindowController.register() // wire PasteManager's panel-host factory
         // Sync the "keep external display on" toggle to the live pmset state

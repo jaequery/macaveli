@@ -159,8 +159,8 @@ function Nav() {
         <a href="/#inside" className="transition hover:text-[var(--ink)]">
           What&rsquo;s inside
         </a>
-        <a href="/#shortcuts" className="transition hover:text-[var(--ink)]">
-          Shortcuts
+        <a href="/#hotkeys" className="transition hover:text-[var(--ink)]">
+          Hotkeys
         </a>
         <a href="/changelog" className="text-[var(--ink)]">
           Changelog

@@ -45,23 +45,23 @@ There is no test target.
 
 ### Accessibility-permissions gotcha when iterating locally
 
-macOS keys accessibility grants by bundle id + binary signature. Running multiple builds (Xcode, `make`, an installed release) confuses System Settings → Privacy & Security → Accessibility — only one will keep the permission. If shortcuts silently stop working after a rebuild: quit every Macaveli instance, delete it from the Accessibility list, relaunch the build under test, re-grant.
+macOS keys accessibility grants by bundle id + binary signature. Running multiple builds (Xcode, `make`, an installed release) confuses System Settings → Privacy & Security → Accessibility — only one will keep the permission. If hotkeys silently stop working after a rebuild: quit every Macaveli instance, delete it from the Accessibility list, relaunch the build under test, re-grant.
 
 ## Architecture
 
 macOS menu-bar app (SwiftUI `MenuBarExtra` in `Macaveli/src/App.swift`, with an `NSApplicationDelegateAdaptor` for lifecycle). No main window — UI lives in the menubar popover.
 
-### Control flow when a shortcut fires
+### Control flow when a hotkey fires
 
-The interesting code path is shortcut → mouse event interception → AX window manipulation. Three singletons cooperate:
+The interesting code path is hotkey → mouse event interception → AX window manipulation. Three singletons cooperate:
 
-1. **`ShortcutsManager.shared`** (`src/Manager/ShortcutsManager.swift`) — loads `UserShortcut`s from `UserDefaults` (one per `ShortcutType`: `.move`, `.resize`). For each shortcut it picks one of two registration paths based on whether the shortcut is modifier-only:
-   - **Normal shortcut** (has a non-modifier key): registered via ShortcutRecorder's `GlobalShortcutMonitor` with separate `.down` / `.up` `ShortcutAction`s.
+1. **`HotkeysManager.shared`** (`src/Manager/HotkeysManager.swift`) — loads `UserHotkey`s from `UserDefaults` (one per `HotkeyType`: `.move`, `.resize`). For each hotkey it picks one of two registration paths based on whether the hotkey is modifier-only:
+   - **Normal hotkey** (has a non-modifier key): registered via ShortcutRecorder's `GlobalShortcutMonitor` with separate `.down` / `.up` `ShortcutAction`s.
    - **Modifier-only** (e.g. just `⌃⌥`): ShortcutRecorder doesn't deliver key-up for these, so it falls back to `NSEvent.addGlobalMonitorForEvents` + `addLocalMonitorForEvents` watching `.flagsChanged`. `handleFlagsChanged` force-stops tracking on every flag change, then starts again if the current modifier mask matches.
-2. **`CGEventSupervisor`** (SPM dep) — when a `UserShortcut` has a `mouseButton` other than `.none`, `startTracking` subscribes to `.leftMouseDown`/`.rightMouseDown` (and `…Up`) CGEvents, **cancels** them (so the host app never sees the click), and uses them as the start/stop trigger for `MouseTracker`. When `mouseButton == .none`, `MouseTracker` starts immediately on shortcut-down.
+2. **`CGEventSupervisor`** (SPM dep) — when a `UserHotkey` has a `mouseButton` other than `.none`, `startTracking` subscribes to `.leftMouseDown`/`.rightMouseDown` (and `…Up`) CGEvents, **cancels** them (so the host app never sees the click), and uses them as the start/stop trigger for `MouseTracker`. When `mouseButton == .none`, `MouseTracker` starts immediately on hotkey-down.
 3. **`MouseTracker.shared`** (`src/Manager/MouseTracker.swift`) — once started, calls `WindowManager.getCurrentWindow()` once to snapshot the target window, then installs an `NSEvent.addGlobalMonitorForEvents` for the appropriate drag/move event type and updates the window's AX `kAXPositionAttribute` / `kAXSizeAttribute` on each callback. A 4 s `trackingTimer` auto-stops tracking as a safety net.
 
-`AppDelegate.applicationDidFinishLaunching` touches `ShortcutsManager.shared` immediately so shortcuts work before the menubar UI is ever opened.
+`AppDelegate.applicationDidFinishLaunching` touches `HotkeysManager.shared` immediately so hotkeys work before the menubar UI is ever opened.
 
 ### Window targeting
 
@@ -93,7 +93,7 @@ Declared in `Macaveli.xcodeproj/project.pbxproj`:
 
 ## Preferences
 
-All settings live in `UserDefaults` via plain string keys. The canonical list is `PreferenceKey` in `src/Manager/Preferences.swift` (`focusOnApp`, `showMenuBarIcon`, `useQuadrants`, `requireMouseClick`). Per-shortcut state is stored separately by `ShortcutsManager` under `"<ShortcutType>"` (archived `Shortcut`) and `"<ShortcutType>_mouseButton"`.
+All settings live in `UserDefaults` via plain string keys. The canonical list is `PreferenceKey` in `src/Manager/Preferences.swift` (`focusOnApp`, `showMenuBarIcon`, `useQuadrants`, `requireMouseClick`). Per-hotkey state is stored separately by `HotkeysManager` under `"<HotkeyType>"` (archived `Shortcut`) and `"<HotkeyType>_mouseButton"`.
 
 ## Design System
 

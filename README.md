@@ -17,7 +17,7 @@ Each app builds standalone; there's no shared package layer yet.
 
 Macaveli is for people who don't want to think about their window manager.
 Hotkeys are the product — the menubar popover is a place to **remember** the
-shortcuts, not a place to operate the app. If you catch yourself clicking
+hotkeys, not a place to operate the app. If you catch yourself clicking
 around in it, we've failed.
 
 That reframes every UI decision. Bindings are the headline because that's
@@ -27,7 +27,7 @@ management because they share the same loop: one keystroke, no break in
 flow, no context switch.
 
 The success criterion: you open the popover the first week to learn the
-shortcuts, and then maybe never again. The dock icon doesn't exist. The
+hotkeys, and then maybe never again. The dock icon doesn't exist. The
 menubar icon barely does. Macaveli works best when you forget you installed
 it — when `⌃⌘↑` is just "how my Mac works now."
 
@@ -43,7 +43,7 @@ with the mouse.
 Linux desktops and BetterTouchTool have had the right primitive for decades:
 **hold a modifier, drag anywhere on the window to move it; hold a different
 modifier, drag anywhere to resize it.** That one gesture replaces ten snap
-shortcuts. Macaveli brings that primitive to macOS cleanly, pairs it with
+hotkeys. Macaveli brings that primitive to macOS cleanly, pairs it with
 the snap actions you still want (maximize, center, halves), and includes a
 hotkey-driven screen recorder so the *record* loop doesn't break the
 keyboard flow either.
