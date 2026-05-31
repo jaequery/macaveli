@@ -120,14 +120,36 @@ final class KeyRepeatManager: ObservableObject {
 
     // MARK: - Logout (full apply)
 
-    /// Polite, user-confirmed logout so the new repeat values take effect in
-    /// every app. Uses the standard System Events logout flow.
+    /// Trigger a logout so the new repeat values take effect in every app.
+    ///
+    /// Both paths are Apple Events, which macOS gates behind Automation
+    /// permission. We try `loginwindow`'s standard "log out" event first (it
+    /// shows the normal confirmation dialog and tends to need no extra grant),
+    /// then fall back to System Events. If macOS blocks both, we surface a clear
+    /// alert telling the user to log out by hand — the button must never just
+    /// silently do nothing.
     func logOut() {
-        let script = "tell application \"System Events\" to log out"
-        guard let appleScript = NSAppleScript(source: script) else { return }
-        var err: NSDictionary?
-        appleScript.executeAndReturnError(&err)
-        if let err = err { NSLog("Macaveli: logout request failed: \(err)") }
+        let attempts = [
+            "tell application \"loginwindow\" to «event aevtlogo»",
+            "tell application \"System Events\" to log out",
+        ]
+        for source in attempts {
+            guard let script = NSAppleScript(source: source) else { continue }
+            var err: NSDictionary?
+            script.executeAndReturnError(&err)
+            if err == nil { return }   // logout flow started — done
+            NSLog("Macaveli: logout attempt failed: \(err!)")
+        }
+        presentLogoutFallback()
+    }
+
+    private func presentLogoutFallback() {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = "Log out to apply your new key-repeat settings"
+        alert.informativeText = "Macaveli couldn’t start the logout for you — macOS needs permission to do that. Log out yourself from the  menu → Log Out, then log back in. (You can grant the permission under System Settings → Privacy & Security → Automation.)"
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     // MARK: - Karabiner detection

@@ -23,6 +23,13 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.25.11",
+    date: "2026-05-31",
+    changes: [
+      { type: "fix", text: "Fixed the Log Out button in Keyboard settings — it now reliably starts logout, and if macOS blocks it, points you to the  menu instead of doing nothing." },
+    ],
+  },
+  {
     version: "0.25.10",
     date: "2026-05-31",
     summary: "Dial in your keyboard's repeat speed.",
