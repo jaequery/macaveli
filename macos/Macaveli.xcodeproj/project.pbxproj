@@ -28,6 +28,7 @@
 		FF11EG012B31EE0000FFEEE0 /* ffmpeg in Resources */ = {isa = PBXBuildFile; fileRef = FF11EG002B31EE0000FFEEE0 /* ffmpeg */; };
 		1798B1202B4812D600E07964 /* CheatsheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1798B11F2B4812D600E07964 /* CheatsheetView.swift */; };
 		1798B1222B48131400E07964 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1798B1212B48131400E07964 /* InfoView.swift */; };
+		1A2B3C4D5E6F00112233A0F2 /* KeyboardSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F00112233B0F2 /* KeyboardSectionView.swift */; };
 		336441112C189812000A1C90 /* CGEventSupervisor in Frameworks */ = {isa = PBXBuildFile; productRef = 336441102C189812000A1C90 /* CGEventSupervisor */; };
 		338FBF5B2C1855AE00D1ECA6 /* ShortcutRecorder in Frameworks */ = {isa = PBXBuildFile; productRef = 338FBF5A2C1855AE00D1ECA6 /* ShortcutRecorder */; };
 		338FBF5D2C1855B200D1ECA6 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 338FBF5C2C1855B200D1ECA6 /* LaunchAtLogin */; };
@@ -46,6 +47,7 @@
 		CC001A010201000000002001 /* PasteboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002001 /* PasteboardItem.swift */; };
 		CC001A010201000000002002 /* PasteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002002 /* PasteManager.swift */; };
 		CC001A010301000000002003 /* DisplaySleepManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010302000000002003 /* DisplaySleepManager.swift */; };
+		1A2B3C4D5E6F00112233A0F1 /* KeyRepeatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F00112233B0F1 /* KeyRepeatManager.swift */; };
 		CC001A010201000000002003 /* PasteWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002003 /* PasteWindow.swift */; };
 		CC001A010201000000002004 /* PasteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002004 /* PasteView.swift */; };
 		SS001A010201000000003001 /* ScreenshotManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS001A010202000000003001 /* ScreenshotManager.swift */; };
@@ -75,6 +77,7 @@
 		1781A5EA2B31EE4B00F27910 /* Macaveli.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Macaveli.entitlements; sourceTree = "<group>"; };
 		1798B11F2B4812D600E07964 /* CheatsheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheatsheetView.swift; sourceTree = "<group>"; };
 		1798B1212B48131400E07964 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F00112233B0F2 /* KeyboardSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardSectionView.swift; sourceTree = "<group>"; };
 		E236331D2B44669200C0E61F /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		E2CABBA42B447AEA00D66D43 /* UpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesView.swift; sourceTree = "<group>"; };
 		E2CABBA72B44D69B00D66D43 /* UpdatesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesManager.swift; sourceTree = "<group>"; };
@@ -90,6 +93,7 @@
 		CC001A010202000000002001 /* PasteboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardItem.swift; sourceTree = "<group>"; };
 		CC001A010202000000002002 /* PasteManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteManager.swift; sourceTree = "<group>"; };
 		CC001A010302000000002003 /* DisplaySleepManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplaySleepManager.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F00112233B0F1 /* KeyRepeatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyRepeatManager.swift; sourceTree = "<group>"; };
 		CC001A010202000000002003 /* PasteWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteWindow.swift; sourceTree = "<group>"; };
 		CC001A010202000000002004 /* PasteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteView.swift; sourceTree = "<group>"; };
 		SS001A010202000000003001 /* ScreenshotManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotManager.swift; sourceTree = "<group>"; };
@@ -117,6 +121,7 @@
 				1781A5E32B31EE4A00F27910 /* AppView.swift */,
 				1798B11F2B4812D600E07964 /* CheatsheetView.swift */,
 				1798B1212B48131400E07964 /* InfoView.swift */,
+				1A2B3C4D5E6F00112233B0F2 /* KeyboardSectionView.swift */,
 				E2CABBA42B447AEA00D66D43 /* UpdatesView.swift */,
 				177FB24B2B31FF1E00B11BA3 /* HotkeyRecorderView.swift */,
 				177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */,
@@ -146,6 +151,7 @@
 				BB001A010202000000001002 /* AnnotatorManager.swift */,
 				CC001A010202000000002002 /* PasteManager.swift */,
 				CC001A010302000000002003 /* DisplaySleepManager.swift */,
+				1A2B3C4D5E6F00112233B0F1 /* KeyRepeatManager.swift */,
 				SS001A010202000000003001 /* ScreenshotManager.swift */,
 			);
 			path = Manager;
@@ -306,6 +312,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1798B1222B48131400E07964 /* InfoView.swift in Sources */,
+				1A2B3C4D5E6F00112233A0F2 /* KeyboardSectionView.swift in Sources */,
 				1798B1202B4812D600E07964 /* CheatsheetView.swift in Sources */,
 				177FB2512B32160B00B11BA3 /* AppDelegate.swift in Sources */,
 				177FB24C2B31FF1E00B11BA3 /* HotkeyRecorderView.swift in Sources */,
@@ -337,6 +344,7 @@
 				CC001A010201000000002001 /* PasteboardItem.swift in Sources */,
 				CC001A010201000000002002 /* PasteManager.swift in Sources */,
 				CC001A010301000000002003 /* DisplaySleepManager.swift in Sources */,
+				1A2B3C4D5E6F00112233A0F1 /* KeyRepeatManager.swift in Sources */,
 				CC001A010201000000002003 /* PasteWindow.swift in Sources */,
 				CC001A010201000000002004 /* PasteView.swift in Sources */,
 				SS001A010201000000003001 /* ScreenshotManager.swift in Sources */,

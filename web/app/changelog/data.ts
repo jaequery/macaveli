@@ -23,6 +23,14 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.25.10",
+    date: "2026-05-31",
+    summary: "Dial in your keyboard's repeat speed.",
+    changes: [
+      { type: "feature", text: "New Keyboard tweak: set how fast keys repeat and how long to wait before they start — faster than macOS's own sliders allow, with a one-tap Fast preset and a Reset to default. Takes full effect after you next log out." },
+    ],
+  },
+  {
     version: "0.25.9",
     date: "2026-05-31",
     summary: "Lid-closed Never Sleep that can't drain your battery in a bag.",

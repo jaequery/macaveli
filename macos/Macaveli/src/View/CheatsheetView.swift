@@ -210,6 +210,9 @@ struct TweaksTabView: View {
                 TweakGroup(title: "Power") {
                     NeverSleepRow()
                 }
+                TweakGroup(title: "Keyboard") {
+                    KeyboardSectionView()
+                }
             }
             .padding(.vertical, 6)
         }

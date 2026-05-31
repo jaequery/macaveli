@@ -19,6 +19,9 @@ enum PreferenceKey: String {
     case recordingCameraY = "recordingCameraY"
     case pasteHistorySize = "pasteHistorySize"
     case neverSleepMode = "neverSleepMode"
+    case keyRepeatOrigDelay = "keyRepeatOrigDelay"
+    case keyRepeatOrigInterval = "keyRepeatOrigInterval"
+    case keyRepeatSnapshotTaken = "keyRepeatSnapshotTaken"
 }
 
 /// Camera overlay geometry shared by the on-screen positioning bubble and the
