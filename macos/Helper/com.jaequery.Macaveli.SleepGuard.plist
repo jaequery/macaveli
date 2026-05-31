@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Label must equal this file's basename for SMAppService.daemon(...). -->
+    <key>Label</key>
+    <string>com.jaequery.Macaveli.SleepGuard</string>
+
+    <!-- Path to the helper executable, RELATIVE to the app bundle root. The
+         binary is embedded in Contents/MacOS so it sits on a SIP/Gatekeeper-
+         validated, root-owned path (no user-writable launch target). -->
+    <key>BundleProgram</key>
+    <string>Contents/MacOS/MacaveliSleepGuard</string>
+
+    <!-- Start at load and keep alive: it must run independent of the app, and
+         restart if it ever crashes, so the battery safety rule is always armed
+         while registered. It is unregistered by the app when the feature is off. -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- It blocks on a runloop source; this is a background utility. -->
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <!-- Associate the daemon with the app so System Settings → Login Items
+         groups it under Macaveli, and SMAppService can manage it. -->
+    <key>AssociatedBundleIdentifiers</key>
+    <array>
+        <string>com.jaequery.Macaveli</string>
+    </array>
+</dict>
+</plist>

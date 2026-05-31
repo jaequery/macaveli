@@ -16,11 +16,16 @@ render-menubar-icon:
 	@swift scripts/render-menubar-icon.swift
 
 build: fetch-ffmpeg render-icon
+	@# Strip any previously-embedded SleepGuard before xcodebuild re-signs, so the
+	@# incremental code-sign step never trips over the helper we add post-build.
+	@rm -f "build/Debug/Macaveli.app/Contents/MacOS/MacaveliSleepGuard" \
+		"build/Debug/Macaveli.app/Contents/Library/LaunchDaemons/com.jaequery.Macaveli.SleepGuard.plist" 2>/dev/null || true
 	xcodebuild -scheme Macaveli build SYMROOT=$(PWD)/build
 	@if [ -f Macaveli/AppIcon.icns ]; then \
 		cp Macaveli/AppIcon.icns "build/Debug/Macaveli.app/Contents/Resources/AppIcon.icns"; \
 		echo "Overwrote bundle .icns with full-fidelity version"; \
 	fi
+	@./scripts/embed-sleepguard.sh "build/Debug/Macaveli.app" "Apple Development"
 	@touch "build/Debug/Macaveli.app"
 
 run-app:

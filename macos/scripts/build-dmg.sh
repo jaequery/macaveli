@@ -133,12 +133,12 @@ if [[ -f "$FFMPEG_BIN" ]]; then
         "$FFMPEG_BIN"
 fi
 
-echo "→ Re-signing app shell…"
-codesign --force \
-    --sign "$SIGN_IDENTITY" \
-    --options runtime \
-    --timestamp \
-    "$APP_PATH"
+# Compile + embed + sign the SleepGuard root daemon (hardened runtime), then
+# re-seal the app shell. This script re-signs the outer .app itself, so it
+# replaces the standalone shell re-sign that used to live here. See
+# scripts/embed-sleepguard.sh and Helper/SleepGuard/main.swift.
+echo "→ Embedding SleepGuard daemon…"
+bash scripts/embed-sleepguard.sh "$APP_PATH" "$SIGN_IDENTITY" 1
 
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 

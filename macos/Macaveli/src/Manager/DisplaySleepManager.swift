@@ -1,6 +1,8 @@
 import AppKit
 import Foundation
 import IOKit.pwr_mgt
+import IOKit.ps
+import ServiceManagement
 
 // MARK: - NeverSleepMode
 
@@ -31,7 +33,7 @@ enum NeverSleepMode: String, CaseIterable {
         case .whileLidOpen:
             return "Keeps the screen on — no screen timeout, on battery or power. Closing the lid still sleeps. Turns off when you quit Macaveli."
         case .evenLidClosed:
-            return "Keeps the screen on, and stays awake even with the lid closed, on battery too — keeps an external display on. Drains battery and adds heat if closed in a bag. Stays on after you quit, until set to Off. Asks for your password."
+            return "Stays awake with the lid closed — for an external display. Only enables while plugged in, and turns itself back off automatically if you unplug, so it can't drain in a bag. Asks for your password."
         }
     }
 }
@@ -100,6 +102,17 @@ final class DisplaySleepManager: ObservableObject {
             return
         }
 
+        // `.evenLidClosed` runs on any power source and can't be scoped to AC —
+        // so on battery, with the lid shut, it drains hard and bakes in a bag.
+        // Refuse to *enable* it unless AC is connected; the SleepGuard daemon
+        // (registered below) then auto-reverts if the Mac is later unplugged, so
+        // the feature is bounded to "only while plugged in" from both ends.
+        if wantDisableSleep, !DisplaySleepManager.onACPower() {
+            presentNeedsACPower()
+            objectWillChange.send() // snap the control back to its current rung
+            return
+        }
+
         // Entering `.evenLidClosed` is a persistent, system-wide change — make
         // the user confirm before we even raise the password prompt.
         if wantDisableSleep, !confirmEnableEvenLidClosed() {
@@ -117,6 +130,10 @@ final class DisplaySleepManager: ObservableObject {
                 case .success:
                     self.applyAssertion(for: newMode)
                     self.commit(newMode)
+                    // Arm the safety daemon while in `.evenLidClosed`; disarm it
+                    // when leaving. Best-effort — a registration failure must not
+                    // block the user (it just means no auto-revert on unplug).
+                    self.setSleepGuard(enabled: wantDisableSleep)
                 case .cancelled:
                     // User dismissed the password prompt — snap back silently.
                     self.objectWillChange.send()
@@ -148,6 +165,10 @@ final class DisplaySleepManager: ObservableObject {
                 self.applyAssertion(for: resolved)
                 if resolved != self.mode { self.mode = resolved }
                 UserDefaults.standard.set(resolved.rawValue, forKey: PreferenceKey.neverSleepMode.rawValue)
+                // Keep the safety daemon's armed state in lockstep with the
+                // resolved mode — covers fresh launches and external `pmset`
+                // changes, not just in-app toggles.
+                self.setSleepGuard(enabled: resolved == .evenLidClosed)
             }
         }
     }
@@ -188,23 +209,66 @@ final class DisplaySleepManager: ObservableObject {
         assertionID = IOPMAssertionID(0)
     }
 
+    // MARK: - SleepGuard daemon
+
+    /// Label = the embedded LaunchDaemon plist's basename, per `SMAppService`.
+    private static let sleepGuardPlist = "com.jaequery.Macaveli.SleepGuard.plist"
+
+    /// Register or unregister the root SleepGuard daemon. It runs only while
+    /// `.evenLidClosed` is active and exists solely to clear `pmset disablesleep`
+    /// if the Mac is unplugged — so the dangerous setting can never strand on
+    /// battery in a bag. Idempotent and best-effort: failures are logged, never
+    /// surfaced as blocking errors, since the feature still works without it
+    /// (just without auto-revert). First registration sends the user to System
+    /// Settings → Login Items to approve the background item.
+    private func setSleepGuard(enabled: Bool) {
+        let service = SMAppService.daemon(plistName: Self.sleepGuardPlist)
+        do {
+            if enabled {
+                guard service.status != .enabled else { return }
+                try service.register()
+                NSLog("Macaveli: SleepGuard registered (status=\(service.status.rawValue)).")
+            } else {
+                guard service.status == .enabled else { return }
+                try service.unregister()
+                NSLog("Macaveli: SleepGuard unregistered.")
+            }
+        } catch {
+            NSLog("Macaveli: SleepGuard \(enabled ? "register" : "unregister") failed: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - User prompts
 
-    /// Modal confirmation shown before enabling `.evenLidClosed`, because the
-    /// change is system-wide, persists after Macaveli quits, and keeps the Mac
-    /// awake on battery. Returns true to proceed to the password prompt.
+    /// Modal confirmation shown before enabling `.evenLidClosed`, because it is a
+    /// system-wide change that needs root. It explains the safety net: the
+    /// SleepGuard daemon turns it back off automatically on unplug. Returns true
+    /// to proceed to the password prompt.
     private func confirmEnableEvenLidClosed() -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = "Keep your Mac awake even when the lid is closed?"
         alert.informativeText = """
-        This keeps the Mac running with the lid shut, on battery as well as power — handy with an external display, but it will drain the battery and add heat if the Mac is closed in a bag.
+        Useful with an external display: the Mac keeps running with the lid shut while it's plugged in.
 
-        It stays in effect even after you quit Macaveli, until you set Never Sleep back to Off. You'll be asked for your password to apply it.
+        For safety, Macaveli installs a small background helper that automatically turns this off the moment you unplug — so it can never drain the battery in a bag. You'll be asked for your password, and macOS may ask you to allow the helper in Login Items the first time.
         """
         alert.addButton(withTitle: "Continue")
         alert.addButton(withTitle: "Cancel")
         return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    /// Shown when the user tries to enable `.evenLidClosed` on battery. Plain
+    /// block — no password prompt is raised.
+    private func presentNeedsACPower() {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Plug in to keep the Mac awake with the lid closed"
+        alert.informativeText = """
+        This setting runs on battery too and can't be limited to power only, so it will drain the battery and add heat with the lid shut. Connect the Mac to power, then try again.
+        """
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     private func presentFailure(_ message: String) {
@@ -255,6 +319,16 @@ final class DisplaySleepManager: ObservableObject {
         // osascript reports a user-cancelled auth prompt as error -128.
         if message.contains("-128") { return .cancelled }
         return .failed(message)
+    }
+
+    /// True when the Mac is running on AC power. Synchronous IOKit read, no root.
+    /// Desktops with no battery report `kIOPSACPowerValue` (always on AC), so the
+    /// gate is a no-op there — exactly what we want.
+    static func onACPower() -> Bool {
+        guard let blob = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+              let source = IOPSGetProvidingPowerSourceType(blob)?.takeRetainedValue() as String?
+        else { return true } // can't tell -> don't block
+        return source == kIOPSACPowerValue
     }
 
     /// Reads the current `SleepDisabled` value from `pmset -g`. No root needed.

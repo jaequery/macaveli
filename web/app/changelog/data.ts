@@ -23,6 +23,32 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.25.9",
+    date: "2026-05-31",
+    summary: "Lid-closed Never Sleep that can't drain your battery in a bag.",
+    changes: [
+      { type: "improvement", text: 'The "even when the lid is closed" level now only turns on while your Mac is plugged in.' },
+      { type: "feature", text: "If you unplug while it's on, Macaveli now switches it back off for you automatically — so it can never keep the Mac awake and draining inside a closed bag." },
+    ],
+  },
+  {
+    version: "0.25.8",
+    date: "2026-05-31",
+    changes: [
+      { type: "improvement", text: "Never Sleep now keeps the screen itself on, on battery as well as power — not just preventing system sleep." },
+    ],
+  },
+  {
+    version: "0.25.7",
+    date: "2026-05-30",
+    changes: [
+      { type: "feature", text: "Add your own labels to clipboard items so they're easier to find." },
+      { type: "improvement", text: 'Renamed "Shortcuts" to "Hotkeys" throughout the app for clarity.' },
+      { type: "improvement", text: "The app version now shows next to the name in the menu header." },
+      { type: "fix", text: "Stopped the clipboard panel from jumping around with a scroll loop." },
+    ],
+  },
+  {
     version: "0.25.4",
     date: "2026-05-28",
     changes: [
