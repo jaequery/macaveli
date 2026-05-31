@@ -3,6 +3,14 @@
     <channel>
         <title>Macaveli</title>
         <item>
+            <title>0.25.9</title>
+            <pubDate>Sun, 31 May 2026 11:57:36 -0700</pubDate>
+            <sparkle:version>0.25.9</sparkle:version>
+            <sparkle:shortVersionString>0.25.9</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://macaveli.sfo3.cdn.digitaloceanspaces.com/Macaveli.zip" length="49772308" type="application/octet-stream" sparkle:edSignature="D2Jk4HD3x24lBPwegawu3JTp8fMDNoNHQW0e+MxBPr20L8/aNkWLsHC90XXT+rptlC2IwOB/jhIpd8w3XTTeCw=="/>
+        </item>
+        <item>
             <title>0.25.8</title>
             <pubDate>Sat, 30 May 2026 17:52:01 -0700</pubDate>
             <sparkle:version>0.25.8</sparkle:version>
@@ -17,14 +25,6 @@
             <sparkle:shortVersionString>0.25.7</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure url="https://macaveli.sfo3.cdn.digitaloceanspaces.com/Macaveli.zip" length="49740960" type="application/octet-stream" sparkle:edSignature="ZGJuywOeSa768SiuuSwrcyKeFOhmqP+uQbx3vY1AAB3KEyX8e33+fA7YZMlPy1hVKS+Q1hRL76Zf2Ie42HM0CQ=="/>
-        </item>
-        <item>
-            <title>0.25.6</title>
-            <pubDate>Fri, 29 May 2026 14:38:43 -0700</pubDate>
-            <sparkle:version>0.25.6</sparkle:version>
-            <sparkle:shortVersionString>0.25.6</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://macaveli.sfo3.cdn.digitaloceanspaces.com/Macaveli.zip" length="49712236" type="application/octet-stream" sparkle:edSignature="r3I0+izYne/4MI517a0uPWBN8POlE5xuv0ebx0NnagIqwNXyDoGWpS2Vmuc604B8qgtLl5iiU7GyM2jKFEj6Dg=="/>
         </item>
     </channel>
 </rss>
