@@ -12,14 +12,13 @@ struct KeyboardSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Key Repeat")
-                .font(.system(size: 12.5))
             if manager.karabinerPresent { karabinerNote }
             delaySlider
             intervalSlider
             buttonRow
-            logoutBanner
+            if manager.needsLogout { logoutBanner }
         }
+        .animation(.easeInOut(duration: 0.16), value: manager.needsLogout)
         .onAppear {
             manager.refreshFromSystem()
             delay = Double(manager.delayUnits)
@@ -43,7 +42,7 @@ struct KeyboardSectionView: View {
 
     private var delaySlider: some View {
         sliderRow(
-            title: "Delay before repeat",
+            title: "Delay until repeat",
             value: $delay,
             range: KeyRepeatManager.delayUnitRange
         )
@@ -51,7 +50,7 @@ struct KeyboardSectionView: View {
 
     private var intervalSlider: some View {
         sliderRow(
-            title: "Repeat speed",
+            title: "Key repeat rate",
             value: $interval,
             range: KeyRepeatManager.intervalUnitRange
         )
@@ -64,7 +63,7 @@ struct KeyboardSectionView: View {
                     .font(.system(size: 12, weight: .medium))
                 Spacer()
                 Text("\(KeyRepeatManager.ms(Int(value.wrappedValue.rounded()))) ms")
-                    .font(.system(size: 11))
+                    .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
@@ -84,32 +83,56 @@ struct KeyboardSectionView: View {
 
     private var buttonRow: some View {
         HStack(spacing: 8) {
-            Button("Fast") {
+            Button {
                 manager.applyFastPreset()
                 syncFromManager()
+            } label: {
+                Label("Fast", systemImage: "hare")
+                    .font(.system(size: 11))
             }
             .controlSize(.small)
+            .help("150 ms delay, 15 ms repeat — past the System Settings floor")
 
-            Button("Reset to macOS default") {
+            Spacer()
+
+            Button("Reset to macOS Default") {
                 manager.resetToSystemDefault()
                 syncFromManager()
             }
+            .buttonStyle(.borderless)
             .controlSize(.small)
+            .font(.system(size: 11))
             .disabled(!manager.isCustomized)
-
-            Spacer()
         }
     }
 
+    /// Contextual banner — appears only when this session changed the values,
+    /// so a logout is actually needed. Mirrors the orange permission-banner
+    /// treatment in CheatSection, tinted with the accent instead.
     private var logoutBanner: some View {
         HStack(spacing: 8) {
+            Image(systemName: "rectangle.portrait.and.arrow.right")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.accentColor)
             Text("Takes full effect after you log out.")
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-            Spacer()
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 4)
             Button("Log Out…") { manager.logOut() }
                 .controlSize(.small)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color.accentColor.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .stroke(Color.accentColor.opacity(0.25), lineWidth: 0.5)
+        )
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     // MARK: - Commit helpers

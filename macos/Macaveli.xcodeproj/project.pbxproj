@@ -29,6 +29,7 @@
 		1798B1202B4812D600E07964 /* CheatsheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1798B11F2B4812D600E07964 /* CheatsheetView.swift */; };
 		1798B1222B48131400E07964 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1798B1212B48131400E07964 /* InfoView.swift */; };
 		1A2B3C4D5E6F00112233A0F2 /* KeyboardSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F00112233B0F2 /* KeyboardSectionView.swift */; };
+		1A2B3C4D5E6F00112233A0F3 /* NeverSleepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F00112233B0F3 /* NeverSleepView.swift */; };
 		336441112C189812000A1C90 /* CGEventSupervisor in Frameworks */ = {isa = PBXBuildFile; productRef = 336441102C189812000A1C90 /* CGEventSupervisor */; };
 		338FBF5B2C1855AE00D1ECA6 /* ShortcutRecorder in Frameworks */ = {isa = PBXBuildFile; productRef = 338FBF5A2C1855AE00D1ECA6 /* ShortcutRecorder */; };
 		338FBF5D2C1855B200D1ECA6 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 338FBF5C2C1855B200D1ECA6 /* LaunchAtLogin */; };
@@ -78,6 +79,7 @@
 		1798B11F2B4812D600E07964 /* CheatsheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheatsheetView.swift; sourceTree = "<group>"; };
 		1798B1212B48131400E07964 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F00112233B0F2 /* KeyboardSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardSectionView.swift; sourceTree = "<group>"; };
+		1A2B3C4D5E6F00112233B0F3 /* NeverSleepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeverSleepView.swift; sourceTree = "<group>"; };
 		E236331D2B44669200C0E61F /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		E2CABBA42B447AEA00D66D43 /* UpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesView.swift; sourceTree = "<group>"; };
 		E2CABBA72B44D69B00D66D43 /* UpdatesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesManager.swift; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 				1798B11F2B4812D600E07964 /* CheatsheetView.swift */,
 				1798B1212B48131400E07964 /* InfoView.swift */,
 				1A2B3C4D5E6F00112233B0F2 /* KeyboardSectionView.swift */,
+				1A2B3C4D5E6F00112233B0F3 /* NeverSleepView.swift */,
 				E2CABBA42B447AEA00D66D43 /* UpdatesView.swift */,
 				177FB24B2B31FF1E00B11BA3 /* HotkeyRecorderView.swift */,
 				177FB2402B31F9B900B11BA3 /* PermissionsRequestView.swift */,
@@ -313,6 +316,7 @@
 			files = (
 				1798B1222B48131400E07964 /* InfoView.swift in Sources */,
 				1A2B3C4D5E6F00112233A0F2 /* KeyboardSectionView.swift in Sources */,
+				1A2B3C4D5E6F00112233A0F3 /* NeverSleepView.swift in Sources */,
 				1798B1202B4812D600E07964 /* CheatsheetView.swift in Sources */,
 				177FB2512B32160B00B11BA3 /* AppDelegate.swift in Sources */,
 				177FB24C2B31FF1E00B11BA3 /* HotkeyRecorderView.swift in Sources */,

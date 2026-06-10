@@ -202,11 +202,12 @@ struct TabSwitcher: View {
 
 /// Mac behavior tweaks macOS doesn't expose, grouped by domain. Unlike the
 /// Hotkeys sections, the control is the content here — there's nothing to
-/// hide behind a gear, so groups are plain labels and rows are self-describing.
+/// hide behind a gear, so each group is a System-Settings-style card under a
+/// tracked-caps header.
 struct TweaksTabView: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
                 TweakGroup(title: "Power") {
                     NeverSleepRow()
                 }
@@ -214,59 +215,40 @@ struct TweaksTabView: View {
                     KeyboardSectionView()
                 }
             }
-            .padding(.vertical, 6)
+            .padding(.vertical, 8)
         }
     }
 }
 
-/// Plain group header (same tracked-caps treatment as a Hotkeys section
-/// header) plus its rows. Deliberately gearless.
+/// Tracked-caps header (same treatment as a Hotkeys section header) over a
+/// rounded card holding the group's controls — the grouped-form idiom from
+/// System Settings, at popover scale. Deliberately gearless.
 struct TweakGroup<Content: View>: View {
     let title: String
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(title.uppercased())
                 .font(.system(size: 10, weight: .semibold))
                 .tracking(1.0)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
+                .padding(.horizontal, 16)
             content()
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.primary.opacity(0.04))
+                )
                 .padding(.horizontal, 12)
-                .padding(.bottom, 10)
         }
+        .padding(.bottom, 8)
     }
 }
 
-/// "Never Sleep" — three rungs of keeping the Mac awake, from off to
-/// lid-closed. The dedicated tab is the whole point: each rung's trade-off is
-/// spelled out under the control. See `NeverSleepMode` for the mechanisms.
-struct NeverSleepRow: View {
-    @ObservedObject private var displaySleep = DisplaySleepManager.shared
+// NeverSleepRow lives in NeverSleepView.swift.
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Never Sleep")
-                .font(.system(size: 12.5))
-            Picker("", selection: Binding(
-                get: { displaySleep.mode },
-                set: { displaySleep.setMode($0) }
-            )) {
-                Text("Off").tag(NeverSleepMode.off)
-                Text("When lid is on").tag(NeverSleepMode.whileLidOpen)
-                Text("Even when lid is off").tag(NeverSleepMode.evenLidClosed)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            Text(displaySleep.mode.explanation)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
 // MARK: - Section primitives
 
 enum CheatSectionID: Hashable { case snap, drag, record, annotate, paste }

@@ -45,6 +45,15 @@ final class KeyRepeatManager: ObservableObject {
     @Published private(set) var delayUnits: Int = defaultDelayUnits
     @Published private(set) var intervalUnits: Int = defaultIntervalUnits
 
+    /// True while the live global values differ from what was in effect when
+    /// the app launched — i.e. the user changed something this session and a
+    /// logout is needed for it to take full effect. Drives the contextual
+    /// "Log Out…" banner; reverting to the launch values clears it.
+    @Published private(set) var needsLogout = false
+
+    /// Values in effect at app launch (≈ since last login).
+    private var sessionBaseline: (delay: Int, interval: Int) = (0, 0)
+
     // MARK: - Global-domain pref plumbing (== `defaults write -g`)
 
     private let initialKeyRepeatKey = "InitialKeyRepeat" as CFString
@@ -63,6 +72,8 @@ final class KeyRepeatManager: ObservableObject {
 
     private init() {
         refreshFromSystem()
+        sessionBaseline = (delayUnits, intervalUnits)
+        updateNeedsLogout()
     }
 
     // MARK: - Reads
@@ -71,6 +82,12 @@ final class KeyRepeatManager: ObservableObject {
     func refreshFromSystem() {
         delayUnits = readGlobal(initialKeyRepeatKey) ?? Self.defaultDelayUnits
         intervalUnits = readGlobal(keyRepeatKey) ?? Self.defaultIntervalUnits
+        updateNeedsLogout()
+    }
+
+    private func updateNeedsLogout() {
+        needsLogout = delayUnits != sessionBaseline.delay
+            || intervalUnits != sessionBaseline.interval
     }
 
     /// True when our values differ from the snapshotted original (or no
@@ -101,6 +118,7 @@ final class KeyRepeatManager: ObservableObject {
 
         delayUnits = d
         intervalUnits = i
+        updateNeedsLogout()
     }
 
     func applyFastPreset() {

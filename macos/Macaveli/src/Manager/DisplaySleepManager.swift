@@ -6,7 +6,7 @@ import ServiceManagement
 
 // MARK: - NeverSleepMode
 
-/// How aggressively to keep the Mac awake. Three rungs of increasing strength —
+/// How aggressively to keep the Mac awake. Four rungs of increasing strength —
 /// each rung uses the lightest macOS mechanism that can deliver it.
 enum NeverSleepMode: String, CaseIterable {
     /// Normal macOS behavior — the Mac sleeps as configured.
@@ -15,15 +15,24 @@ enum NeverSleepMode: String, CaseIterable {
     /// display-sleep assertion — it disables the automatic screen timeout. No
     /// root, and it is released when the app quits, so it leaves nothing behind.
     /// Closing the lid still sleeps — assertions do not survive a lid-close; use
-    /// `.evenLidClosed` for that.
+    /// a lid-closed rung for that.
     case whileLidOpen = "whileLidOpen"
-    /// Stay awake even with the lid shut, on any power source, via
-    /// `pmset disablesleep`. Needs root (one password prompt) and persists in
-    /// the system power prefs across reboots *and* app removal until turned
-    /// off. It is the only macOS lever that survives a lid-close, and it cannot
-    /// be scoped to AC only — so on battery it keeps running in a bag. The UI
-    /// labels this explicitly and confirms before enabling.
+    /// Stay awake with the lid shut **while plugged in**, via
+    /// `pmset disablesleep`. Needs root (one password prompt). Bounded from both
+    /// ends: refuses to enable on battery, and the SleepGuard daemon auto-clears
+    /// it the moment the Mac is unplugged — so it can never bake in a bag.
     case evenLidClosed = "evenLidClosed"
+    /// Stay awake with the lid shut **even on battery** — the dangerous rung.
+    /// Same `pmset disablesleep` lever, but with no AC gate and no SleepGuard:
+    /// nothing turns it off automatically, and it persists across reboots and
+    /// app removal until switched off. Strictly for short, attended sessions;
+    /// the UI confirms with an explicit warning before enabling.
+    case evenLidClosedBattery = "evenLidClosedBattery"
+
+    /// Both lid-closed rungs ride on `pmset disablesleep`.
+    var usesDisableSleep: Bool {
+        self == .evenLidClosed || self == .evenLidClosedBattery
+    }
 
     /// One-line description shown under the control for the selected rung.
     var explanation: String {
@@ -33,7 +42,42 @@ enum NeverSleepMode: String, CaseIterable {
         case .whileLidOpen:
             return "Keeps the screen on — no screen timeout, on battery or power. Closing the lid still sleeps. Turns off when you quit Macaveli."
         case .evenLidClosed:
-            return "Stays awake with the lid closed — for an external display. Only enables while plugged in, and turns itself back off automatically if you unplug, so it can't drain in a bag. Asks for your password."
+            return "Stays awake with the lid closed while plugged in. Turns itself off the moment you unplug, so it can't drain in a bag. Asks for your password."
+        case .evenLidClosedBattery:
+            return "Stays awake with the lid closed, even on battery. Nothing turns this off for you — switch it off as soon as you're done."
+        }
+    }
+
+    // MARK: Hover-card copy (see NeverSleepInfoCard)
+
+    var title: String {
+        switch self {
+        case .off:                  return "Off"
+        case .whileLidOpen:         return "While Lid Open"
+        case .evenLidClosed:        return "Lid Closed · Plugged In"
+        case .evenLidClosedBattery: return "Lid Closed · On Battery"
+        }
+    }
+
+    var blurb: String {
+        switch self {
+        case .off:
+            return "Your Mac sleeps on its normal schedule."
+        case .whileLidOpen:
+            return "The screen never times out, on battery or power. Closing the lid still sleeps. Ends when you quit Macaveli."
+        case .evenLidClosed:
+            return "Keeps running with the lid shut — and turns itself off the moment you unplug. Asks for your password."
+        case .evenLidClosedBattery:
+            return "Keeps running with the lid shut on battery. Nothing turns it off automatically — it stays on until you switch it off, even after a restart."
+        }
+    }
+
+    var useFor: String {
+        switch self {
+        case .off:                  return "Everyday use."
+        case .whileLidOpen:         return "Reading, presenting, watching a long task."
+        case .evenLidClosed:        return "Clamshell mode with an external display."
+        case .evenLidClosedBattery: return "Finishing a download or render on the move — short sessions only."
         }
     }
 }
@@ -81,41 +125,50 @@ final class DisplaySleepManager: ObservableObject {
 
     // MARK: API
 
-    /// Switch to `newMode`. Transitions that cross the `.evenLidClosed` boundary
+    /// Switch to `newMode`. Transitions that cross the `disablesleep` boundary
     /// run `pmset disablesleep` as root off the main thread (one password
-    /// prompt); every other transition just flips the IOKit assertion locally
-    /// with no prompt. On cancel or failure the published mode is left
-    /// unchanged so the control snaps back.
+    /// prompt); every other transition — including swapping between the two
+    /// lid-closed flavors — just flips local state with no prompt. On cancel or
+    /// failure the published mode is left unchanged so the control snaps back.
     func setMode(_ newMode: NeverSleepMode) {
         // Guard against the in-flight target, not the committed value, so a
         // rapid second tap during the password prompt is not silently dropped.
         let current = pendingMode ?? mode
         guard newMode != current else { return }
 
-        let wantDisableSleep = (newMode == .evenLidClosed)
-        let haveDisableSleep = (current == .evenLidClosed)
+        let wantDisableSleep = newMode.usesDisableSleep
+        let haveDisableSleep = current.usesDisableSleep
 
-        // No root needed: only the assertion changes (off <-> whileLidOpen).
-        guard wantDisableSleep != haveDisableSleep else {
-            applyAssertion(for: newMode)
-            commit(newMode)
+        // Entering the battery flavor is the dangerous move — nothing reverts
+        // it automatically. Confirm every time, from any starting rung.
+        if newMode == .evenLidClosedBattery, !confirmEnableLidClosedBattery() {
+            objectWillChange.send() // snap the control back to its current rung
             return
         }
 
-        // `.evenLidClosed` runs on any power source and can't be scoped to AC —
-        // so on battery, with the lid shut, it drains hard and bakes in a bag.
-        // Refuse to *enable* it unless AC is connected; the SleepGuard daemon
-        // (registered below) then auto-reverts if the Mac is later unplugged, so
-        // the feature is bounded to "only while plugged in" from both ends.
-        if wantDisableSleep, !DisplaySleepManager.onACPower() {
+        // The plugged-in flavor only ever *enters* on AC; the SleepGuard daemon
+        // (armed below) then auto-reverts if the Mac is later unplugged, so it
+        // is bounded to "only while plugged in" from both ends.
+        if newMode == .evenLidClosed, !DisplaySleepManager.onACPower() {
             presentNeedsACPower()
             objectWillChange.send() // snap the control back to its current rung
             return
         }
 
+        // No root needed: off <-> whileLidOpen, or a swap between the two
+        // lid-closed flavors (`disablesleep` is already set; only the guard's
+        // armed state changes).
+        guard wantDisableSleep != haveDisableSleep else {
+            applyAssertion(for: newMode)
+            commit(newMode)
+            setSleepGuard(enabled: newMode == .evenLidClosed)
+            return
+        }
+
         // Entering `.evenLidClosed` is a persistent, system-wide change — make
-        // the user confirm before we even raise the password prompt.
-        if wantDisableSleep, !confirmEnableEvenLidClosed() {
+        // the user confirm before we even raise the password prompt. (The
+        // battery flavor already confirmed above with its own warning.)
+        if newMode == .evenLidClosed, !confirmEnableEvenLidClosed() {
             objectWillChange.send() // snap the control back to its current rung
             return
         }
@@ -130,10 +183,12 @@ final class DisplaySleepManager: ObservableObject {
                 case .success:
                     self.applyAssertion(for: newMode)
                     self.commit(newMode)
-                    // Arm the safety daemon while in `.evenLidClosed`; disarm it
-                    // when leaving. Best-effort — a registration failure must not
-                    // block the user (it just means no auto-revert on unplug).
-                    self.setSleepGuard(enabled: wantDisableSleep)
+                    // Arm the safety daemon only for the plugged-in flavor —
+                    // auto-revert-on-unplug is its contract. The battery flavor
+                    // exists precisely to opt out of that net, so the daemon
+                    // must stay disarmed there. Best-effort — a registration
+                    // failure must not block the user.
+                    self.setSleepGuard(enabled: newMode == .evenLidClosed)
                 case .cancelled:
                     // User dismissed the password prompt — snap back silently.
                     self.objectWillChange.send()
@@ -156,7 +211,12 @@ final class DisplaySleepManager: ObservableObject {
                 guard let self else { return }
                 let resolved: NeverSleepMode
                 if sleepDisabled == true {
-                    resolved = .evenLidClosed
+                    // Both lid-closed flavors look identical to pmset; keep the
+                    // flavor the user chose. External `disablesleep` changes
+                    // surface as the safe (guarded) flavor.
+                    resolved = self.mode == .evenLidClosedBattery
+                        ? .evenLidClosedBattery
+                        : .evenLidClosed
                 } else if self.mode == .whileLidOpen {
                     resolved = .whileLidOpen
                 } else {
@@ -258,6 +318,25 @@ final class DisplaySleepManager: ObservableObject {
         return alert.runModal() == .alertFirstButtonReturn
     }
 
+    /// Modal warning shown before entering `.evenLidClosedBattery` — the one
+    /// rung with no automatic off-switch. Cancel is the default button, on
+    /// purpose. Returns true to proceed.
+    private func confirmEnableLidClosedBattery() -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = "Stay awake with the lid closed — on battery?"
+        alert.informativeText = """
+        Use this for short, attended sessions only — finishing a download or a render with the Mac in hand.
+
+        Nothing turns this off for you: it keeps running on battery, builds heat with the lid shut, and survives restarts. Forgotten in a backpack, it can drain the battery flat and overheat the Mac.
+
+        Switch back to Off (or the plugged-in option) as soon as you're done.
+        """
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "I Understand — Keep Awake")
+        return alert.runModal() == .alertSecondButtonReturn
+    }
+
     /// Shown when the user tries to enable `.evenLidClosed` on battery. Plain
     /// block — no password prompt is raised.
     private func presentNeedsACPower() {
@@ -265,7 +344,7 @@ final class DisplaySleepManager: ObservableObject {
         alert.alertStyle = .warning
         alert.messageText = "Plug in to keep the Mac awake with the lid closed"
         alert.informativeText = """
-        This setting runs on battery too and can't be limited to power only, so it will drain the battery and add heat with the lid shut. Connect the Mac to power, then try again.
+        This option only enables while plugged in, so it can turn itself off when you unplug. Connect the Mac to power and try again — or, if you accept the risk, use the On Battery option for a short session.
         """
         alert.addButton(withTitle: "OK")
         alert.runModal()

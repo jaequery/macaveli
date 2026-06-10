@@ -23,6 +23,17 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.26.0",
+    date: "2026-06-10",
+    summary: "More control over staying awake, and a tidier Tweaks tab.",
+    changes: [
+      { type: "feature", text: "Never Sleep now has a lid-closed option that works on battery, for finishing a download or render with the Mac in hand. It's the one mode nothing turns off for you, so it asks you to confirm — switch it off when you're done." },
+      { type: "improvement", text: "The plugged-in lid-closed mode is clearer about what it does: it stays awake only while plugged in and turns itself off the moment you unplug, so it can't drain in a bag." },
+      { type: "improvement", text: "Redesigned the Tweaks tab with System Settings–style grouped cards, and added hover cards explaining each Never Sleep mode and when to use it." },
+      { type: "improvement", text: "The \"log out to take full effect\" banner in Keyboard settings now appears only when you've actually changed something this session, instead of always." },
+    ],
+  },
+  {
     version: "0.25.11",
     date: "2026-05-31",
     changes: [
