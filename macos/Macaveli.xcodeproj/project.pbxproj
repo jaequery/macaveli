@@ -487,7 +487,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.25.11;
+				CURRENT_PROJECT_VERSION = 0.26.0;
 				DEVELOPMENT_ASSET_PATHS = "\"Macaveli/Preview Content\"";
 				DEVELOPMENT_TEAM = 7BWUZV469T;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -503,7 +503,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.25.11;
+				MARKETING_VERSION = 0.26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaequery.Macaveli;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -521,7 +521,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.25.11;
+				CURRENT_PROJECT_VERSION = 0.26.0;
 				DEVELOPMENT_ASSET_PATHS = "\"Macaveli/Preview Content\"";
 				DEVELOPMENT_TEAM = 7BWUZV469T;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -537,7 +537,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.25.11;
+				MARKETING_VERSION = 0.26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaequery.Macaveli;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
