@@ -19,3 +19,6 @@ web/tsconfig.tsbuildinfo
 # Local secrets (DO Spaces upload creds, etc.) — never commit
 .env
 .gstack/
+
+# Fredrin session wrapper (holds a scoped API token)
+.fredrin/
