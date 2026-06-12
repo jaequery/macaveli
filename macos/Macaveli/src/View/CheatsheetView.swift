@@ -735,8 +735,22 @@ struct RecordSettingsStrip: View {
                 Button("Choose…") { pickFolder() }
                     .buttonStyle(.borderless)
                     .controlSize(.mini)
+                Button("Browse") { browseFolder() }
+                    .buttonStyle(.borderless)
+                    .controlSize(.mini)
             }
         }
+    }
+
+    private var resolvedSaveFolder: String {
+        let current = saveFolder.isEmpty
+            ? (FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first?.path ?? NSHomeDirectory())
+            : saveFolder
+        return (current as NSString).expandingTildeInPath
+    }
+
+    private func browseFolder() {
+        NSWorkspace.shared.open(URL(fileURLWithPath: resolvedSaveFolder, isDirectory: true))
     }
 
     private func pickFolder() {
@@ -745,10 +759,7 @@ struct RecordSettingsStrip: View {
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.prompt = "Select"
-        let current = saveFolder.isEmpty
-            ? (FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first?.path ?? NSHomeDirectory())
-            : saveFolder
-        panel.directoryURL = URL(fileURLWithPath: (current as NSString).expandingTildeInPath, isDirectory: true)
+        panel.directoryURL = URL(fileURLWithPath: resolvedSaveFolder, isDirectory: true)
         if panel.runModal() == .OK, let url = panel.url {
             saveFolder = url.path
         }
