@@ -20,6 +20,6 @@ web/tsconfig.tsbuildinfo
 .env
 .gstack/
 
-# Fredrin worker files
+# Fredrin session wrapper (holds a scoped API token)
 .fredrin/
 FREDRIN.md
