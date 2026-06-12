@@ -19,3 +19,7 @@ web/tsconfig.tsbuildinfo
 # Local secrets (DO Spaces upload creds, etc.) — never commit
 .env
 .gstack/
+
+# Fredrin worker files
+.fredrin/
+FREDRIN.md
