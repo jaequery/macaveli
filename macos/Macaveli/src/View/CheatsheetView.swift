@@ -726,16 +726,17 @@ struct RecordSettingsStrip: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .frame(width: 80, alignment: .leading)
-                Text(folderDisplayName)
-                    .font(.system(size: 11, design: .monospaced))
-                    .lineLimit(1)
-                    .truncationMode(.head)
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button { browseFolder() } label: {
+                    Text(folderDisplayName)
+                        .font(.system(size: 11, design: .monospaced))
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+                .help("Open in Finder")
+                Spacer(minLength: 0)
                 Button("Choose…") { pickFolder() }
-                    .buttonStyle(.borderless)
-                    .controlSize(.mini)
-                Button("Browse") { browseFolder() }
                     .buttonStyle(.borderless)
                     .controlSize(.mini)
             }
