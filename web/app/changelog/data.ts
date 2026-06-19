@@ -23,6 +23,15 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.27.0",
+    date: "2026-06-19",
+    summary: "Spot the right screenshot at a glance, and jump to your save folders faster.",
+    changes: [
+      { type: "feature", text: "Clipboard history now shows a thumbnail preview for copied images, so two screenshots are no longer indistinguishable — you can tell them apart without pasting first." },
+      { type: "improvement", text: "Save-folder paths are now clickable: tap the path to open the folder in Finder. The screen-record section gained the same shortcut, replacing its separate Browse button." },
+    ],
+  },
+  {
     version: "0.26.0",
     date: "2026-06-10",
     summary: "More control over staying awake, and a tidier Tweaks tab.",
