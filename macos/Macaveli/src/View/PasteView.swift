@@ -337,7 +337,11 @@ struct PasteRowView: View {
 
     @State private var isHovering = false
     @State private var imageDimensions: String? = nil
+    @State private var thumbnail: NSImage? = nil
     @FocusState private var labelFieldFocused: Bool
+
+    /// Displayed thumbnail edge, in points. Decoded at a Retina-safe pixel size.
+    private let thumbSide: CGFloat = 28
 
     private var isImage: Bool {
         if case .image = item.kind { return true }
@@ -358,12 +362,8 @@ struct PasteRowView: View {
                 .foregroundStyle(isSelected ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
                 .frame(width: 16, alignment: .trailing)
 
-            // Type icon
-            Image(systemName: isImage ? "photo" : "doc.on.clipboard")
-                .font(.system(size: 13, weight: .regular))
-                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-                .frame(width: 16, alignment: .center)
-                .accessibilityHidden(true)
+            // Type slot: a real thumbnail for image items, the glyph for text.
+            typeSlot
 
             // Preview text
             VStack(alignment: .leading, spacing: 1) {
@@ -413,12 +413,55 @@ struct PasteRowView: View {
         .padding(.vertical, 5)
         .background(rowBackground)
         .onHover { isHovering = $0 }
-        .onAppear { resolveImageDimensions() }
+        .onAppear {
+            resolveImageDimensions()
+            loadThumbnail()
+        }
         .accessibilityLabel(accessibilityRowLabel)
         .accessibilityAddTraits(.isButton)
     }
 
     // MARK: Helpers
+
+    /// The leading icon slot. Image rows show a decoded thumbnail (with a
+    /// glyph-tile fallback while loading or on failure); text rows keep the
+    /// original `doc.on.clipboard` glyph and 16pt frame, unchanged.
+    @ViewBuilder
+    private var typeSlot: some View {
+        if isImage {
+            Group {
+                if let thumbnail {
+                    Image(nsImage: thumbnail)
+                        .resizable()
+                        .interpolation(.medium)
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: thumbSide, height: thumbSide)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                } else {
+                    // Loading / fallback tile: the photo glyph on a faint fill.
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color.primary.opacity(0.06))
+                        .frame(width: thumbSide, height: thumbSide)
+                        .overlay(
+                            Image(systemName: "photo")
+                                .font(.system(size: 13, weight: .regular))
+                                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                        )
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(Color.primary.opacity(0.12), lineWidth: 0.5)
+            )
+            .accessibilityHidden(true)
+        } else {
+            Image(systemName: "doc.on.clipboard")
+                .font(.system(size: 13, weight: .regular))
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                .frame(width: 16, alignment: .center)
+                .accessibilityHidden(true)
+        }
+    }
 
     private var displayText: String {
         if case .image = item.kind {
@@ -475,6 +518,86 @@ struct PasteRowView: View {
             let desc = "\(w)×\(h)"
             DispatchQueue.main.async { imageDimensions = desc }
         }
+    }
+
+    /// Loads a downsampled thumbnail for image items. Serves the id-keyed cache
+    /// on a hit (no disk, no decode) so re-used rows during scroll never re-work;
+    /// otherwise decodes off the main thread. A missing file or decode failure
+    /// leaves `thumbnail` nil, so `typeSlot` shows the glyph fallback.
+    private func loadThumbnail() {
+        guard case .image(let filename) = item.kind, thumbnail == nil else { return }
+        if let cached = ThumbnailCache.shared.cached(for: item.id) {
+            thumbnail = cached
+            return
+        }
+        guard let url = PasteManager.shared.imageURL(for: filename),
+              FileManager.default.fileExists(atPath: url.path) else { return }
+        // Decode at a Retina-safe pixel size (up to 3×) so the tile stays crisp.
+        let maxPixel = thumbSide * 3
+        ThumbnailCache.shared.thumbnail(for: item.id, url: url, maxPixel: maxPixel) { image in
+            thumbnail = image
+        }
+    }
+}
+
+// MARK: - ThumbnailCache
+
+/// Decodes and caches small downsampled thumbnails for image rows.
+///
+/// Decoding happens on a utility queue via `CGImageSourceCreateThumbnailAtIndex`
+/// with `kCGImageSourceThumbnailMaxPixelSize`, so the full-res PNG is never
+/// loaded into a row. Results are cached by item id (`NSCache`, auto-evicting
+/// under memory pressure) so scrolling a long history never re-decodes.
+final class ThumbnailCache {
+
+    static let shared = ThumbnailCache()
+
+    private let cache = NSCache<NSString, NSImage>()
+    private let queue = DispatchQueue(label: "com.jaequery.Macaveli.thumbnails",
+                                      qos: .utility,
+                                      attributes: .concurrent)
+
+    private init() {
+        cache.countLimit = 256
+    }
+
+    /// Synchronous cache lookup; returns nil on a miss.
+    func cached(for id: UUID) -> NSImage? {
+        cache.object(forKey: id.uuidString as NSString)
+    }
+
+    /// Resolves a thumbnail for `id`, decoding off the main thread on a cache
+    /// miss. `completion` is always invoked on the main thread; it receives nil
+    /// when decoding fails (caller falls back to the glyph).
+    func thumbnail(for id: UUID,
+                   url: URL,
+                   maxPixel: CGFloat,
+                   completion: @escaping (NSImage?) -> Void) {
+        if let hit = cached(for: id) {
+            completion(hit)
+            return
+        }
+        queue.async {
+            let image = Self.makeThumbnail(url: url, maxPixel: maxPixel)
+            if let image {
+                self.cache.setObject(image, forKey: id.uuidString as NSString)
+            }
+            DispatchQueue.main.async { completion(image) }
+        }
+    }
+
+    private static func makeThumbnail(url: URL, maxPixel: CGFloat) -> NSImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixel,
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return nil
+        }
+        return NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
     }
 }
 
