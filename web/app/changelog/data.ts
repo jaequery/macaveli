@@ -23,6 +23,14 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.27.1",
+    date: "2026-06-19",
+    summary: "Fixes the \"Permissions Required\" dead-end when you launch straight from the disk image.",
+    changes: [
+      { type: "fix", text: "If you opened Macaveli right from the DMG or your Downloads folder, macOS could keep showing \"Permissions Required\" even after you granted access — because it was running from a temporary copy your grant didn't stick to. The prompt now spots this and offers a one-click \"Move to Applications & Relaunch\" to fix it for good, plus a reliable Quit & Relaunch to apply a fresh Screen Recording grant." },
+    ],
+  },
+  {
     version: "0.27.0",
     date: "2026-06-19",
     summary: "Spot the right screenshot at a glance, and jump to your save folders faster.",
