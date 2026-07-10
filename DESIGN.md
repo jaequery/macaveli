@@ -25,6 +25,12 @@ adds noise or fights the platform, cut it.
 - **Mood:** Calm, premium, native. The product gets out of the way.
 - **Three brand signatures** (carry all distinctiveness so the native SF type can stay neutral):
   1. The **chevron logomark** (the `M`-stroke: `M5.5 26.5 L5.5 5.5 L16 19 L26.5 5.5 L26.5 26.5`).
+     - **Menubar mark — the M-crown** (adopted 2026-07-10): the chevron M rendered as a
+       solid crown — body `M4.7 13.7 L3.3 3.7 L11 10.5 L18.7 3.7 L17.3 13.7 Z`, jewel
+       `circle(11, 5.0, r=1.7)`, band `rect(3.8, 15.5, 14.4×3.2, rx=1.4)` on a 22×22 grid.
+       Two readings: the M (peaks + valley) and the crown (The Prince — the name's story).
+       Always a solid monochrome silhouette in the menubar (template image); assets live in
+       `macos/Macaveli/Assets.xcassets/MenuBarIcon.imageset/`.
   2. The **mono keycap motif** — monospace for keycaps, hotkey glyphs, version tags, eyebrow labels.
   3. The **aurora wash** — a low-opacity cyan→pink radial, hero + first-run only.
 
