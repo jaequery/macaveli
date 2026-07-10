@@ -23,6 +23,14 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.27.2",
+    date: "2026-07-10",
+    summary: "Macaveli gets its crown — a new menubar icon you can spot at a glance.",
+    changes: [
+      { type: "improvement", text: "New menubar icon: the M-crown. The Macaveli M is redrawn as a solid crown silhouette, so it no longer blends in with other letter-shaped menubar icons — one glance and you know where your window hotkeys live." },
+    ],
+  },
+  {
     version: "0.27.1",
     date: "2026-06-19",
     summary: "Fixes the \"Permissions Required\" dead-end when you launch straight from the disk image.",
