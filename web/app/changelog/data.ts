@@ -23,6 +23,13 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.27.3",
+    date: "2026-07-10",
+    changes: [
+      { type: "fix", text: "The new M-crown menubar icon now renders at the same size as neighboring system icons — it was drawing noticeably smaller than the icons around it." },
+    ],
+  },
+  {
     version: "0.27.2",
     date: "2026-07-10",
     summary: "Macaveli gets its crown — a new menubar icon you can spot at a glance.",
