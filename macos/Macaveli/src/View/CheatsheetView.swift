@@ -110,6 +110,14 @@ struct CheatsheetView: View {
                     rows: pasteRows,
                     settings: { PasteSettingsStrip() }
                 )
+                SectionDivider()
+                CheatSection(
+                    id: .color,
+                    title: "Color",
+                    openSection: $openSection,
+                    rows: colorRows,
+                    settings: { ColorSettingsStrip() }
+                )
             }
             .padding(.vertical, 6)
         }
@@ -145,6 +153,11 @@ struct CheatsheetView: View {
     private var pasteRows: [CheatRowSpec] {
         [
             .init(type: .paste, label: "Show clipboard history", desc: "Browse and paste recent clipboard items"),
+        ]
+    }
+    private var colorRows: [CheatRowSpec] {
+        [
+            .init(type: .colorPicker, label: "Pick a color", desc: "Eyedropper — sample any pixel, hex copied"),
         ]
     }
 }
@@ -251,7 +264,7 @@ struct TweakGroup<Content: View>: View {
 
 // MARK: - Section primitives
 
-enum CheatSectionID: Hashable { case snap, drag, record, annotate, paste }
+enum CheatSectionID: Hashable { case snap, drag, record, annotate, paste, color }
 
 struct CheatRowSpec: Identifiable {
     var id: HotkeyType { type }
@@ -771,6 +784,14 @@ struct AnnotateSettingsStrip: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             BindingEditorRow(type: .annotate, label: "Hotkey")
+        }
+    }
+}
+
+struct ColorSettingsStrip: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            BindingEditorRow(type: .colorPicker, label: "Hotkey")
         }
     }
 }

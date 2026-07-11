@@ -12,11 +12,12 @@ enum HotkeyType: String, CaseIterable {
     case annotate = "Annotate"
     case paste = "Paste"
     case screenshot = "Screenshot"
+    case colorPicker = "Color Picker"
 
     var isMouseDriven: Bool {
         switch self {
         case .move, .resize: return true
-        case .maximize, .center, .leftHalf, .rightHalf, .record, .annotate, .paste, .screenshot: return false
+        case .maximize, .center, .leftHalf, .rightHalf, .record, .annotate, .paste, .screenshot, .colorPicker: return false
         }
     }
 }
@@ -92,6 +93,7 @@ class HotkeysManager {
         seedAnnotateHotkeyIfNeeded()
         seedPasteHotkeyIfNeeded()
         seedScreenshotHotkeyIfNeeded()
+        seedColorPickerHotkeyIfNeeded()
     }
 
     private func seedHalfHotkeysIfNeeded() {
@@ -174,6 +176,19 @@ class HotkeysManager {
             let modifiers: NSEvent.ModifierFlags = [.command, .control]
             let shortcut = Shortcut(code: .ansi4, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
             save(UserHotkey(type: .screenshot, shortcut: shortcut, mouseButton: .none))
+        }
+
+        UserDefaults.standard.set(true, forKey: didSeedKey)
+    }
+
+    private func seedColorPickerHotkeyIfNeeded() {
+        let didSeedKey = "didSeedColorPickerShortcut"
+        if UserDefaults.standard.bool(forKey: didSeedKey) { return }
+
+        if load(for: .colorPicker) == nil {
+            let modifiers: NSEvent.ModifierFlags = [.command, .control]
+            let shortcut = Shortcut(code: .ansiE, modifierFlags: modifiers, characters: nil, charactersIgnoringModifiers: nil)
+            save(UserHotkey(type: .colorPicker, shortcut: shortcut, mouseButton: .none))
         }
 
         UserDefaults.standard.set(true, forKey: didSeedKey)
@@ -312,6 +327,7 @@ class HotkeysManager {
                 case .annotate: AnnotatorManager.shared.openFromClipboard()
                 case .paste: PasteManager.shared.togglePanel()
                 case .screenshot: ScreenshotManager.shared.captureInteractiveToClipboard()
+                case .colorPicker: ColorPickerManager.shared.pick()
                 case .move, .resize: break
                 }
             }
