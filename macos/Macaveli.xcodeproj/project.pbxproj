@@ -53,6 +53,8 @@
 		CC001A010201000000002004 /* PasteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC001A010202000000002004 /* PasteView.swift */; };
 		SS001A010201000000003001 /* ScreenshotManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS001A010202000000003001 /* ScreenshotManager.swift */; };
 		SS001A010201000000003002 /* ScreenshotConfirmationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = SS001A010202000000003002 /* ScreenshotConfirmationOverlay.swift */; };
+		EE001A010201000000004001 /* ColorPickerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE001A010202000000004001 /* ColorPickerManager.swift */; };
+		EE001A010201000000004002 /* ColorSampleOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE001A010202000000004002 /* ColorSampleOverlay.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -100,6 +102,8 @@
 		CC001A010202000000002004 /* PasteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteView.swift; sourceTree = "<group>"; };
 		SS001A010202000000003001 /* ScreenshotManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotManager.swift; sourceTree = "<group>"; };
 		SS001A010202000000003002 /* ScreenshotConfirmationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotConfirmationOverlay.swift; sourceTree = "<group>"; };
+		EE001A010202000000004001 /* ColorPickerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPickerManager.swift; sourceTree = "<group>"; };
+		EE001A010202000000004002 /* ColorSampleOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorSampleOverlay.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +160,7 @@
 				CC001A010302000000002003 /* DisplaySleepManager.swift */,
 				1A2B3C4D5E6F00112233B0F1 /* KeyRepeatManager.swift */,
 				SS001A010202000000003001 /* ScreenshotManager.swift */,
+				EE001A010202000000004001 /* ColorPickerManager.swift */,
 			);
 			path = Manager;
 			sourceTree = "<group>";
@@ -177,6 +182,7 @@
 				CD0002002B31EE0000C0DD01 /* CountdownOverlay.swift */,
 				AA001A302C5F0003000AA001 /* CameraOverlayWindow.swift */,
 				SS001A010202000000003002 /* ScreenshotConfirmationOverlay.swift */,
+				EE001A010202000000004002 /* ColorSampleOverlay.swift */,
 			);
 			path = lib;
 			sourceTree = "<group>";
@@ -353,6 +359,8 @@
 				CC001A010201000000002004 /* PasteView.swift in Sources */,
 				SS001A010201000000003001 /* ScreenshotManager.swift in Sources */,
 				SS001A010201000000003002 /* ScreenshotConfirmationOverlay.swift in Sources */,
+				EE001A010201000000004001 /* ColorPickerManager.swift in Sources */,
+				EE001A010201000000004002 /* ColorSampleOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
