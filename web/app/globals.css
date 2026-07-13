@@ -30,6 +30,7 @@
   --cap-bg: rgba(0, 0, 0, 0.06);
   --cap-line: rgba(0, 0, 0, 0.11);
   --shadow: 0 30px 80px rgba(0, 0, 0, 0.16);
+  --shadow-card: 0 20px 48px rgba(0, 0, 0, 0.1);
   /* aurora signature — hero only, never behind body text */
   --aurora: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(125, 211, 252, 0.22), transparent 60%),
     radial-gradient(ellipse 80% 50% at 50% 100%, rgba(244, 114, 182, 0.12), transparent 60%);
@@ -52,6 +53,7 @@
     --cap-bg: rgba(255, 255, 255, 0.08);
     --cap-line: rgba(255, 255, 255, 0.13);
     --shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 20px 48px rgba(0, 0, 0, 0.5);
     --aurora: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(125, 211, 252, 0.13), transparent 60%),
       radial-gradient(ellipse 80% 50% at 50% 100%, rgba(244, 114, 182, 0.09), transparent 60%);
   }
