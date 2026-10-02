@@ -227,6 +227,9 @@ struct TweaksTabView: View {
                 TweakGroup(title: "Keyboard") {
                     KeyboardSectionView()
                 }
+                TweakGroup(title: "Remote") {
+                    RemoteMacSection()
+                }
             }
             .padding(.vertical, 8)
         }
