@@ -23,6 +23,15 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.28.0",
+    date: "2026-10-02",
+    summary: "Reach your other Macs from the menubar, and zoom into copied images.",
+    changes: [
+      { type: "feature", text: "Remote: view and control your other Macs. Nearby Macs show up automatically, you can save any Mac by address (works great over Tailscale), and one click opens it in Apple's Screen Sharing. A \"This Mac\" status tells you whether Screen Sharing is on and lists addresses you can copy." },
+      { type: "feature", text: "Zoom into clipboard images. Hit the magnifier on any image in the Paste panel to see it full size — zoom with +/−, reset with 0, drag to pan, and press Esc to drop right back into your clipboard list." },
+    ],
+  },
+  {
     version: "0.27.3",
     date: "2026-07-10",
     changes: [
