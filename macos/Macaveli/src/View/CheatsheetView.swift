@@ -6,7 +6,7 @@ import LaunchAtLogin
 // MARK: - Top-level cheatsheet view
 
 struct CheatsheetView: View {
-    enum Tab: Hashable { case hotkeys, tweaks }
+    enum Tab: Hashable { case hotkeys, tweaks, screensharing }
 
     @State private var tab: Tab = .hotkeys
     @State private var openSection: CheatSectionID? = nil
@@ -28,6 +28,8 @@ struct CheatsheetView: View {
                     hotkeysList
                 case .tweaks:
                     TweaksTabView()
+                case .screensharing:
+                    ScreensharingTabView()
                 }
             } else {
                 PermissionRequestView()
@@ -164,8 +166,9 @@ struct CheatsheetView: View {
 
 // MARK: - Tab switcher
 
-/// Two-segment switcher under the brand bar: Hotkeys (the hotkey cheatsheet)
-/// and Tweaks (Mac behavior adjustments). The selected segment lifts on a light
+/// Three-segment switcher under the brand bar: Hotkeys (the hotkey cheatsheet),
+/// Tweaks (Mac behavior adjustments) and Screensharing (view + control other
+/// Macs). The selected segment lifts on a light
 /// track; selection itself conveys which tab is active.
 struct TabSwitcher: View {
     @Binding var tab: CheatsheetView.Tab
@@ -176,6 +179,7 @@ struct TabSwitcher: View {
             HStack(spacing: 2) {
                 segment(.hotkeys, "Hotkeys")
                 segment(.tweaks, "Tweaks")
+                segment(.screensharing, "Screensharing")
             }
             .padding(2)
             .background(
@@ -227,6 +231,20 @@ struct TweaksTabView: View {
                 TweakGroup(title: "Keyboard") {
                     KeyboardSectionView()
                 }
+            }
+            .padding(.vertical, 8)
+        }
+    }
+}
+
+// MARK: - Screensharing tab
+
+/// See and control other Macs (and share this one). Same grouped-card idiom
+/// as Tweaks; the section itself lives in RemoteMacView.swift.
+struct ScreensharingTabView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 4) {
                 TweakGroup(title: "Remote") {
                     RemoteMacSection()
                 }
