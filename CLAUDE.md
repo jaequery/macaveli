@@ -121,7 +121,7 @@ post-build helper.
 
 `RemoteMacManager` (`src/Manager/RemoteMacManager.swift`) + `RemoteMacSection`
 (`src/View/RemoteMacView.swift`, mounted as the **Remote** group in its own
-**Screensharing** tab, `ScreensharingTabView` in `CheatsheetView.swift`). Macaveli streams no pixels itself — it finds Macs and hands a `vnc://` URL
+**Remote** tab, `RemoteTabView` in `CheatsheetView.swift`). Macaveli streams no pixels itself — it finds Macs and hands a `vnc://` URL
 to Apple's Screen Sharing.app (opened by bundle id `com.apple.ScreenSharing`, so a
 third-party VNC client can't hijack it), which owns auth, encryption, view and
 control.
