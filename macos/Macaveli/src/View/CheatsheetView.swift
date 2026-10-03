@@ -6,7 +6,7 @@ import LaunchAtLogin
 // MARK: - Top-level cheatsheet view
 
 struct CheatsheetView: View {
-    enum Tab: Hashable { case hotkeys, tweaks, screensharing }
+    enum Tab: Hashable { case hotkeys, tweaks, remote }
 
     @State private var tab: Tab = .hotkeys
     @State private var openSection: CheatSectionID? = nil
@@ -28,8 +28,8 @@ struct CheatsheetView: View {
                     hotkeysList
                 case .tweaks:
                     TweaksTabView()
-                case .screensharing:
-                    ScreensharingTabView()
+                case .remote:
+                    RemoteTabView()
                 }
             } else {
                 PermissionRequestView()
@@ -167,7 +167,7 @@ struct CheatsheetView: View {
 // MARK: - Tab switcher
 
 /// Three-segment switcher under the brand bar: Hotkeys (the hotkey cheatsheet),
-/// Tweaks (Mac behavior adjustments) and Screensharing (view + control other
+/// Tweaks (Mac behavior adjustments) and Remote (view + control other
 /// Macs). The selected segment lifts on a light
 /// track; selection itself conveys which tab is active.
 struct TabSwitcher: View {
@@ -179,7 +179,7 @@ struct TabSwitcher: View {
             HStack(spacing: 2) {
                 segment(.hotkeys, "Hotkeys")
                 segment(.tweaks, "Tweaks")
-                segment(.screensharing, "Screensharing")
+                segment(.remote, "Remote")
             }
             .padding(2)
             .background(
@@ -237,11 +237,11 @@ struct TweaksTabView: View {
     }
 }
 
-// MARK: - Screensharing tab
+// MARK: - Remote tab
 
 /// See and control other Macs (and share this one). Same grouped-card idiom
 /// as Tweaks; the section itself lives in RemoteMacView.swift.
-struct ScreensharingTabView: View {
+struct RemoteTabView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 4) {
