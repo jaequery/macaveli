@@ -710,6 +710,7 @@ struct RecordSettingsStrip: View {
     @AppStorage(PreferenceKey.recordingDemoMode.rawValue) private var demoMode = false
     @AppStorage(PreferenceKey.recordingCountdownSeconds.rawValue) private var countdownSeconds = 3
     @AppStorage(PreferenceKey.recordingCameraOverlay.rawValue) private var cameraOverlay = false
+    @AppStorage(PreferenceKey.recordingMicrophone.rawValue) private var microphone = true
 
     private var folderDisplayName: String {
         let resolved = saveFolder.isEmpty
@@ -742,6 +743,20 @@ struct RecordSettingsStrip: View {
                               options: [(0, "Off"), (3, "3 s"), (5, "5 s")])
             StripSegmentedRow(title: "Mode", selection: $demoMode,
                               options: [(false, "Default"), (true, "Product demo")])
+            if format == RecordingFormat.mp4.rawValue {
+                StripSegmentedRow(title: "Microphone", selection: $microphone,
+                                  options: [(false, "Off"), (true, "On")])
+                if #unavailable(macOS 15) {
+                    HStack(spacing: 8) {
+                        Text("")
+                            .frame(width: stripLabelWidth, alignment: .leading)
+                        Text("Microphone recording requires macOS 15 or later.")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
             StripSegmentedRow(title: "Camera", selection: $cameraOverlay,
                               options: [(false, "Off"), (true, "On")])
             if cameraOverlay {
