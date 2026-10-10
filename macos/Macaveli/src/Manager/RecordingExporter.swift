@@ -460,6 +460,78 @@ enum RecordingExporter {
         }
     }
 
+    // MARK: - Audio mixdown
+
+    /// Folds every audio track (system audio + microphone) into one AAC track
+    /// in place. The recorder writes them separately, but most players — and
+    /// ffmpeg's default stream selection in the passes below — only use the
+    /// first audio track, which would silently drop the mic. Video is copied,
+    /// so this is fast. No-op when there's a single audio track; on failure
+    /// (or without bundled ffmpeg) the multi-track file is left untouched.
+    static func mixAudioTracks(input: URL, completion: @escaping (Result<URL, Error>) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let audioTracks = audioTrackCount(at: input)
+            guard audioTracks > 1 else {
+                completion(.success(input))
+                return
+            }
+            guard let ffmpeg = bundledFFmpegURL() else {
+                eLog.log("audio mix: ffmpeg not bundled, keeping \(audioTracks, privacy: .public) separate tracks")
+                completion(.success(input))
+                return
+            }
+
+            let tempURL = input.deletingLastPathComponent()
+                .appendingPathComponent("mix-\(UUID().uuidString)")
+                .appendingPathExtension("mp4")
+
+            // normalize=0 keeps each source at full volume instead of
+            // halving both; duration=longest so a silent/short system-audio
+            // track can't truncate the narration.
+            let inputs = (0..<audioTracks).map { "[0:a:\($0)]" }.joined()
+            let exitCode = runFFmpeg(ffmpeg, args: [
+                "-y", "-loglevel", "error",
+                "-i", input.path,
+                "-filter_complex", "\(inputs)amix=inputs=\(audioTracks):duration=longest:normalize=0[a]",
+                "-map", "0:v:0",
+                "-map", "[a]",
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-b:a", "192k",
+                "-ar", "48000",
+                "-ac", "2",
+                tempURL.path
+            ])
+
+            guard exitCode == 0 else {
+                try? FileManager.default.removeItem(at: tempURL)
+                completion(.failure(ExporterError.optimizeFailed))
+                return
+            }
+
+            do {
+                _ = try FileManager.default.replaceItemAt(input, withItemAt: tempURL)
+                eLog.log("audio mix: merged \(audioTracks, privacy: .public) tracks")
+                completion(.success(input))
+            } catch {
+                try? FileManager.default.removeItem(at: tempURL)
+                completion(.failure(error))
+            }
+        }
+    }
+
+    /// Synchronous track count — fine here since we're already off-main.
+    private static func audioTrackCount(at url: URL) -> Int {
+        let semaphore = DispatchSemaphore(value: 0)
+        var count = 0
+        Task {
+            count = (try? await AVURLAsset(url: url).loadTracks(withMediaType: .audio).count) ?? 0
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return count
+    }
+
     // MARK: - Demo Mode (cursor-following auto-zoom)
 
     struct CursorSamplePoint {

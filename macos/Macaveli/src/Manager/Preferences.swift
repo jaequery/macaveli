@@ -15,6 +15,7 @@ enum PreferenceKey: String {
     case recordingDemoMode = "recordingDemoMode"
     case recordingCountdownSeconds = "recordingCountdownSeconds"
     case recordingCameraOverlay = "recordingCameraOverlay"
+    case recordingMicrophone = "recordingMicrophone"
     case recordingCameraX = "recordingCameraX"
     case recordingCameraY = "recordingCameraY"
     case pasteHistorySize = "pasteHistorySize"

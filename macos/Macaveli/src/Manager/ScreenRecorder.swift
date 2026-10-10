@@ -13,7 +13,7 @@ private let mLog = Logger(subsystem: "com.jaequery.Macaveli", category: "recorde
 /// - Main thread (or `@MainActor` Tasks): `lifecycleState`, `isRecording`,
 ///   `isConverting`, `outputMP4URL`, `gifAutoStopItem`.
 /// - `writerQueue` (serial): `assetWriter`, `videoInput`, `systemAudioInput`,
-///   `sessionStarted`, `videoAdaptor`, `discCache`.
+///   `micAudioInput`, `sessionStarted`, `videoAdaptor`, `discCache`.
 /// - SCStream callback queue (always `writerQueue` here): reads `assetWriter`,
 ///   `*Input`, `sessionStarted`, composites the camera overlay.
 ///
@@ -46,6 +46,9 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
     private var systemAudioInput: AVAssetWriterInput?
+    /// Separate track for the microphone (macOS 15+, when enabled). Mixed down
+    /// with system audio into a single track after recording stops.
+    private var micAudioInput: AVAssetWriterInput?
     private var sessionStarted = false
     private var outputMP4URL: URL?
 
@@ -250,6 +253,11 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             config.capturesAudio = true
             config.sampleRate = 48000
             config.channelCount = 2
+
+            let captureMic = await Self.resolveMicrophoneCapture()
+            if #available(macOS 15, *), captureMic {
+                config.captureMicrophone = true
+            }
             // P8: Explicit pixel format and cursor visibility.
             config.pixelFormat = kCVPixelFormatType_32BGRA
             config.showsCursor = true
@@ -257,11 +265,14 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             let mp4URL = RecordingFileNamer.nextURL(format: .mp4)
             self.outputMP4URL = mp4URL
 
-            try self.setupAssetWriter(outputURL: mp4URL, width: setup.width, height: setup.height, fps: fps)
+            try self.setupAssetWriter(outputURL: mp4URL, width: setup.width, height: setup.height, fps: fps, includeMic: captureMic)
 
             let stream = SCStream(filter: setup.filter, configuration: config, delegate: self)
             try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: self.writerQueue)
             try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: self.writerQueue)
+            if #available(macOS 15, *), captureMic {
+                try stream.addStreamOutput(self, type: .microphone, sampleHandlerQueue: self.writerQueue)
+            }
             self.stream = stream
 
             try await stream.startCapture()
@@ -351,6 +362,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
                 let sessionRan = self.sessionStarted
                 self.videoInput?.markAsFinished()
                 self.systemAudioInput?.markAsFinished()
+                self.micAudioInput?.markAsFinished()
                 // F10: No session ever started → cancel; AVAssetWriter deletes
                 // the 0-byte placeholder for us.
                 guard sessionRan else {
@@ -374,6 +386,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             self.assetWriter = nil
             self.videoInput = nil
             self.systemAudioInput = nil
+            self.micAudioInput = nil
             self.videoAdaptor = nil
             self.discCache.removeAll()
             self.sessionStarted = false
@@ -506,8 +519,13 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
                 self.cursorSamples.removeAll()
                 self.clickTimes.removeAll()
 
-                if demoOn || optimizeOn {
-                    await MainActor.run { self.isConverting = true }
+                await MainActor.run { self.isConverting = true }
+
+                // Mic + system audio land on separate tracks; most players
+                // (and the ffmpeg passes below) only pick up the first one,
+                // so fold them into a single track before anything else.
+                await withCheckedContinuation { continuation in
+                    RecordingExporter.mixAudioTracks(input: mp4URL) { _ in continuation.resume() }
                 }
 
                 // Demo Mode: re-encode with auto-zoom toward cursor path.
@@ -533,11 +551,9 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
                 postNotification(title: "Recording Saved", body: mp4URL.lastPathComponent)
                 Self.revealInFinder(url: mp4URL)
 
-                if demoOn || optimizeOn {
-                    await MainActor.run {
-                        self.isConverting = false
-                        self.lifecycleState = .idle
-                    }
+                await MainActor.run {
+                    self.isConverting = false
+                    self.lifecycleState = .idle
                 }
             }
         }
@@ -741,7 +757,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         }
     }
 
-    private func setupAssetWriter(outputURL: URL, width: Int, height: Int, fps: Int) throws {
+    private func setupAssetWriter(outputURL: URL, width: Int, height: Int, fps: Int, includeMic: Bool) throws {
         let writer = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
 
         // P10: Explicit H.264 bitrate derived from the user-selected quality
@@ -783,6 +799,24 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         writer.add(vInput)
         writer.add(sysAudioInput)
 
+        var micInput: AVAssetWriterInput?
+        if includeMic {
+            let micSettings: [String: Any] = [
+                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVSampleRateKey: 48000,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderBitRateKey: 96000
+            ]
+            let input = AVAssetWriterInput(mediaType: .audio, outputSettings: micSettings)
+            input.expectsMediaDataInRealTime = true
+            if writer.canAdd(input) {
+                writer.add(input)
+                micInput = input
+            } else {
+                mLog.error("cannot add mic input; recording without microphone")
+            }
+        }
+
         // Pixel-buffer adaptor used only when the camera overlay is active —
         // its pool supplies the destination buffers for composited frames.
         let adaptorAttrs: [String: Any] = [
@@ -801,6 +835,7 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         self.assetWriter = writer
         self.videoInput = vInput
         self.systemAudioInput = sysAudioInput
+        self.micAudioInput = micInput
         self.videoAdaptor = adaptor
         self.sessionStarted = false
     }
@@ -866,9 +901,10 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
             }
 
         case .microphone:
-            // Mic capture was removed; nothing to do if the system delivers
-            // a sample of this type (it shouldn't, since we never subscribe).
-            break
+            if !sessionStarted { return }
+            if micAudioInput?.isReadyForMoreMediaData == true {
+                micAudioInput?.append(sampleBuffer)
+            }
 
         @unknown default:
             break
@@ -884,9 +920,34 @@ final class ScreenRecorder: NSObject, ObservableObject, SCStreamOutput, SCStream
         }
     }
 
-    // Screen recording permission is the only hard gate now — mic capture was
-    // removed, system audio (Spotify, browser, app sound) still comes through
-    // the SCStream itself under the same Screen Recording permission.
+    // Screen recording permission is the only hard gate. System audio comes
+    // through the SCStream under the same permission; the microphone is
+    // optional (see `resolveMicrophoneCapture`) and never blocks a recording.
+    /// Whether this recording should capture the microphone. Requires macOS 15
+    /// (`SCStreamConfiguration.captureMicrophone`), MP4 output (GIFs have no
+    /// audio), the Microphone setting on (default), and mic access. Prompts
+    /// for access the first time; if denied, records without the mic and
+    /// points the user at System Settings instead of failing.
+    @MainActor
+    private static func resolveMicrophoneCapture() async -> Bool {
+        guard #available(macOS 15, *) else { return false }
+        let enabled = UserDefaults.standard.object(forKey: PreferenceKey.recordingMicrophone.rawValue) as? Bool ?? true
+        guard enabled, shared.recordingFormat() == .mp4 else { return false }
+
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            return true
+        case .notDetermined:
+            return await AVCaptureDevice.requestAccess(for: .audio)
+        default:
+            shared.postNotification(
+                title: "Recording Without Microphone",
+                body: "Allow Macaveli under Privacy & Security → Microphone, or turn Microphone off in Record settings."
+            )
+            return false
+        }
+    }
+
     private func checkPermissions() -> Bool {
         guard PermissionsManager.hasScreenRecordingPermission() else {
             PermissionsManager.requestScreenRecordingPermission {

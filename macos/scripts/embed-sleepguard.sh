@@ -77,10 +77,15 @@ else
 fi
 
 echo "→ Re-sealing app shell (SleepGuard changed bundle contents)…"
+# `codesign --force` replaces the whole signature, so the app's entitlements
+# must be passed again or they're silently dropped — and under the hardened
+# runtime a missing device.audio-input / device.camera entitlement means the
+# mic and camera are denied without ever prompting.
+APP_ENTITLEMENTS="${REPO_ROOT}/Macaveli/Macaveli.entitlements"
 if [[ "$HARDENED" == "1" ]]; then
-    codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp "$APP_PATH"
+    codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp --entitlements "$APP_ENTITLEMENTS" "$APP_PATH"
 else
-    codesign --force --sign "$SIGN_IDENTITY" "$APP_PATH"
+    codesign --force --sign "$SIGN_IDENTITY" --entitlements "$APP_ENTITLEMENTS" "$APP_PATH"
 fi
 
 echo "✓ SleepGuard embedded at ${HELPER_BIN}"
