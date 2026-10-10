@@ -35,9 +35,11 @@ struct CheckUpdatesButton: View {
                 Text(label)
             } else {
                 Image(systemName: "arrow.counterclockwise")
-                    .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
             }
         }
+        // Sparkle ignores checkForUpdates() while a session is in flight;
+        // disable the button so that state is visible instead of a dead click.
+        .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
     }
 }
 

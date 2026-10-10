@@ -23,6 +23,17 @@ export interface Release {
 // Newest first.
 export const releases: Release[] = [
   {
+    version: "0.29.0",
+    date: "2026-10-10",
+    summary: "Your voice is back in screen recordings, and Remote gets its own tab.",
+    changes: [
+      { type: "fix", text: "Screen recordings capture your microphone again. Recent builds silently dropped the mic and kept only system audio; MP4 recordings now mix your voice and system sound into one track that plays everywhere." },
+      { type: "feature", text: "New \"Microphone\" switch in Record settings (MP4 only, on by default). macOS asks for mic access the first time you record; if you decline, recording still works without it." },
+      { type: "improvement", text: "Remote now lives in its own Remote tab instead of being tucked under Tweaks, so your other Macs are one click away." },
+      { type: "fix", text: "\"Check for Updates\" now brings the update window to the front instead of opening it behind whatever you were working in, and the menu item greys out while a check is already running." },
+    ],
+  },
+  {
     version: "0.28.0",
     date: "2026-10-02",
     summary: "Reach your other Macs from the menubar, and zoom into copied images.",

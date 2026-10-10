@@ -1,3 +1,4 @@
+import AppKit
 import Sparkle
 
 class UpdatesManager {
@@ -11,6 +12,10 @@ class UpdatesManager {
     }
     
     func checkForUpdates() {
-        return self.updater.checkForUpdates()
+        // Menubar-only (LSUIElement) app: without activating first, Sparkle's
+        // update window opens behind the frontmost app and the click looks
+        // like it did nothing.
+        NSApp.activate(ignoringOtherApps: true)
+        self.updater.checkForUpdates()
     }
 }
