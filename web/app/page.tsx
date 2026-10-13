@@ -1,7 +1,7 @@
-import { DOWNLOAD_URL, DownloadIcon, Footer, Keys, Nav, RELEASES_URL, REPO_URL, VERSION } from "./components/site";
+import { DOWNLOAD_URL, DownloadIcon, Footer, Keys, Logo, Nav, RELEASES_URL, REPO_URL, VERSION } from "./components/site";
 
-// Landing page — "Bento Tactile" (Concept 5, picked 2026-10-13). Section flow
-// modeled on creatorspace.co: hero with floating objects → hotkey marquee →
+// Landing page. Section flow from "Bento Tactile" (creatorspace.co-style),
+// restyled after shiori.sh (DESIGN.md): hero + framed preview → hotkey marquee →
 // value line → fact strip → feature bento → numbered list + orbit → statement
 // + stats → banner → three tall cards → four blocks + founder → FAQ → final
 // CTA → footer. Every visual is CSS/SVG (no images, no layout shift); every
@@ -31,81 +31,25 @@ export default function Page() {
 }
 
 // ---------------------------------------------------------------------------
-// Hero — big tactile ⌃ ⌘ ⇧ caps (they sink on hover, or when you hold the real
-// keys), floating window + chip objects, a slow ring behind the headline.
+// Hero — shiori-style left-aligned copy (mark → headline → gray subhead → CTAs),
+// then a framed preview holding the big tactile ⌃ ⌘ ⇧ caps (they sink on hover,
+// or when you hold the real keys) with floating window + chip objects.
 // ---------------------------------------------------------------------------
 
 function Hero() {
   return (
     <section className="hero">
-      <div className="hero-ring" aria-hidden>
-        <svg viewBox="0 0 880 880" fill="none">
-          <circle className="r1" cx="440" cy="440" r="430" strokeWidth="1.2" />
-          <circle className="r2" cx="440" cy="440" r="340" strokeWidth="1.2" strokeDasharray="2 9" />
-          <circle className="r3" cx="440" cy="440" r="250" strokeWidth="1.2" />
-          <circle cx="870" cy="440" r="5" fill="var(--accent)" />
-          <circle cx="440" cy="100" r="4" fill="var(--dash)" />
-        </svg>
-      </div>
-
-      <div className="wrap">
-        <div className="stage" aria-hidden>
-          <div className="tilt">
-            <div className="capfloat" style={{ left: "calc(50% - 150px)", top: 20 }}>
-              <span className="bigcap" data-key="Control" style={{ "--w": "124px" } as React.CSSProperties}>
-                <span>⌃</span>
-                <small>control</small>
-              </span>
-            </div>
-            <div className="capfloat" style={{ left: "calc(50% + 26px)", top: 20 }}>
-              <span className="bigcap" data-key="Meta" style={{ "--w": "124px" } as React.CSSProperties}>
-                <span>⌘</span>
-                <small>command</small>
-              </span>
-            </div>
-            <div className="capfloat" style={{ left: "calc(50% + 196px)", top: 110 }}>
-              <span className="bigcap" data-key="Shift" style={{ "--w": "76px" } as React.CSSProperties}>
-                <span>⇧</span>
-              </span>
-            </div>
-          </div>
-          <span className="plus-big">+</span>
-
-          <div className="mini" style={{ left: -60, top: 30, width: 150, animationDelay: "-3s" }}>
-            <div className="bar">
-              <Dots />
-            </div>
-            <div className="body">
-              <Line w="80%" />
-              <Line w="55%" />
-              <Line w="68%" />
-            </div>
-          </div>
-          <div className="mini" style={{ right: -80, top: -6, width: 120, animationDelay: "-6s" }}>
-            <div className="bar">
-              <Dots />
-            </div>
-            <div className="body">
-              <Line w="70%" />
-              <Line w="44%" />
-            </div>
-          </div>
-          <span className="chip" style={{ left: -10, top: 180, animationDelay: "-1s" }}>
-            <span className="sw" />
-            #F472B6
-          </span>
-          <span className="chip" style={{ right: -40, top: 200, animationDelay: "-5s" }}>
-            <span className="rec" />
-            REC 00:12
-          </span>
-          <span className="hint">psst — hold ⌃ ⌘ on your keyboard</span>
+      <div className="wrap hero-copy">
+        <a href="/" className="hero-mark" aria-label="Macaveli home">
+          <Logo />
+        </a>
+        <div className="hero-text">
+          <h1>Your Mac, already set up.</h1>
+          <p>
+            Macaveli is one free menubar app with the window, capture and clipboard tools everyone
+            installs on a new Mac. Pre-bound hotkeys. Zero config.
+          </p>
         </div>
-
-        <h1>Your Mac, already set up.</h1>
-        <p>
-          Macaveli is one free menubar app with the window, capture and clipboard tools everyone
-          installs on a new Mac. Pre-bound hotkeys. Zero config.
-        </p>
         <div className="ctas">
           <a className="pill lg" href={DOWNLOAD_URL}>
             <DownloadIcon />
@@ -116,6 +60,66 @@ function Hero() {
           </a>
         </div>
         <p className="meta">v{VERSION} · free · MIT · macOS 13+ · ~14 MB</p>
+      </div>
+
+      <div className="wrap preview-wrap">
+        <div className="preview">
+          <div className="preview-bar" aria-hidden>
+            <Dots />
+            <span>Macaveli</span>
+          </div>
+          <div className="stage" aria-hidden>
+            <div className="tilt">
+              <div className="capfloat" style={{ left: "calc(50% - 150px)", top: 20 }}>
+                <span className="bigcap" data-key="Control" style={{ "--w": "124px" } as React.CSSProperties}>
+                  <span>⌃</span>
+                  <small>control</small>
+                </span>
+              </div>
+              <div className="capfloat" style={{ left: "calc(50% + 26px)", top: 20 }}>
+                <span className="bigcap" data-key="Meta" style={{ "--w": "124px" } as React.CSSProperties}>
+                  <span>⌘</span>
+                  <small>command</small>
+                </span>
+              </div>
+              <div className="capfloat" style={{ left: "calc(50% + 196px)", top: 110 }}>
+                <span className="bigcap" data-key="Shift" style={{ "--w": "76px" } as React.CSSProperties}>
+                  <span>⇧</span>
+                </span>
+              </div>
+            </div>
+            <span className="plus-big">+</span>
+
+            <div className="mini" style={{ left: -60, top: 30, width: 150, animationDelay: "-3s" }}>
+              <div className="bar">
+                <Dots />
+              </div>
+              <div className="body">
+                <Line w="80%" />
+                <Line w="55%" />
+                <Line w="68%" />
+              </div>
+            </div>
+            <div className="mini" style={{ right: -80, top: -6, width: 120, animationDelay: "-6s" }}>
+              <div className="bar">
+                <Dots />
+              </div>
+              <div className="body">
+                <Line w="70%" />
+                <Line w="44%" />
+              </div>
+            </div>
+            <span className="chip" style={{ left: -10, top: 180, animationDelay: "-1s" }}>
+              <span className="sw" />
+              #F472B6
+            </span>
+            <span className="chip" style={{ right: -40, top: 200, animationDelay: "-5s" }}>
+              <span className="rec" />
+              REC 00:12
+            </span>
+            <span className="hint">psst — hold ⌃ ⌘ on your keyboard</span>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -296,7 +300,7 @@ function Features() {
         <div className="sechead rv">
           <div>
             <p className="eyebrow">Features</p>
-            <h2 className="h2" style={{ maxWidth: "12ch" }}>
+            <h2 className="h2">
               Every tool, one press away.
             </h2>
           </div>
@@ -306,7 +310,7 @@ function Features() {
           </p>
         </div>
 
-        <div className="bento">
+        <div className="bento rv">
           <article className="card b-move press rv">
             <div className="top">
               <span className="tag">Window · move &amp; resize</span>
@@ -553,7 +557,7 @@ function WindowControl() {
       <div className="wrap orbit-sec">
         <div className="rv">
           <p className="eyebrow">Window control</p>
-          <h2 className="h2" style={{ marginTop: 14, maxWidth: "11ch" }}>
+          <h2 className="h2">
             Put any window where it belongs.
           </h2>
           <ol className="nlist">
@@ -636,7 +640,7 @@ function Stats() {
           <DownloadIcon />
           Download free
         </a>
-        <ul className="stats">
+        <ul className="stats rv">
           <li className="stat rv">
             <div className="num">11</div>
             <p>pre-bound hotkeys, all rebindable</p>
@@ -689,7 +693,7 @@ function Capture() {
         <div className="sechead rv">
           <div>
             <p className="eyebrow">Capture</p>
-            <h2 className="h2" style={{ maxWidth: "13ch" }}>
+            <h2 className="h2">
               Show, copy, record.
             </h2>
           </div>
