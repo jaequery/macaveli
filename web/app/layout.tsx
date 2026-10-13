@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
+import { SiteEffects } from "./components/site-effects";
 import "./globals.css";
 
 // Mono signature — keycaps, eyebrows, section labels, version tags.
@@ -22,14 +23,31 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f0" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0e10" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={jetbrainsMono.variable}>
-      <body>{children}</body>
+    <html lang="en" className={jetbrainsMono.variable} suppressHydrationWarning>
+      <head>
+        {/* Scroll-reveal only hides content once we know JS is running. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
+      <body>
+        <a className="skip" href="#main">
+          Skip to content
+        </a>
+        {children}
+        <SiteEffects />
+      </body>
     </html>
   );
 }

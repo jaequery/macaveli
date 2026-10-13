@@ -27,7 +27,10 @@ For Vercel: `vercel deploy` from this folder.
 
 ## Files
 
-- `app/page.tsx` — the landing page (Hero / Features / Hotkeys / Footer).
+- `app/page.tsx` — the landing page ("Bento Tactile"; see `/DESIGN.md`).
+- `app/changelog/` — the changelog page + its release data.
+- `app/components/site.tsx` — shared Nav, Footer, keycaps and links (reads `version.json`).
+- `app/components/site-effects.tsx` — the only client JS: scroll reveal, nav hairline, hero keycaps.
 - `app/layout.tsx` — root layout + `<head>` metadata.
-- `app/globals.css` — Tailwind v4 entry + design tokens in `@theme`.
+- `app/globals.css` — design tokens (light + dark) and all site styles.
 - `postcss.config.mjs` — wires `@tailwindcss/postcss`.
