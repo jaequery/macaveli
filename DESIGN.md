@@ -35,8 +35,14 @@ adds noise or fights the platform, cut it.
   3. The **aurora wash** — a low-opacity cyan→pink radial, hero + first-run only.
      (Web, since 2026-10-13: the wash lives on the final-CTA card instead of the hero.)
   4. **Tactile 3D keycaps** (web, 2026-10-13) — mono-labelled caps with stacked edge
-     shadows that sink on hover; giant ⌃ ⌘ ⇧ caps in the hero also sink when the
-     visitor holds the real keys. The keycap is the web's primary visual motif.
+     shadows that sink on hover; giant ⌃ ⌘ ⇧ caps in the hero preview also sink when
+     the visitor holds the real keys. The keycap is the web's primary visual motif.
+- **Web visual language (2026-10-13, after shiori.sh):** quiet neutral grays, medium
+  (500) weight headings with tight tracking at modest sizes, **two-tone headings**
+  (primary line + a gray continuation at the same size), one centered ~672px reading
+  column for all text with visuals allowed wider, hairline (`1px`) borders and
+  `gap: 1px` hairline grids instead of floating shadowed cards, half-pixel "control"
+  shadows on buttons and chips.
 
 ## Typography
 - **Display + Body + UI:** **SF Pro** via the system stack
@@ -67,9 +73,11 @@ adds noise or fights the platform, cut it.
   Never behind body text.**
 - **Semantic:** success `#16A34A` · warning `#D97706` · error `#DC2626` · info = accent.
 - **Dark mode:** redesign surfaces (not a raw invert); drop saturation ~12%.
-- **Web canvas (Bento Tactile, 2026-10-13):** `#F2F2F0` soft gray canvas with
-  `#FFFFFF` cards (dark: `#0E0E10` / `#17171A`); ink `#1A1A1A` / `#55554F` / `#75756F`.
-  Tokens live in `web/app/globals.css`.
+- **Web canvas (shiori restyle, 2026-10-13):** neutral ramp — canvas `#FCFCFC`,
+  surface-2 `#F5F5F5`, hairline `#E7E7E7`; ink `#0A0A0A` / `#525252` / `#737373` /
+  `#A3A3A3` (dark: canvas `#121212`, hairline `#262626`, ink `#F5F5F5` / `#A3A3A3` /
+  `#8A8A8A` / `#6F6F6F`). The `#2563EB` accent is reserved for in-mock state (selection,
+  snap target, sliders) and the "New" changelog dot. Tokens live in `web/app/globals.css`.
 
 ## Spacing
 - **Base unit:** 4px
@@ -82,9 +90,10 @@ adds noise or fights the platform, cut it.
 - **Risk (deliberate):** marketing breaks the centered-everything pattern — use an
   asymmetric / left-aligned editorial moment for the pillars + hotkeys (avoids the
   AI-slop centered grid flagged in the design review).
-- **Max content width (web):** ~1080–1152px.
+- **Max content width (web):** 1040px for visuals (bento, stats, cards); text sits in a
+  centered 672px reading column.
 - **Border radius:** sm 6px (keycaps) · md 9–11px (inputs/cards) · lg 14–18px (windows/heroes) · full 9999px (pills/buttons).
-  Web bento cards use 24px, tall cards 32px, the final CTA 40px.
+  Web (shiori restyle): buttons 8px, hairline grids/panels 14–16px, mocks 10px.
 - **Web page flow (2026-10-13):** modeled on creatorspace.co's structure — hero with
   floating objects → hotkey-card marquee → value line → fact strip (instead of a
   logo wall) → feature bento → numbered list + orbit → statement + stats → ALL-CAPS
@@ -102,11 +111,13 @@ adds noise or fights the platform, cut it.
 - No purple/violet gradient as accent (the aurora is cyan→pink atmosphere, not a button).
 - No 3-column icon-in-circle feature grid (the current landing `Pillars` must move off this).
 - No centered-everything. No uniform bubble-radius. No decorative blobs/dividers.
-- No gradient CTA buttons. CTAs are solid `#2563EB` pills.
+- No gradient CTA buttons. Web CTAs are solid filled-dark buttons (`#262626`; light
+  `#E5E5E5` in dark mode) with 8px radius; secondary CTAs are white "control" buttons.
 - Mono is a signature, not body text. SF is the native voice, not a fallback.
 
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-10-13 | Web visually restyled after shiori.sh (ticket MACA-W0G7F6) | Owner asked for a shiori.sh-inspired redesign of the whole site. It's a visual restyle only: the Bento Tactile section flow, copy and links stay. The restyle brings a neutral palette, 500-weight two-tone headings, a centered 672px text column, a left-aligned hero with the mark above it and the keycap stage in a framed preview, hairline grids instead of floating cards, 8px filled-dark CTAs (replacing blue pills), a quiet ticker banner, a flat accordion FAQ and a centered minimal footer. Kept: SF system type, JetBrains Mono keycaps, chevron mark, aurora on the final CTA. |
 | 2026-10-13 | Web redesigned as "Bento Tactile" (Concept 5 of 5, picked by the owner) | Ticket MACA-3GD40E asked for a creatorspace.co-grade landing page. Keeps SF + JetBrains Mono, the single #2563EB accent and the chevron mark; adds tactile keycaps, a white bento grid on a soft gray canvas, a creatorspace-style section flow, and moves the aurora to the final CTA. Hero is centered (a deliberate, approved exception to the asymmetric-landing risk). |
 | 2026-05-25 | Initial design system created | `/design-consultation`. North star "one install, your Mac is ready"; Apple-native minimalism; SF Pro + JetBrains Mono signature; aurora wash; 3 deliberate risks (mono signature, aurora, asymmetric landing). Preview: `~/.gstack/projects/jaequery-macaveli/designs/design-system-20260525/preview.html` |
