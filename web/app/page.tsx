@@ -1,862 +1,533 @@
-import versionInfo from "../version.json";
+import { DOWNLOAD_URL, DownloadIcon, Footer, Keys, Nav, RELEASES_URL, REPO_URL, VERSION } from "./components/site";
 
-const VERSION = versionInfo.version;
-const DOWNLOAD_URL = versionInfo.downloadUrl;
-const RELEASES_URL = "https://github.com/jaequery/macaveli/releases/latest";
-const REPO_URL = "https://github.com/jaequery/macaveli";
+// Landing page — "Bento Tactile" (Concept 5, picked 2026-10-13). Section flow
+// modeled on creatorspace.co: hero with floating objects → hotkey marquee →
+// value line → fact strip → feature bento → numbered list + orbit → statement
+// + stats → banner → three tall cards → four blocks + founder → FAQ → final
+// CTA → footer. Every visual is CSS/SVG (no images, no layout shift); every
+// claim comes from the app itself.
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
-      <Nav />
-      <Hero />
-      <HotkeyStrip />
-      <Features />
-      <FounderNote />
-      <Trust />
-      <CallToAction />
-      <Faq />
-      <Footer />
-    </main>
+    <>
+      <Nav route="home" />
+      <main id="main">
+        <Hero />
+        <HotkeyMarquee />
+        <Value />
+        <Facts />
+        <Features />
+        <WindowControl />
+        <Stats />
+        <Banner />
+        <Capture />
+        <Principles />
+        <Faq />
+        <FinalCta />
+      </main>
+      <Footer route="home" />
+    </>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Nav — sticky, blurred; the hero visual runs right under it
-// ---------------------------------------------------------------------------
-
-function Nav() {
-  return (
-    <nav
-      className="sticky top-0 z-50 border-b backdrop-blur-md"
-      style={{
-        background: "color-mix(in srgb, var(--canvas) 72%, transparent)",
-        borderColor: "color-mix(in srgb, var(--line) 60%, transparent)",
-      }}
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-8 py-5">
-        <a href="/" className="flex items-center gap-2.5">
-          <Logo />
-          <span className="text-[15px] font-semibold tracking-tight">Macaveli</span>
-          <span className="font-mono text-[11px] text-[var(--ink-faint)]">v{VERSION}</span>
-        </a>
-
-        <div className="hidden gap-9 text-sm text-[var(--ink-muted)] sm:flex">
-          <a href="#features" className="transition hover:text-[var(--ink)]">
-            Features
-          </a>
-          <a href="#faq" className="transition hover:text-[var(--ink)]">
-            FAQ
-          </a>
-          <a href="/changelog" className="transition hover:text-[var(--ink)]">
-            Changelog
-          </a>
-          <a href={REPO_URL} target="_blank" rel="noreferrer" className="transition hover:text-[var(--ink)]">
-            GitHub
-          </a>
-        </div>
-
-        <a
-          href={DOWNLOAD_URL}
-          className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-press)]"
-        >
-          Download
-        </a>
-      </div>
-    </nav>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Hero — poster composition, aurora wash (the one decorative move). The desktop
-// visual pulls down over the section seam below it.
+// Hero — big tactile ⌃ ⌘ ⇧ caps (they sink on hover, or when you hold the real
+// keys), floating window + chip objects, a slow ring behind the headline.
 // ---------------------------------------------------------------------------
 
 function Hero() {
   return (
-    <section className="aurora-wash">
-      <div className="mx-auto max-w-6xl px-8 pt-20 text-center">
-        <p className="mb-6 font-mono text-[13px] font-medium tracking-[0.02em] text-[var(--accent)]">
-          // one install, your Mac is ready
+    <section className="hero">
+      <div className="hero-ring" aria-hidden>
+        <svg viewBox="0 0 880 880" fill="none">
+          <circle className="r1" cx="440" cy="440" r="430" strokeWidth="1.2" />
+          <circle className="r2" cx="440" cy="440" r="340" strokeWidth="1.2" strokeDasharray="2 9" />
+          <circle className="r3" cx="440" cy="440" r="250" strokeWidth="1.2" />
+          <circle cx="870" cy="440" r="5" fill="var(--accent)" />
+          <circle cx="440" cy="100" r="4" fill="var(--dash)" />
+        </svg>
+      </div>
+
+      <div className="wrap">
+        <div className="stage" aria-hidden>
+          <div className="tilt">
+            <div className="capfloat" style={{ left: "calc(50% - 150px)", top: 20 }}>
+              <span className="bigcap" data-key="Control" style={{ "--w": "124px" } as React.CSSProperties}>
+                <span>⌃</span>
+                <small>control</small>
+              </span>
+            </div>
+            <div className="capfloat" style={{ left: "calc(50% + 26px)", top: 20 }}>
+              <span className="bigcap" data-key="Meta" style={{ "--w": "124px" } as React.CSSProperties}>
+                <span>⌘</span>
+                <small>command</small>
+              </span>
+            </div>
+            <div className="capfloat" style={{ left: "calc(50% + 196px)", top: 110 }}>
+              <span className="bigcap" data-key="Shift" style={{ "--w": "76px" } as React.CSSProperties}>
+                <span>⇧</span>
+              </span>
+            </div>
+          </div>
+          <span className="plus-big">+</span>
+
+          <div className="mini" style={{ left: -60, top: 30, width: 150, animationDelay: "-3s" }}>
+            <div className="bar">
+              <Dots />
+            </div>
+            <div className="body">
+              <Line w="80%" />
+              <Line w="55%" />
+              <Line w="68%" />
+            </div>
+          </div>
+          <div className="mini" style={{ right: -80, top: -6, width: 120, animationDelay: "-6s" }}>
+            <div className="bar">
+              <Dots />
+            </div>
+            <div className="body">
+              <Line w="70%" />
+              <Line w="44%" />
+            </div>
+          </div>
+          <span className="chip" style={{ left: -10, top: 180, animationDelay: "-1s" }}>
+            <span className="sw" />
+            #F472B6
+          </span>
+          <span className="chip" style={{ right: -40, top: 200, animationDelay: "-5s" }}>
+            <span className="rec" />
+            REC 00:12
+          </span>
+          <span className="hint">psst — hold ⌃ ⌘ on your keyboard</span>
+        </div>
+
+        <h1>Your Mac, already set up.</h1>
+        <p>
+          Macaveli is one free menubar app with the window, capture and clipboard tools everyone
+          installs on a new Mac. Pre-bound hotkeys. Zero config.
         </p>
-
-        <h1
-          className="font-bold tracking-[-0.04em] text-[var(--ink)]"
-          style={{ fontSize: "clamp(2.75rem, 7.5vw, 6rem)", lineHeight: 1 }}
-        >
-          Your Mac,
-          <br />
-          already set up.
-        </h1>
-
-        <p className="mx-auto mt-8 max-w-2xl text-pretty text-[22px] leading-[1.45] text-[var(--ink-muted)]">
-          The essential Mac utilities &mdash; window control, screenshots, clipboard,
-          recording &mdash; already configured, already there. Hold <Kbd>&#8963;</Kbd>{" "}
-          <Kbd>&#8984;</Kbd> and drag any window to see it work.
-        </p>
-
-        <p className="mx-auto mt-5 font-mono text-[13px] text-[var(--ink-faint)]">
-          free forever · MIT open source · no signup · no telemetry
-        </p>
-
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <a
-            href={DOWNLOAD_URL}
-            className="rounded-full bg-[var(--accent)] px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-[var(--accent-press)]"
-          >
+        <div className="ctas">
+          <a className="pill lg" href={DOWNLOAD_URL}>
+            <DownloadIcon />
             Download for Mac
           </a>
-          <a
-            href="#features"
-            className="text-[15px] font-semibold text-[var(--accent)] transition hover:opacity-70"
-          >
-            See what&rsquo;s inside &rarr;
+          <a className="pill lg ghost" href="#features">
+            See the hotkeys
           </a>
         </div>
-
-        <HeroDesktop />
+        <p className="meta">v{VERSION} · free · MIT · macOS 13+ · ~14 MB</p>
       </div>
     </section>
   );
 }
 
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd
-      className="rounded-md border px-1.5 py-0.5 font-mono text-[16px]"
-      style={{ background: "var(--cap-bg)", borderColor: "var(--cap-line)", color: "var(--ink)" }}
-    >
-      {children}
-    </kbd>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Hero desktop — a macOS desktop mid alt-drag: dashed ghost at the origin,
-// solid window where it's been dragged, cursor mid-surface + key HUD, plus a
-// snapped set-dressing window so the wide frame doesn't feel sparse.
-// TODO(T6): replace with a real screen recording captured with Macaveli.
+// Hotkey marquee — the creator-card rows, recast as the 11 pre-bound hotkeys.
+// Rendered on the server; the duplicate half exists only for the seamless loop.
 // ---------------------------------------------------------------------------
 
-function HeroDesktop() {
-  return (
-    <div className="relative z-10 mt-20 mb-[-48px] sm:mb-[-96px]">
-      <div
-        className="relative mx-auto aspect-[16/9] max-w-6xl overflow-hidden rounded-[18px]"
-        style={{
-          background: "linear-gradient(180deg, #2b2b34 0%, #16161c 100%)",
-          boxShadow: "var(--shadow)",
-        }}
-        aria-hidden
-      >
-        {/* fake macOS menubar — Macaveli's mark lives here */}
-        <div className="absolute left-0 right-0 top-0 z-10 flex h-7 items-center gap-4 bg-white/[0.08] px-4 text-[11px] font-medium text-white/85 backdrop-blur">
-          <AppleGlyph />
-          <span className="font-semibold">Finder</span>
-          <span className="hidden sm:inline">File</span>
-          <span className="hidden sm:inline">Edit</span>
-          <div className="ml-auto flex items-center gap-3 text-white/70">
-            <Logo size={12} className="text-white/90" />
-            <span className="font-mono text-[10px]">100%</span>
-            <span className="font-mono text-[10px]">Wed 7:45</span>
-          </div>
-        </div>
+type Hotkey = { icon: keyof typeof ICONS; name: string; hint: string; keys: string[]; after?: string };
 
-        {/* set-dressing: a window already snapped to the left edge */}
-        <div
-          className="absolute left-[3%] top-[14%] hidden h-[74%] w-[26%] flex-col overflow-hidden rounded-lg border border-white/[0.07] opacity-60 sm:flex"
-          style={{ background: "linear-gradient(180deg, #26262e 0%, #1a1a21 100%)" }}
-        >
-          <div className="flex h-6 items-center gap-1.5 border-b border-white/5 bg-white/[0.03] px-2.5">
-            <span className="h-2 w-2 rounded-full bg-white/20" />
-            <span className="h-2 w-2 rounded-full bg-white/20" />
-            <span className="h-2 w-2 rounded-full bg-white/20" />
-          </div>
-          <div className="flex-1 space-y-2 p-3">
-            <div className="h-1.5 w-3/4 rounded bg-white/10" />
-            <div className="h-1.5 w-2/3 rounded bg-white/10" />
-            <div className="h-1.5 w-4/5 rounded bg-white/10" />
-            <div className="h-1.5 w-1/2 rounded bg-white/10" />
-          </div>
-        </div>
+const HOTKEYS: Hotkey[] = [
+  { icon: "move", name: "Move window", hint: "grab anywhere", keys: ["⌃", "⌘"], after: "+drag" },
+  { icon: "resize", name: "Resize window", hint: "knows where you grabbed", keys: ["⌘", "⇧"], after: "+drag" },
+  { icon: "half", name: "Left half", hint: "snap", keys: ["⌃", "["] },
+  { icon: "half", name: "Right half", hint: "snap", keys: ["⌃", "]"] },
+  { icon: "max", name: "Maximize", hint: "fill the screen", keys: ["⌃", "⌘", "↑"] },
+  { icon: "center", name: "Center", hint: "bring it home", keys: ["⌃", "⌘", "↓"] },
+  { icon: "shot", name: "Screenshot", hint: "region → clipboard", keys: ["⌃", "⌘", "4"] },
+  { icon: "pen", name: "Annotate", hint: "arrows, text, shapes", keys: ["⌃", "⌘", "A"] },
+  { icon: "drop", name: "Eyedropper", hint: "hex copied", keys: ["⌃", "⌘", "E"] },
+  { icon: "clip", name: "Clipboard", hint: "text + images", keys: ["⌃", "⌘", "P"] },
+  { icon: "rec", name: "Record", hint: "MP4 or GIF", keys: ["⌃", "⌘", "R"] },
+];
 
-        {/* ghost origin — where the window started */}
-        <div className="absolute left-[34%] top-[18%] h-[52%] w-[36%] rounded-xl border border-dashed border-white/15" />
-
-        {/* the window mid-drag, offset toward the right */}
-        <div
-          className="absolute left-[50%] top-[30%] flex h-[56%] w-[38%] flex-col overflow-hidden rounded-xl border border-white/10"
-          style={{
-            background: "linear-gradient(180deg, #2c2c36 0%, #1c1c24 100%)",
-            boxShadow: "0 28px 50px rgba(0,0,0,0.5)",
-          }}
-        >
-          <div className="flex h-7 items-center gap-1.5 border-b border-white/5 bg-white/[0.04] px-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-          </div>
-          <div className="flex-1 space-y-2.5 p-4">
-            <div className="h-2 w-2/3 rounded" style={{ background: "rgba(96,165,250,0.5)" }} />
-            <div className="h-2 w-5/6 rounded bg-white/15" />
-            <div className="h-2 w-4/5 rounded bg-white/15" />
-            <div className="h-2 w-3/4 rounded bg-white/15" />
-            <div className="h-2 w-2/3 rounded bg-white/15" />
-          </div>
-        </div>
-
-        {/* cursor grabbing the window mid-surface (not the title bar) */}
-        <div className="absolute left-[66%] top-[56%]">
-          <CursorGlyph />
-          <div
-            className="mt-1 flex items-center gap-1 rounded-lg px-2 py-1.5 backdrop-blur"
-            style={{ background: "rgba(20,20,24,0.82)", boxShadow: "0 8px 20px rgba(0,0,0,0.4)" }}
-          >
-            <HudCap>ctrl</HudCap>
-            <span className="text-[10px] text-white/40">+</span>
-            <HudCap>cmd</HudCap>
-            <span className="text-[10px] text-white/40">+</span>
-            <HudCap wide>drag</HudCap>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HudCap({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
-  return (
-    <span
-      className={`font-mono text-[10.5px] font-semibold text-white/90 ${wide ? "rounded-full px-2.5" : "rounded px-1.5"} py-1`}
-      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.14)" }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function CursorGlyph() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M5 3 L5 19 L9.5 14.5 L12.5 21 L15 20 L12 13.5 L18 13.5 Z"
-        fill="white"
-        stroke="rgba(0,0,0,0.55)"
-        strokeWidth="1"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Hotkey strip — the logo-strip slot, without logos. A quiet rail of the
-// shortcuts that come pre-bound. Extra top padding absorbs the hero overlap.
-// ---------------------------------------------------------------------------
-
-function HotkeyStrip() {
-  const items: Array<[string, string]> = [
-    ["⌃⌘ drag", "move"],
-    ["⌘⇧ drag", "resize"],
-    ["⌃⌘4", "screenshot"],
-    ["⌃⌘A", "annotate"],
-    ["⌃⌘P", "clipboard"],
-    ["⌃⌘R", "record"],
-    ["⌃⌘E", "eyedropper"],
-  ];
-
-  return (
-    <section className="border-b border-[var(--line)] bg-[var(--canvas)] px-8 pb-8 pt-[88px] sm:pt-[144px]">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3">
-        {items.map(([keys, label]) => (
-          <span key={label} className="flex items-center gap-2">
-            <kbd
-              className="rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-medium"
-              style={{ background: "var(--cap-bg)", borderColor: "var(--cap-line)", color: "var(--ink)" }}
-            >
-              {keys}
-            </kbd>
-            <span className="font-mono text-[12px] text-[var(--ink-faint)]">{label}</span>
-          </span>
-        ))}
-      </div>
-      <p className="mt-5 text-center font-mono text-[12px] text-[var(--ink-faint)]">
-        // every shortcut, out of the box &mdash; and every one of them rebindable
-      </p>
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Features — centered intro + six zigzag rows, each with a stylized macOS mock
-// ---------------------------------------------------------------------------
-
-type Feature = {
-  eyebrow: string;
-  title: string;
-  body: React.ReactNode;
-  keycaps: Array<[string, string]>;
-  visual: React.ReactNode;
+const ICONS = {
+  move: (
+    <path d="M10 2v16M2 10h16M10 2 7.5 4.5M10 2l2.5 2.5M10 18l-2.5-2.5M10 18l2.5-2.5M2 10l2.5-2.5M2 10l2.5 2.5M18 10l-2.5-2.5M18 10l-2.5 2.5" />
+  ),
+  resize: <path d="M4 16 16 4M16 4h-5M16 4v5M4 16h5M4 16v-5" />,
+  half: (
+    <>
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+      <path d="M10 3.5v13" />
+    </>
+  ),
+  max: (
+    <>
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+      <path d="M7 8l3-3 3 3" />
+    </>
+  ),
+  center: (
+    <>
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+      <rect x="6.5" y="7" width="7" height="6" rx="1" />
+    </>
+  ),
+  shot: (
+    <>
+      <path d="M3 7V4h3M14 4h3v3M17 13v3h-3M6 16H3v-3" />
+      <circle cx="10" cy="10" r="2.5" />
+    </>
+  ),
+  pen: <path d="M3 17l3.5-1L16 6.5 13.5 4 4 13.5z" />,
+  drop: (
+    <>
+      <path d="M12 4l4 4-8 8H4v-4z" />
+      <path d="M11 5l4 4" />
+    </>
+  ),
+  clip: (
+    <>
+      <rect x="4.5" y="3.5" width="11" height="14" rx="2" />
+      <path d="M7.5 3.5h5v2h-5z" />
+    </>
+  ),
+  rec: (
+    <>
+      <circle cx="10" cy="10" r="7" />
+      <circle cx="10" cy="10" r="3" fill="#FF3B30" stroke="none" />
+    </>
+  ),
 };
 
-function Features() {
-  const features: Feature[] = [
-    {
-      eyebrow: "move anything, anywhere",
-      title: "Grab any window. Not just the title bar.",
-      body: (
-        <>
-          Hold &#8963;&#8984; and drag from anywhere on the window &mdash; no hunting
-          for a title bar, no fighting a cramped corner. &#8984;&#8679;-drag resizes
-          the same way, and it knows where you grabbed: a corner resizes that corner,
-          the center resizes evenly from the middle. Snap a window to a half, maximize
-          it, or center it without touching the mouse again.
-        </>
-      ),
-      keycaps: [
-        ["⌃⌘ drag", "move"],
-        ["⌘⇧ drag", "resize"],
-        ["⌃[", "left half"],
-        ["⌃]", "right half"],
-        ["⌃⌘↑", "maximize"],
-        ["⌃⌘↓", "center"],
-      ],
-      visual: <WindowControlMock />,
-    },
-    {
-      eyebrow: "capture, mark up, done",
-      title: "Screenshot, annotate, and sample color — instantly.",
-      body: (
-        <>
-          &#8963;&#8984;4 grabs a region straight to your clipboard, with a quick toast
-          to confirm. &#8963;&#8984;A opens whatever image is on that clipboard in a
-          lightweight annotator &mdash; arrows, text, shapes, all selectable, movable,
-          and resizable &mdash; so there&rsquo;s no round-trip through Preview. Need a
-          hex code instead of a screenshot? &#8963;&#8984;E samples any pixel on screen
-          and copies it straight to your clipboard.
-        </>
-      ),
-      keycaps: [
-        ["⌃⌘4", "screenshot"],
-        ["⌃⌘A", "annotate"],
-        ["⌃⌘E", "eyedropper"],
-      ],
-      visual: <CaptureMock />,
-    },
-    {
-      eyebrow: "never lose a copy",
-      title: "Everything you've copied, searchable, right there.",
-      body: (
-        <>
-          &#8963;&#8984;P opens a panel of your clipboard history &mdash; text and
-          images alike, with thumbnails and custom labels so you can find the one you
-          meant. It&rsquo;s a private log, not a synced service: everything stays on
-          your Mac.
-        </>
-      ),
-      keycaps: [["⌃⌘P", "history"]],
-      visual: <ClipboardMock />,
-    },
-    {
-      eyebrow: "record without the friction",
-      title: "Screen recording that doesn't get in your way.",
-      body: (
-        <>
-          &#8963;&#8984;R starts and stops a recording &mdash; no countdown, no
-          watermark, no upload prompt. Export to MP4 or GIF, add a draggable camera
-          overlay, and capture system audio if you need it.
-        </>
-      ),
-      keycaps: [["⌃⌘R", "start / stop"]],
-      visual: <RecordingMock />,
-    },
-    {
-      eyebrow: "stay awake, safely",
-      title: "Stay awake — without draining your battery.",
-      body: (
-        <>
-          Three levels: off, awake while the lid&rsquo;s open, or awake even with the
-          lid closed. That last mode only arms on AC power, and a tiny watchdog
-          switches it off the instant you unplug &mdash; so it can&rsquo;t quietly
-          kill your battery on the way out the door.
-        </>
-      ),
-      keycaps: [],
-      visual: <NeverSleepMock />,
-    },
-    {
-      eyebrow: "type at your speed",
-      title: "Key repeat, tuned faster than macOS allows.",
-      body: (
-        <>
-          Set repeat speed and delay past the limits of System Settings&rsquo; own
-          sliders, or tap the one-touch Fast preset and stop thinking about it. Built
-          for anyone who lives in a terminal or an editor and finds the stock defaults
-          sluggish.
-        </>
-      ),
-      keycaps: [],
-      visual: <KeyboardMock />,
-    },
-  ];
-
+function HotkeyCard({ h }: { h: Hotkey }) {
   return (
-    <section id="features" className="bg-[var(--surface)] px-8 pb-32 pt-24">
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="mb-4 font-mono text-[13px] font-medium tracking-[0.02em] text-[var(--accent)]">
-          // the essentials
-        </p>
-        <h2
-          className="font-bold tracking-[-0.035em] text-[var(--ink)]"
-          style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)", lineHeight: 1.05 }}
-        >
-          Everything a Mac needs. Nothing to set up.
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-[17px] leading-relaxed text-[var(--ink-muted)]">
-          Each one bound to a single hotkey, configured before you ever open the app.
+    <div className="hk press">
+      <span className="ic">
+        <svg viewBox="0 0 20 20" aria-hidden>
+          {ICONS[h.icon]}
+        </svg>
+      </span>
+      <span>
+        <b>{h.name}</b>
+        <em>{h.hint}</em>
+      </span>
+      <Keys keys={h.keys} small after={h.after} />
+    </div>
+  );
+}
+
+/** A seamless marquee: the items, then an aria-hidden copy for the loop. */
+function Loop({ children, className = "track" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      {children}
+      <div aria-hidden style={{ display: "contents" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function HotkeyMarquee() {
+  const rowA = HOTKEYS.slice(0, 6);
+  const rowB = [...HOTKEYS.slice(6), ...HOTKEYS.slice(0, 2)];
+  return (
+    <section className="marq" aria-label="Pre-bound hotkeys">
+      <Loop>
+        {rowA.map((h) => (
+          <HotkeyCard key={h.name} h={h} />
+        ))}
+      </Loop>
+      <div aria-hidden>
+        <Loop className="track r2">
+          {rowB.map((h) => (
+            <HotkeyCard key={h.name} h={h} />
+          ))}
+        </Loop>
+      </div>
+    </section>
+  );
+}
+
+function Value() {
+  return (
+    <section className="value">
+      <div className="wrap rv">
+        <p>
+          Stop rebuilding your setup from a list.{" "}
+          <span>
+            Install one app and the shortcuts are already there — window moves, snaps, screenshots,
+            clipboard history, recording.
+          </span>
         </p>
       </div>
+    </section>
+  );
+}
 
-      <div className="mx-auto mt-24 max-w-6xl space-y-28 lg:space-y-[120px]">
-        {features.map((f, i) => (
-          <div
-            key={f.eyebrow}
-            className={`flex flex-col gap-12 lg:items-center lg:gap-16 ${
-              i % 2 === 1 ? "lg:flex-row-reverse" : "lg:flex-row"
-            }`}
-          >
-            <div className="shrink-0 lg:max-w-[420px] lg:basis-5/12">
-              <p className="font-mono text-[12px] font-medium tracking-[0.02em] text-[var(--accent)]">
-                {f.eyebrow}
-              </p>
-              <h3 className="mt-3 text-[28px] font-semibold leading-tight tracking-tight text-[var(--ink)]">
-                {f.title}
-              </h3>
-              <p className="mt-3 text-[15px] leading-[1.6] text-[var(--ink-muted)]">{f.body}</p>
-              {f.keycaps.length > 0 && (
-                <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
-                  {f.keycaps.map(([keys, label]) => (
-                    <span key={keys} className="flex items-center gap-1.5">
-                      <kbd
-                        className="rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-medium"
-                        style={{ background: "var(--cap-bg)", borderColor: "var(--cap-line)", color: "var(--ink)" }}
-                      >
-                        {keys}
-                      </kbd>
-                      <span className="font-mono text-[11px] text-[var(--ink-faint)]">{label}</span>
-                    </span>
-                  ))}
-                </div>
-              )}
+// The "trusted by" logo strip, without borrowed logos: plain facts instead.
+function Facts() {
+  const facts = [
+    "Free forever",
+    "MIT licensed",
+    "No account",
+    "No telemetry",
+    "Everything stays local",
+    "~14 MB",
+    "Menubar only",
+    "macOS 13 Ventura+",
+    "Apple Silicon & Intel",
+    "Sparkle auto-updates",
+  ];
+  return (
+    <div className="facts" aria-label="At a glance">
+      <Loop>
+        {facts.map((f) => (
+          <span key={f} className="fact">
+            {f}
+          </span>
+        ))}
+      </Loop>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Feature bento — one white card per tool, each with its keycaps + a mini mock.
+// ---------------------------------------------------------------------------
+
+function Features() {
+  return (
+    <section className="sec" id="features">
+      <div className="wrap">
+        <div className="sechead rv">
+          <div>
+            <p className="eyebrow">Features</p>
+            <h2 className="h2" style={{ maxWidth: "12ch" }}>
+              Every tool, one press away.
+            </h2>
+          </div>
+          <p className="lede">
+            Eleven hotkeys come pre-bound, configured before you ever open the app. Every one of them is
+            rebindable from the menubar.
+          </p>
+        </div>
+
+        <div className="bento">
+          <article className="card b-move press rv">
+            <div className="top">
+              <span className="tag">Window · move &amp; resize</span>
+              <Keys keys={["⌃", "⌘"]} after="+ drag" />
             </div>
+            <div className="mock tall-1" aria-hidden>
+              <div className="mv-ghost" />
+              <div className="win mv-win">
+                <div className="bar">
+                  <Dots />
+                </div>
+                <div className="body">
+                  <Line w="70%" />
+                  <Line w="50%" />
+                  <Line w="62%" />
+                </div>
+                <Cursor className="cursor mv-cur" />
+              </div>
+              <span className="resize-note">
+                <Keys keys={["⌘", "⇧"]} small /> + drag resizes
+              </span>
+            </div>
+            <h3>Grab a window anywhere.</h3>
+            <p>
+              Hold ⌃⌘ and drag from any point — not just the title bar. Hold ⌘⇧ to resize: grab a corner
+              and that corner moves; grab the middle and it grows evenly from the center.
+            </p>
+          </article>
 
-            <div className="min-w-0 flex-1">
-              <div
-                className="flex aspect-[4/3] items-center justify-center rounded-[18px] border border-[var(--line)] bg-[var(--surface-2)] p-6 sm:p-8"
-                style={{ boxShadow: "var(--shadow-card)" }}
-              >
-                {f.visual}
+          <article className="card b-snap press rv">
+            <div className="top">
+              <span className="tag">Snap</span>
+              <Keys keys={["⌃", "["]} />
+            </div>
+            <div className="mock" aria-hidden>
+              <div className="snap-grid">
+                <div className="on">
+                  <kbd className="kc sm">[</kbd>
+                </div>
+                <div>
+                  <kbd className="kc sm">]</kbd>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+            <h3>Halves, max, center.</h3>
+            <p>⌃[ left · ⌃] right · ⌃⌘↑ maximize · ⌃⌘↓ center.</p>
+          </article>
 
-// ---------------------------------------------------------------------------
-// Feature mocks — stylized macOS UI, all decorative (aria-hidden). Dark desktop
-// chrome for whole-screen actions (window control, recording — ties them to the
-// hero); light native chrome for panel-scale features.
-// ---------------------------------------------------------------------------
+          <article className="card b-shot press rv">
+            <div className="top">
+              <span className="tag">Screenshot</span>
+              <Keys keys={["⌃", "⌘", "4"]} />
+            </div>
+            <div className="mock" aria-hidden>
+              <div className="sel" />
+              <div className="toast">
+                <i>✓</i>Copied to clipboard
+              </div>
+            </div>
+            <h3>Region to clipboard.</h3>
+            <p>Drag a region; it lands on your clipboard with a quick confirmation.</p>
+          </article>
 
-function WindowControlMock() {
-  return (
-    <div
-      aria-hidden
-      className="relative h-[88%] w-[94%] overflow-hidden rounded-[11px]"
-      style={{ background: "linear-gradient(180deg, #2b2b34 0%, #16161c 100%)" }}
-    >
-      {/* faint quadrant grid */}
-      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div key={i} className="border border-white/[0.05]" />
-        ))}
-      </div>
+          <article className="card b-ann press rv">
+            <div className="top">
+              <span className="tag">Annotate</span>
+              <Keys keys={["⌃", "⌘", "A"]} />
+            </div>
+            <div className="mock" aria-hidden>
+              <svg className="annot" viewBox="0 0 200 150">
+                <rect className="paper" x="22" y="22" width="156" height="106" rx="8" />
+                <rect className="ln-fill" x="40" y="40" width="70" height="5" rx="2.5" />
+                <rect className="ln-fill" x="40" y="52" width="50" height="5" rx="2.5" />
+                <rect x="104" y="68" width="58" height="40" rx="4" fill="none" stroke="var(--accent)" strokeWidth="2.2" />
+                <path d="M52 108 L96 84" stroke="var(--pink)" strokeWidth="3" strokeLinecap="round" />
+                <path
+                  d="M86 82 L97 83.5 L92 93"
+                  fill="none"
+                  stroke="var(--pink)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <text x="40" y="122" fontSize="10">
+                  fix this
+                </text>
+                <rect className="handle" x="101" y="65" width="6" height="6" stroke="var(--accent)" strokeWidth="1.4" />
+                <rect className="handle" x="159" y="105" width="6" height="6" stroke="var(--accent)" strokeWidth="1.4" />
+              </svg>
+            </div>
+            <h3>Mark it up.</h3>
+            <p>Arrows, text and shapes on the clipboard image — each one selectable, movable, resizable.</p>
+          </article>
 
-      {/* window snapped to the left half */}
-      <div
-        className="absolute left-[3.5%] top-[7%] flex h-[86%] w-[44%] flex-col overflow-hidden rounded-lg border border-white/10"
-        style={{ background: "linear-gradient(180deg, #2c2c36 0%, #1c1c24 100%)" }}
-      >
-        <div className="flex h-6 items-center gap-1.5 border-b border-white/5 bg-white/[0.04] px-2.5">
-          <span className="h-2 w-2 rounded-full bg-[#ff5f57]" />
-          <span className="h-2 w-2 rounded-full bg-[#febc2e]" />
-          <span className="h-2 w-2 rounded-full bg-[#28c840]" />
-        </div>
-        <div className="flex-1 space-y-2 p-3">
-          <div className="h-1.5 w-2/3 rounded" style={{ background: "rgba(96,165,250,0.5)" }} />
-          <div className="h-1.5 w-5/6 rounded bg-white/15" />
-          <div className="h-1.5 w-3/4 rounded bg-white/15" />
-          <div className="h-1.5 w-4/5 rounded bg-white/15" />
-        </div>
-      </div>
+          <article className="card b-eye press rv">
+            <div className="top">
+              <span className="tag">Eyedropper</span>
+              <Keys keys={["⌃", "⌘", "E"]} />
+            </div>
+            <div className="mock" aria-hidden>
+              <div className="loupe" />
+              <div className="hex">
+                <span className="sw" />
+                #F472B6 copied
+              </div>
+            </div>
+            <h3>Any pixel, as hex.</h3>
+            <p>Sample a color anywhere on screen; the hex code is copied.</p>
+          </article>
 
-      {/* ghost target on the right half */}
-      <div className="absolute right-[3.5%] top-[7%] h-[86%] w-[44%] rounded-lg border border-dashed border-white/20" />
+          <article className="card b-clip press rv">
+            <div className="top">
+              <span className="tag">Clipboard history</span>
+              <Keys keys={["⌃", "⌘", "P"]} />
+            </div>
+            <div className="mock tall-2" aria-hidden>
+              <div className="clipl">
+                <div className="row on">
+                  <span className="thumb" />
+                  Screenshot 2:14 PM<span className="lbl">mockup</span>
+                </div>
+                <div className="row">
+                  <span className="mono" style={{ fontSize: 11 }}>
+                    git
+                  </span>
+                  git push origin main
+                </div>
+                <div className="row">
+                  <span className="thumb warm" />
+                  Image · 1440 × 900
+                </div>
+                <div className="row">
+                  github.com/jaequery/macaveli<span className="lbl">repo</span>
+                </div>
+              </div>
+            </div>
+            <h3>Everything you copied.</h3>
+            <p>Text and images with thumbnails, custom labels and image zoom. History stays on your Mac.</p>
+          </article>
 
-      {/* snap motion arrow */}
-      <svg
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-        width="36"
-        height="16"
-        viewBox="0 0 36 16"
-        fill="none"
-      >
-        <path d="M2 8 H30 M24 2 L30 8 L24 14" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" />
-      </svg>
+          <article className="card b-rec press rv">
+            <div className="top">
+              <span className="tag">Screen recording</span>
+              <Keys keys={["⌃", "⌘", "R"]} />
+            </div>
+            <div className="mock tall-2" aria-hidden>
+              <div className="hud">
+                <span className="rec" />
+                00:12 · system audio + mic
+              </div>
+              <div className="fmt">
+                <span>MP4</span>
+                <span>GIF</span>
+              </div>
+              <div className="cam" />
+            </div>
+            <h3>Press, record, press.</h3>
+            <p>
+              No countdown, no watermark, no upload. MP4 or GIF, a draggable camera overlay, system audio
+              and microphone.
+            </p>
+          </article>
 
-      {/* HUD */}
-      <div
-        className="absolute bottom-3 left-3 flex items-center gap-1 rounded-lg px-2 py-1.5"
-        style={{ background: "rgba(20,20,24,0.82)" }}
-      >
-        <HudCap>ctrl</HudCap>
-        <span className="text-[10px] text-white/40">+</span>
-        <HudCap>cmd</HudCap>
-        <span className="text-[10px] text-white/40">+</span>
-        <HudCap wide>drag</HudCap>
-      </div>
-    </div>
-  );
-}
+          <article className="card b-sleep rv">
+            <div className="top">
+              <span className="tag">Never Sleep</span>
+              <span className="note">menubar</span>
+            </div>
+            <div className="seg" aria-hidden>
+              <div>Off</div>
+              <div>While lid open</div>
+              <div className="on">
+                Even lid closed <small>AC only</small>
+              </div>
+            </div>
+            <h3>Stay awake, safely.</h3>
+            <p>Lid-closed mode only arms on AC power, and a tiny watchdog turns it off the instant you unplug.</p>
+          </article>
 
-function CaptureMock() {
-  return (
-    <div
-      aria-hidden
-      className="relative flex h-[88%] w-[92%] flex-col overflow-hidden rounded-[11px] border border-[var(--line)] bg-[var(--surface)]"
-      style={{ boxShadow: "0 12px 28px rgba(0,0,0,0.12)" }}
-    >
-      <div className="flex h-7 items-center gap-1.5 border-b border-[var(--line)] px-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-      </div>
+          <article className="card b-key rv">
+            <div className="top">
+              <span className="tag">Key Repeat</span>
+              <span className="fastbtn">Fast</span>
+            </div>
+            <div className="slider" aria-hidden>
+              <div className="rail">
+                <div className="fill" />
+                <div className="sys" />
+                <div className="knob" />
+              </div>
+              <div className="scale">
+                <span>slow</span>
+                <span>System max</span>
+                <span>faster</span>
+              </div>
+            </div>
+            <h3>Faster than Settings.</h3>
+            <p>Key repeat past what System Settings allows, with a one-tap Fast preset.</p>
+          </article>
 
-      <div className="relative flex-1 p-4">
-        {/* the captured "app" — abstract content */}
-        <div className="space-y-2.5">
-          <div className="h-2 w-1/2 rounded bg-[var(--surface-2)]" />
-          <div className="h-2 w-3/4 rounded bg-[var(--surface-2)]" />
-          <div className="h-16 w-full rounded-md bg-[var(--surface-2)]" />
-          <div className="h-2 w-2/3 rounded bg-[var(--surface-2)]" />
-        </div>
-
-        {/* selection marquee */}
-        <div className="absolute left-[10%] top-[26%] h-[52%] w-[62%] rounded-md border border-dashed border-[var(--accent)]" />
-
-        {/* drawn annotation arrow */}
-        <svg
-          className="absolute left-[22%] top-[38%]"
-          width="90"
-          height="46"
-          viewBox="0 0 90 46"
-          fill="none"
-        >
-          <path
-            d="M4 42 C 30 30, 52 20, 78 8 M68 6 L78 8 L74 17"
-            stroke="var(--accent)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-
-        {/* floating annotation toolbar */}
-        <div
-          className="absolute left-1/2 top-[12%] flex -translate-x-1/2 items-center gap-2.5 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3.5 py-1.5"
-          style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.12)" }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2 12 L12 2 M12 2 H6 M12 2 V8" stroke="var(--ink-muted)" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <span className="h-3 w-3 rounded-[3px] border-[1.5px] border-[var(--ink-muted)]" />
-          <span className="text-[11px] font-semibold leading-none text-[var(--ink-muted)]">T</span>
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-            <path d="M2 11 L9 4 L11 6 L4 13 Z M9 4 L11 2 L13 4 L11 6" stroke="var(--ink-muted)" strokeWidth="1.3" />
-          </svg>
-          <span className="h-3.5 w-3.5 rounded-full bg-[var(--accent)]" />
-        </div>
-
-        {/* picked-color chip — the eyedropper's output */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-md border border-[var(--line)] bg-[var(--surface)] px-2 py-1">
-          <span className="h-3 w-3 rounded-[3px] bg-[var(--accent)]" />
-          <span className="font-mono text-[10px] text-[var(--ink-muted)]">#2563EB</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ClipboardMock() {
-  const rows: Array<{ icon: React.ReactNode; width: string; time: string; highlight?: boolean }> = [
-    {
-      icon: <span className="text-[9px] font-semibold text-[var(--ink-muted)]">Aa</span>,
-      width: "w-3/4",
-      time: "2m",
-    },
-    {
-      icon: (
-        <span
-          className="h-4 w-4 rounded-[3px]"
-          style={{ background: "linear-gradient(135deg, #7dd3fc 0%, #f472b6 100%)", opacity: 0.7 }}
-        />
-      ),
-      width: "w-1/2",
-      time: "14m",
-      highlight: true,
-    },
-    {
-      icon: <span className="h-3 w-3 rounded-[3px] bg-[var(--accent)]" />,
-      width: "w-2/5",
-      time: "1h",
-    },
-    {
-      icon: <span className="text-[9px] font-semibold text-[var(--ink-muted)]">Aa</span>,
-      width: "w-4/5",
-      time: "3h",
-    },
-    {
-      icon: <span className="text-[9px] font-semibold text-[var(--ink-muted)]">Aa</span>,
-      width: "w-2/3",
-      time: "1d",
-    },
-  ];
-
-  return (
-    <div
-      aria-hidden
-      className="flex h-[92%] w-[64%] max-w-[280px] flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--surface)]"
-      style={{ boxShadow: "0 12px 28px rgba(0,0,0,0.12)" }}
-    >
-      {/* search field */}
-      <div className="p-3">
-        <div className="flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5">
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-            <circle cx="5" cy="5" r="3.5" stroke="var(--ink-faint)" strokeWidth="1.5" />
-            <path d="M8 8 L11 11" stroke="var(--ink-faint)" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <span className="h-1.5 w-16 rounded bg-[var(--cap-bg)]" />
-        </div>
-      </div>
-
-      {/* history rows */}
-      <div className="flex-1">
-        {rows.map((row, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2.5 border-t border-[var(--line)] px-3.5 py-2.5"
-            style={
-              row.highlight
-                ? { background: "color-mix(in srgb, var(--accent) 6%, transparent)" }
-                : undefined
-            }
-          >
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center">{row.icon}</span>
-            <span className={`h-1.5 ${row.width} rounded bg-[var(--cap-bg)]`} />
-            <span className="ml-auto font-mono text-[9px] text-[var(--ink-faint)]">{row.time}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RecordingMock() {
-  return (
-    <div
-      aria-hidden
-      className="relative h-[88%] w-[94%] overflow-hidden rounded-[11px]"
-      style={{ background: "linear-gradient(180deg, #2b2b34 0%, #16161c 100%)" }}
-    >
-      {/* fake menubar with recording badge on the mark */}
-      <div className="flex h-6 items-center gap-3 bg-white/[0.08] px-3 text-[10px] font-medium text-white/80">
-        <AppleGlyph />
-        <div className="ml-auto flex items-center gap-3 text-white/70">
-          <span className="relative">
-            <Logo size={11} className="text-white/90" />
-            <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-[#f87171]" />
-          </span>
-          <span className="font-mono text-[9px]">Wed 7:45</span>
-        </div>
-      </div>
-
-      {/* capture region */}
-      <div className="absolute left-[12%] top-[22%] h-[62%] w-[64%] rounded-md border border-dashed border-[var(--accent)]" />
-
-      {/* recording HUD */}
-      <div
-        className="absolute left-1/2 top-[10%] flex -translate-x-1/2 items-center gap-2 rounded-full px-3 py-1.5"
-        style={{ background: "rgba(20,20,24,0.85)", boxShadow: "0 8px 20px rgba(0,0,0,0.4)" }}
-      >
-        <span className="h-2 w-2 animate-pulse rounded-full bg-[#f87171]" />
-        <span className="font-mono text-[10px] font-medium text-white/90">00:12</span>
-        <span className="ml-1 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/25">
-          <span className="h-1.5 w-1.5 rounded-[1px] bg-white/80" />
-        </span>
-      </div>
-
-      {/* draggable camera overlay */}
-      <div
-        className="absolute bottom-[8%] right-[7%] flex h-14 w-14 items-center justify-center rounded-full border-2 border-white/25"
-        style={{ background: "linear-gradient(135deg, #3a3a46 0%, #23232b 100%)" }}
-      >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,0.35)">
-          <circle cx="12" cy="9" r="4" />
-          <path d="M4 21 C4 16.5, 8 14.5, 12 14.5 C16 14.5, 20 16.5, 20 21 Z" />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-function NeverSleepMock() {
-  const options: Array<{ label: string; caption?: string; selected?: boolean }> = [
-    { label: "Off" },
-    { label: "While the lid is open" },
-    { label: "Even with the lid closed", caption: "arms on AC only · auto-off on unplug", selected: true },
-  ];
-
-  return (
-    <div
-      aria-hidden
-      className="w-[78%] max-w-[340px] overflow-hidden rounded-[11px] border border-[var(--line)] bg-[var(--surface)]"
-      style={{ boxShadow: "0 12px 28px rgba(0,0,0,0.12)" }}
-    >
-      <div className="border-b border-[var(--line)] px-4 py-2.5">
-        <span className="text-[12px] font-semibold text-[var(--ink)]">Never Sleep</span>
-      </div>
-      {options.map((opt) => (
-        <div key={opt.label} className="flex items-start gap-2.5 border-t border-[var(--line)] px-4 py-3 first:border-t-0">
-          <span
-            className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
-              opt.selected ? "border-[var(--accent)]" : "border-[var(--cap-line)]"
-            }`}
-            style={opt.selected ? { background: "var(--accent)" } : undefined}
-          >
-            {opt.selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-          </span>
-          <span className="min-w-0">
-            <span className={`block text-[12px] ${opt.selected ? "font-medium text-[var(--ink)]" : "text-[var(--ink-muted)]"}`}>
-              {opt.label}
-            </span>
-            {opt.caption && (
-              <span className="mt-0.5 block font-mono text-[9.5px] text-[var(--ink-faint)]">{opt.caption}</span>
-            )}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function KeyboardMock() {
-  return (
-    <div
-      aria-hidden
-      className="w-[78%] max-w-[340px] overflow-hidden rounded-[11px] border border-[var(--line)] bg-[var(--surface)]"
-      style={{ boxShadow: "0 12px 28px rgba(0,0,0,0.12)" }}
-    >
-      <div className="border-b border-[var(--line)] px-4 py-2.5">
-        <span className="text-[12px] font-semibold text-[var(--ink)]">Key Repeat</span>
-      </div>
-
-      <div className="space-y-4 px-4 py-4">
-        <div>
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-[var(--ink-muted)]">Repeat speed</span>
-            <span className="font-mono text-[10px] text-[var(--ink-faint)]">fast</span>
-          </div>
-          <MockSlider fill={0.85} />
-        </div>
-        <div>
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-[var(--ink-muted)]">Delay until repeat</span>
-            <span className="font-mono text-[10px] text-[var(--ink-faint)]">short</span>
-          </div>
-          <MockSlider fill={0.2} />
-        </div>
-        <div className="flex items-center gap-2 pt-1">
-          <span className="rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-semibold text-white">Fast</span>
-          <span
-            className="rounded-full border px-3 py-1 text-[11px] font-medium text-[var(--ink-muted)]"
-            style={{ borderColor: "var(--cap-line)" }}
-          >
-            Default
-          </span>
-          <span className="ml-auto font-mono text-[9.5px] text-[var(--ink-faint)]">beyond System Settings</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MockSlider({ fill }: { fill: number }) {
-  return (
-    <div className="relative mt-2 h-1 rounded-full bg-[var(--cap-bg)]">
-      <div
-        className="absolute left-0 top-0 h-1 rounded-full bg-[var(--accent)]"
-        style={{ width: `${fill * 100}%` }}
-      />
-      <span
-        className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-[var(--line)] bg-white"
-        style={{ left: `calc(${fill * 100}% - 7px)`, boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}
-      />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Founder note — the testimonial slot, used honestly (no customer quotes to
-// fake). The new-Mac origin story.
-// ---------------------------------------------------------------------------
-
-function FounderNote() {
-  return (
-    <section className="bg-[var(--canvas)] px-8 py-28">
-      <div
-        className="mx-auto max-w-2xl rounded-[18px] border border-[var(--line)] bg-[var(--surface)] px-8 py-14 text-center sm:px-14"
-        style={{ boxShadow: "var(--shadow-card)" }}
-      >
-        <Logo size={28} className="mx-auto mb-8 text-[var(--ink-faint)]" />
-
-        <p className="mx-auto max-w-[46ch] text-[20px] leading-[1.55] text-[var(--ink)]">
-          &ldquo;I got a new MacBook and did what I always do: started listing
-          everything I&rsquo;d need to install and configure before it felt like mine.
-          Window snapping. A decent screenshot tool. Clipboard history. About an hour
-          in, I realized I was rebuilding the same afternoon I&rsquo;d already lost
-          the last time I did this.
-        </p>
-        <p className="mx-auto mt-5 max-w-[46ch] text-[20px] leading-[1.55] text-[var(--ink)]">
-          So I stopped listing and started building &mdash; one menubar app with sane
-          defaults for the stuff every Mac needs, ready the moment you install it.
-          It&rsquo;s free, it&rsquo;s open source, and it&rsquo;s the app I wished
-          existed the day I unboxed this laptop.&rdquo;
-        </p>
-
-        <div className="mt-10 flex items-center justify-center gap-3">
-          <span
-            className="flex h-11 w-11 items-center justify-center rounded-full font-mono text-[16px] font-medium text-[var(--accent)]"
-            style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--surface-2))" }}
-            aria-hidden
-          >
-            J
-          </span>
-          <span className="text-left">
-            <span className="block text-[15px] font-semibold text-[var(--ink)]">Jae</span>
-            <span className="block text-[13px] text-[var(--ink-faint)]">Builds Macaveli</span>
-          </span>
+          <article className="card b-remote rv">
+            <div className="top">
+              <span className="tag">Remote</span>
+              <span className="note">Bonjour</span>
+            </div>
+            <div className="macs" aria-hidden>
+              <div>
+                <MacIcon />
+                Studio Mac<small>nearby</small>
+              </div>
+              <div>
+                <MacIcon />
+                office.local<small>saved</small>
+              </div>
+            </div>
+            <h3>Your other Macs.</h3>
+            <p>
+              Find Macs on your network and open them in Apple&rsquo;s Screen Sharing. No relay — use
+              Tailscale to reach them from anywhere.
+            </p>
+          </article>
         </div>
       </div>
     </section>
@@ -864,174 +535,347 @@ function FounderNote() {
 }
 
 // ---------------------------------------------------------------------------
-// Trust — three flat typographic cards (open source / private / native)
+// Window control — numbered list + an orbit of snap positions around a window.
 // ---------------------------------------------------------------------------
 
-function Trust() {
-  const cards: Array<{ tag: string; title: string; body: string }> = [
-    {
-      tag: "01 / open source",
-      title: "Free & open source",
-      body: "Macaveli is free forever, MIT-licensed, and built in the open on GitHub. Read the code, fork it, or send a pull request — there's no catch hiding behind a future paywall.",
-    },
-    {
-      tag: "02 / private",
-      title: "Private by design",
-      body: "Clipboard history, screenshots, everything — it all stays on your Mac. No account, no telemetry, no analytics phoning home in the background.",
-    },
-    {
-      tag: "03 / native",
-      title: "Feels native",
-      body: "About 14 MB, lives only in the menubar with no dock icon, and updates itself quietly in the background. It behaves like something Apple shipped, not something you installed.",
-    },
-  ];
+const ORBIT: Array<[label: string, keys: string, area: React.CSSProperties]> = [
+  ["Left half", "⌃[", { left: "6%", top: "12%", width: "42%", height: "76%" }],
+  ["Right half", "⌃]", { left: "52%", top: "12%", width: "42%", height: "76%" }],
+  ["Maximize", "⌃⌘↑", { left: "6%", top: "12%", width: "88%", height: "76%" }],
+  ["Center", "⌃⌘↓", { left: "25%", top: "22%", width: "50%", height: "56%" }],
+  ["Move", "⌃⌘ drag", { left: "44%", top: "30%", width: "44%", height: "50%" }],
+  ["Resize", "⌘⇧ drag", { left: "10%", top: "18%", width: "62%", height: "64%" }],
+];
 
+function WindowControl() {
   return (
-    <section className="border-t border-[var(--line)] bg-[var(--surface-2)] px-8 py-28">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="mb-4 font-mono text-[13px] font-medium tracking-[0.02em] text-[var(--accent)]">
-          // trust
-        </p>
-        <h2
-          className="font-bold tracking-[-0.035em] text-[var(--ink)]"
-          style={{ fontSize: "clamp(1.75rem, 4vw, 2.75rem)", lineHeight: 1.1 }}
-        >
-          Nothing to worry about.
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-[17px] leading-relaxed text-[var(--ink-muted)]">
-          The parts you&rsquo;d normally have to take on faith, made obvious instead.
-        </p>
-      </div>
+    <section className="sec">
+      <div className="wrap orbit-sec">
+        <div className="rv">
+          <p className="eyebrow">Window control</p>
+          <h2 className="h2" style={{ marginTop: 14, maxWidth: "11ch" }}>
+            Put any window where it belongs.
+          </h2>
+          <ol className="nlist">
+            <li>
+              <span className="n">01</span>
+              <div>
+                <b>Point at it</b>
+                <span>Macaveli targets the window under your cursor. No clicking to focus first.</span>
+              </div>
+            </li>
+            <li>
+              <span className="n">02</span>
+              <div>
+                <b>Hold ⌃⌘ and drag</b>
+                <span>Move from anywhere inside the window, not just the title bar.</span>
+              </div>
+            </li>
+            <li>
+              <span className="n">03</span>
+              <div>
+                <b>Hold ⌘⇧ to resize</b>
+                <span>Where you grab decides what changes — corner, edge, or evenly from the center.</span>
+              </div>
+            </li>
+            <li>
+              <span className="n">04</span>
+              <div>
+                <b>Or snap it</b>
+                <span>⌃[ and ⌃] for halves, ⌃⌘↑ to maximize, ⌃⌘↓ to center.</span>
+              </div>
+            </li>
+          </ol>
+        </div>
 
-      <div className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
-        {cards.map((card) => (
-          <div
-            key={card.tag}
-            className="rounded-[11px] border border-[var(--line)] bg-[var(--surface)] p-8"
-          >
-            <p className="font-mono text-[12px] tracking-[0.02em] text-[var(--ink-faint)]">{card.tag}</p>
-            <h3 className="mt-4 text-[19px] font-semibold text-[var(--ink)]">{card.title}</h3>
-            <p className="mt-2 text-[14px] leading-[1.6] text-[var(--ink-muted)]">{card.body}</p>
+        <div className="orbit rv" aria-hidden>
+          <div className="rings" />
+          <div className="center">
+            <div className="bar">
+              <Dots />
+            </div>
+            <div className="body">
+              <Line w="76%" />
+              <Line w="52%" />
+              <Line w="64%" />
+              <Line w="40%" />
+            </div>
           </div>
-        ))}
+          <div className="spin">
+            {ORBIT.map(([label, keys, area], i) => {
+              const t = (i / ORBIT.length) * Math.PI * 2 - Math.PI / 2;
+              const x = (50 + 50 * Math.cos(t)).toFixed(2);
+              const y = (50 + 50 * Math.sin(t)).toFixed(2);
+              return (
+                <div key={label} className="orb" style={{ left: `${x}%`, top: `${y}%` }}>
+                  <div>
+                    <div className="pos">
+                      <span className="mini-scr">
+                        <i style={area} />
+                      </span>
+                      <small>{label}</small>
+                      <kbd className="kc sm">{keys}</kbd>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
+    </section>
+  );
+}
 
-      <div className="mt-12 flex justify-center">
-        <a
-          href={REPO_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full border border-[var(--line)] px-6 py-3 text-[14px] font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-        >
-          View source on GitHub
+function Stats() {
+  return (
+    <section className="sec statement">
+      <div className="wrap">
+        <h2 className="h2 rv">One install. Your Mac is ready.</h2>
+        <a className="pill lg" href={DOWNLOAD_URL}>
+          <DownloadIcon />
+          Download free
         </a>
+        <ul className="stats">
+          <li className="stat rv">
+            <div className="num">11</div>
+            <p>pre-bound hotkeys, all rebindable</p>
+          </li>
+          <li className="stat rv">
+            <div className="num">
+              <sup>$</sup>0
+            </div>
+            <p>free forever, MIT licensed</p>
+          </li>
+          <li className="stat rv">
+            <div className="num">0</div>
+            <p>telemetry, analytics or accounts</p>
+          </li>
+          <li className="stat rv">
+            <div className="num">
+              <sup>~</sup>14<span className="unit"> MB</span>
+            </div>
+            <p>menubar only, no Dock icon</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Banner() {
+  return (
+    <section className="banner" aria-label="One install. Your Mac is ready.">
+      <div aria-hidden>
+        <Loop>
+          <span>One install</span>
+          <span className="k">Your Mac is ready</span>
+          <span>One install</span>
+          <span className="k">Your Mac is ready</span>
+        </Loop>
       </div>
     </section>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Big CTA
+// Capture — the three tall "pitch" cards, each with Hotkey / Output fields.
 // ---------------------------------------------------------------------------
 
-function CallToAction() {
+function Capture() {
   return (
-    <section className="border-t border-[var(--line)] bg-[var(--canvas)] px-8 py-32 text-center">
-      <div className="mx-auto max-w-3xl">
-        <h2
-          className="font-bold tracking-[-0.035em] text-[var(--ink)]"
-          style={{ fontSize: "clamp(2.5rem, 6vw, 4.25rem)", lineHeight: 1.05 }}
-        >
-          Your Mac is already <span style={{ color: "var(--accent)" }}>ready</span>.
-        </h2>
-        <p className="mx-auto mt-5 max-w-xl text-[19px] leading-[1.5] text-[var(--ink-muted)]">
-          One install. No configuration. No account required.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <a
-            href={DOWNLOAD_URL}
-            className="rounded-full bg-[var(--accent)] px-7 py-3.5 text-[15px] font-semibold text-white transition hover:bg-[var(--accent-press)]"
-          >
-            Download for Mac
-          </a>
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-[15px] font-semibold text-[var(--accent)] transition hover:opacity-70"
-          >
-            View on GitHub &rarr;
-          </a>
+    <section className="sec">
+      <div className="wrap">
+        <div className="sechead rv">
+          <div>
+            <p className="eyebrow">Capture</p>
+            <h2 className="h2" style={{ maxWidth: "13ch" }}>
+              Show, copy, record.
+            </h2>
+          </div>
+          <p className="lede">
+            Three tools you&rsquo;d otherwise install separately — built in, bound, and local.
+          </p>
+        </div>
+        <div className="tall">
+          <article className="tc press rv">
+            <div className="thumb-l" aria-hidden>
+              <div className="shot-paper">
+                <div className="sel" />
+              </div>
+              <Keys keys={["⌃", "⌘", "4"]} />
+            </div>
+            <h3>Capture</h3>
+            <p>Drag a region, then mark it up with ⌃⌘A.</p>
+            <Fields hotkey="⌃⌘4" output="Clipboard" />
+          </article>
+          <article className="tc press rv">
+            <div className="thumb-l" aria-hidden>
+              <div className="clip-stack">
+                <div className="on">
+                  <span className="thumb" />
+                  <Line w="100%" />
+                </div>
+                <div>
+                  <Line w="70%" />
+                </div>
+                <div>
+                  <Line w="50%" />
+                </div>
+              </div>
+              <Keys keys={["⌃", "⌘", "P"]} />
+            </div>
+            <h3>Clipboard</h3>
+            <p>Text and images, with thumbnails and labels you can find at a glance.</p>
+            <Fields hotkey="⌃⌘P" output="Stays local" />
+          </article>
+          <article className="tc press rv">
+            <div className="thumb-l" aria-hidden>
+              <div className="hud static">
+                <span className="rec" />
+                00:12
+              </div>
+              <Keys keys={["⌃", "⌘", "R"]} />
+            </div>
+            <h3>Record</h3>
+            <p>Start and stop with one hotkey. Nothing is uploaded.</p>
+            <Fields hotkey="⌃⌘R" output="MP4 or GIF" />
+          </article>
         </div>
       </div>
     </section>
   );
 }
 
+function Fields({ hotkey, output }: { hotkey: string; output: string }) {
+  return (
+    <dl className="fields">
+      <div>
+        <dt>Hotkey</dt>
+        <dd className="mono">{hotkey}</dd>
+      </div>
+      <div>
+        <dt>Output</dt>
+        <dd>{output}</dd>
+      </div>
+    </dl>
+  );
+}
+
 // ---------------------------------------------------------------------------
-// FAQ — native <details>, zero JS
+// Principles + founder note (the testimonial slot, used honestly).
 // ---------------------------------------------------------------------------
+
+function Principles() {
+  return (
+    <section className="sec">
+      <div className="wrap">
+        <div className="four">
+          <div className="rv">
+            <div className="k" aria-hidden>
+              <kbd className="kc">$0</kbd>
+            </div>
+            <h3>Free, for real</h3>
+            <p>MIT-licensed and open source. No paywall, no account, no signup.</p>
+          </div>
+          <div className="rv">
+            <div className="k" aria-hidden>
+              <kbd className="kc">⌂</kbd>
+            </div>
+            <h3>Stays on your Mac</h3>
+            <p>No telemetry, no analytics. Your clipboard and captures never leave.</p>
+          </div>
+          <div className="rv">
+            <div className="k" aria-hidden>
+              <kbd className="kc">≡</kbd>
+            </div>
+            <h3>Lives in the menubar</h3>
+            <p>No Dock icon, no window to manage. About 14 MB.</p>
+          </div>
+          <div className="rv">
+            <div className="k" aria-hidden>
+              <kbd className="kc">↻</kbd>
+            </div>
+            <h3>Updates itself</h3>
+            <p>Sparkle keeps it current. macOS 13+, Apple Silicon and Intel.</p>
+          </div>
+        </div>
+
+        <figure className="founder rv">
+          <div className="avatar" aria-hidden>
+            J
+          </div>
+          <div>
+            <blockquote>
+              <p>
+                &ldquo;I got a new MacBook and did what I always do: started listing everything I&rsquo;d
+                need to install and configure before it felt like mine. About an hour in, I realized I was
+                rebuilding the same afternoon I&rsquo;d already lost the last time.
+              </p>
+              <p>
+                So I stopped listing and started building — one menubar app with sane defaults for the stuff
+                every Mac needs, ready the moment you install it.&rdquo;
+              </p>
+            </blockquote>
+            <figcaption>Jae — builds Macaveli</figcaption>
+          </div>
+        </figure>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FAQ — native <details>, works without JS.
+// ---------------------------------------------------------------------------
+
+const FAQ: Array<[string, string]> = [
+  [
+    "Is it really free?",
+    "Yes. Macaveli is free forever and open source under the MIT license. There's no trial, no paywall, and no plan to add one.",
+  ],
+  [
+    "Why does it need Accessibility & Screen Recording permissions?",
+    "Accessibility lets Macaveli move and resize windows on your behalf — that's what the window-control hotkeys actually do under the hood. Screen Recording is required by macOS for the screenshot and recording features, even though nothing is captured until you press the hotkey.",
+  ],
+  [
+    "Does anything leave my Mac?",
+    "No. Clipboard history, screenshots, and recordings all stay local. Macaveli has no account, no telemetry and no analytics.",
+  ],
+  [
+    "Can I change the hotkeys?",
+    "Yes, every one. All eleven come pre-bound so it works out of the box, and each is rebindable from the menubar preferences.",
+  ],
+  ["What macOS versions?", "macOS 13 (Ventura) and later, on Apple Silicon and Intel."],
+  [
+    "How do updates work?",
+    "Macaveli checks for updates automatically and installs them via Sparkle, the update framework used by many native Mac apps. No App Store, no manual downloads. Every release is listed in the changelog.",
+  ],
+  ["Will it add a Dock icon?", "No. Macaveli lives in the menubar only."],
+  [
+    "Can I reach my other Macs over the internet?",
+    "Remote finds Macs on your local network and opens them in Apple's Screen Sharing. To reach them from elsewhere, use your own network path such as Tailscale — there's no Macaveli relay.",
+  ],
+  ["Where is the source?", "On GitHub at jaequery/macaveli. Issues and pull requests are welcome."],
+];
 
 function Faq() {
-  const items: Array<[string, string]> = [
-    [
-      "Is it really free?",
-      "Yes. Macaveli is free forever and open source under the MIT license. There's no trial, no paywall, and no plan to add one.",
-    ],
-    [
-      "Why does it need Accessibility & Screen Recording permissions?",
-      "Accessibility lets Macaveli move and resize windows on your behalf — that's what the window-control hotkeys actually do under the hood. Screen Recording is required by macOS for the screenshot and recording features, even though nothing is captured until you press the hotkey.",
-    ],
-    [
-      "Does anything leave my Mac?",
-      "No. Clipboard history, screenshots, and recordings all stay local. Macaveli has no telemetry and no analytics — there's nothing to send even if it wanted to.",
-    ],
-    [
-      "Can I change the hotkeys?",
-      "Every hotkey is rebindable from the menubar preferences, including the defaults for move, resize, screenshot, and the rest.",
-    ],
-    [
-      "What macOS versions?",
-      "macOS 13 (Ventura) and later, on Apple Silicon and Intel.",
-    ],
-    [
-      "How do updates work?",
-      "Macaveli checks for updates automatically and installs them via Sparkle, the same update framework used by many native Mac apps. No App Store, no manual downloads.",
-    ],
-  ];
-
   return (
-    <section id="faq" className="border-t border-[var(--line)] bg-[var(--surface)] px-8 py-28">
-      <div className="mx-auto max-w-2xl">
-        <p className="mb-4 font-mono text-[13px] font-medium tracking-[0.02em] text-[var(--accent)]">
-          // faq
-        </p>
-        <h2
-          className="font-bold tracking-[-0.035em] text-[var(--ink)]"
-          style={{ fontSize: "clamp(2rem, 5vw, 3rem)", lineHeight: 1.05 }}
-        >
-          We got answers.
-        </h2>
-
-        <div className="mt-14">
-          {items.map(([question, answer]) => (
-            <details key={question} className="group border-t border-[var(--line)] py-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-[16px] font-medium text-[var(--ink)] [&::-webkit-details-marker]:hidden">
-                {question}
-                <svg
-                  className="shrink-0 transition-transform duration-200 ease-in-out group-open:rotate-180"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden
-                >
-                  <path d="M2 4 L6 8 L10 4" stroke="var(--ink-faint)" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+    <section className="sec" id="faq">
+      <div className="wrap faq">
+        <h2 className="h2 rv">Questions, answered.</h2>
+        <div className="qs">
+          {FAQ.map(([q, a]) => (
+            <details key={q} className="q">
+              <summary>
+                {q}
+                <span className="tg" aria-hidden>
+                  <svg viewBox="0 0 12 12">
+                    <path d="M6 1v10M1 6h10" />
+                  </svg>
+                </span>
               </summary>
-              <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-[var(--ink-muted)]">
-                {answer}
-              </p>
+              <p>{a}</p>
             </details>
           ))}
         </div>
@@ -1040,89 +884,37 @@ function Faq() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Footer — link columns + the original legal strip as the bottom bar
-// ---------------------------------------------------------------------------
-
-function Footer() {
+function FinalCta() {
   return (
-    <footer className="border-t border-[var(--line)] bg-[var(--canvas)] px-8 pb-8 pt-16">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-10 md:grid-cols-4">
-        <div className="col-span-2 md:col-span-1">
-          <div className="flex items-center gap-2.5">
-            <Logo />
-            <span className="text-[15px] font-semibold tracking-tight">Macaveli</span>
-          </div>
-          <p className="mt-2 font-mono text-[12px] text-[var(--ink-faint)]">
-            one install, your Mac is ready
-          </p>
+    <section className="wrap" id="download">
+      <div className="final rv">
+        <div className="aur" aria-hidden />
+        <div className="caps press" aria-hidden>
+          <kbd className="kc">⌃</kbd>
+          <kbd className="kc">⌘</kbd>
         </div>
-
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--ink-faint)]">
-            Product
-          </p>
-          <div className="mt-3 space-y-2.5 text-[13px] text-[var(--ink-muted)]">
-            <a href="#features" className="block transition hover:text-[var(--ink)]">
-              Features
-            </a>
-            <a href="#faq" className="block transition hover:text-[var(--ink)]">
-              FAQ
-            </a>
-            <a href="/changelog" className="block transition hover:text-[var(--ink)]">
-              Changelog
-            </a>
-            <a href={DOWNLOAD_URL} className="block transition hover:text-[var(--ink)]">
-              Download
-            </a>
-          </div>
-        </div>
-
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--ink-faint)]">
-            Resources
-          </p>
-          <div className="mt-3 space-y-2.5 text-[13px] text-[var(--ink-muted)]">
-            <a href={REPO_URL} target="_blank" rel="noreferrer" className="block transition hover:text-[var(--ink)]">
-              GitHub
-            </a>
-            <a href={`${REPO_URL}/issues`} target="_blank" rel="noreferrer" className="block transition hover:text-[var(--ink)]">
-              Issues
-            </a>
-            <a href={RELEASES_URL} target="_blank" rel="noreferrer" className="block transition hover:text-[var(--ink)]">
-              Releases
-            </a>
-          </div>
-        </div>
-
-        <div className="space-y-2.5 font-mono text-[12px] text-[var(--ink-faint)]">
-          <p>MIT licensed</p>
-          <p>macOS 13+</p>
-          <p>No telemetry</p>
-        </div>
-      </div>
-
-      <div className="mx-auto mt-14 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-[var(--line)] pt-6 font-mono text-[12px] text-[var(--ink-faint)] sm:flex-row">
-        <div className="flex items-center gap-2.5">
-          <Logo size={16} className="text-[var(--ink-muted)]" />
-          <span>Macaveli · MIT · macOS 13+ · v{VERSION}</span>
-        </div>
-        <div className="flex gap-6">
-          <a href="/changelog" className="hover:text-[var(--ink)]">
-            Changelog
+        <h2>Your new Mac starts here.</h2>
+        <p>Download once. The hotkeys work the moment it launches.</p>
+        <div className="ctas">
+          <a className="pill lg" href={DOWNLOAD_URL}>
+            <DownloadIcon />
+            Download v{VERSION}
           </a>
-          <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-[var(--ink)]">
-            Source
+          <a className="pill lg ghost" href={REPO_URL} target="_blank" rel="noreferrer">
+            View on GitHub
           </a>
-          <a href={`${REPO_URL}/issues`} target="_blank" rel="noreferrer" className="hover:text-[var(--ink)]">
-            Issues
-          </a>
-          <a href={RELEASES_URL} target="_blank" rel="noreferrer" className="hover:text-[var(--ink)]">
-            Releases
+        </div>
+        <div className="sub">
+          <div>
+            <b>Follow along</b>
+            <span>Every release is listed in the changelog and on GitHub.</span>
+          </div>
+          <a href={RELEASES_URL} target="_blank" rel="noreferrer">
+            Latest release →
           </a>
         </div>
       </div>
-    </footer>
+    </section>
   );
 }
 
@@ -1130,25 +922,39 @@ function Footer() {
 // Bits
 // ---------------------------------------------------------------------------
 
-function Logo({ size = 22, className = "" }: { size?: number; className?: string }) {
+function Dots() {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className={className}>
+    <span className="dots">
+      <i />
+      <i />
+      <i />
+    </span>
+  );
+}
+
+function Line({ w }: { w: string }) {
+  return <span className="ln" style={{ width: w }} />;
+}
+
+function Cursor({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 18 22" aria-hidden>
       <path
-        d="M5.5 26.5 L5.5 5.5 L16 19 L26.5 5.5 L26.5 26.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinejoin="miter"
-        strokeMiterlimit={8}
+        d="M1.5 1.5v16.2l4.2-4 2.9 6.6 2.7-1.2-2.9-6.4h5.9z"
+        fill="#1A1A1A"
+        stroke="#fff"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
       />
     </svg>
   );
 }
 
-function AppleGlyph() {
+function MacIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="text-white/85">
-      <path d="M17.05 12.04c-.02-2.18 1.78-3.23 1.86-3.28-1.01-1.48-2.59-1.68-3.15-1.7-1.34-.13-2.62.79-3.3.79-.68 0-1.74-.77-2.86-.75-1.47.02-2.83.85-3.59 2.17-1.53 2.65-.39 6.57 1.1 8.72.73 1.05 1.6 2.23 2.74 2.19 1.1-.05 1.51-.71 2.84-.71 1.33 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.12.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.35-3.54zM14.93 5.13c.6-.74 1.01-1.76.9-2.79-.87.04-1.94.59-2.56 1.32-.56.65-1.04 1.7-.91 2.7.97.08 1.97-.49 2.57-1.23z" />
+    <svg viewBox="0 0 20 20" aria-hidden>
+      <rect x="2.5" y="4" width="15" height="10" rx="1.5" />
+      <path d="M1 16.5h18" />
     </svg>
   );
 }

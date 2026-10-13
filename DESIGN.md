@@ -33,6 +33,10 @@ adds noise or fights the platform, cut it.
        `macos/Macaveli/Assets.xcassets/MenuBarIcon.imageset/`.
   2. The **mono keycap motif** — monospace for keycaps, hotkey glyphs, version tags, eyebrow labels.
   3. The **aurora wash** — a low-opacity cyan→pink radial, hero + first-run only.
+     (Web, since 2026-10-13: the wash lives on the final-CTA card instead of the hero.)
+  4. **Tactile 3D keycaps** (web, 2026-10-13) — mono-labelled caps with stacked edge
+     shadows that sink on hover; giant ⌃ ⌘ ⇧ caps in the hero also sink when the
+     visitor holds the real keys. The keycap is the web's primary visual motif.
 
 ## Typography
 - **Display + Body + UI:** **SF Pro** via the system stack
@@ -63,6 +67,9 @@ adds noise or fights the platform, cut it.
   Never behind body text.**
 - **Semantic:** success `#16A34A` · warning `#D97706` · error `#DC2626` · info = accent.
 - **Dark mode:** redesign surfaces (not a raw invert); drop saturation ~12%.
+- **Web canvas (Bento Tactile, 2026-10-13):** `#F2F2F0` soft gray canvas with
+  `#FFFFFF` cards (dark: `#0E0E10` / `#17171A`); ink `#1A1A1A` / `#55554F` / `#75756F`.
+  Tokens live in `web/app/globals.css`.
 
 ## Spacing
 - **Base unit:** 4px
@@ -77,6 +84,12 @@ adds noise or fights the platform, cut it.
   AI-slop centered grid flagged in the design review).
 - **Max content width (web):** ~1080–1152px.
 - **Border radius:** sm 6px (keycaps) · md 9–11px (inputs/cards) · lg 14–18px (windows/heroes) · full 9999px (pills/buttons).
+  Web bento cards use 24px, tall cards 32px, the final CTA 40px.
+- **Web page flow (2026-10-13):** modeled on creatorspace.co's structure — hero with
+  floating objects → hotkey-card marquee → value line → fact strip (instead of a
+  logo wall) → feature bento → numbered list + orbit → statement + stats → ALL-CAPS
+  banner → three tall cards → four principles + founder note → FAQ → final CTA →
+  footer. Shared `Nav`/`Footer` in `web/app/components/site.tsx`.
 
 ## Motion
 - **Approach:** minimal-functional in-app (fast, no countdown/nag) · intentional on marketing.
@@ -95,4 +108,5 @@ adds noise or fights the platform, cut it.
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-10-13 | Web redesigned as "Bento Tactile" (Concept 5 of 5, picked by the owner) | Ticket MACA-3GD40E asked for a creatorspace.co-grade landing page. Keeps SF + JetBrains Mono, the single #2563EB accent and the chevron mark; adds tactile keycaps, a white bento grid on a soft gray canvas, a creatorspace-style section flow, and moves the aurora to the final CTA. Hero is centered (a deliberate, approved exception to the asymmetric-landing risk). |
 | 2026-05-25 | Initial design system created | `/design-consultation`. North star "one install, your Mac is ready"; Apple-native minimalism; SF Pro + JetBrains Mono signature; aurora wash; 3 deliberate risks (mono signature, aurora, asymmetric landing). Preview: `~/.gstack/projects/jaequery-macaveli/designs/design-system-20260525/preview.html` |
