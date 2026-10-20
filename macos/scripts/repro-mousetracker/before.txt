@@ -1,0 +1,8 @@
+FAIL  desktop→window cycles x20 — max live monitors 21, live after final stop 20
+FAIL  AX writes per mouse event — 21 writes for 1 event (live monitors 21)
+FAIL  forceStopTracking clears everything — live monitors after forceStop 20
+FAIL  overlapping move→resize — live monitors during overlap 22, after resize stop 21
+FAIL  drag > 4 s keeps tracking — after 5 s of continuous movement: 0 AX write(s), live monitors 21
+FAIL  idle 4.5 s auto-stops — live monitors after 4.5 s idle 21
+6 FAILURE(S)
+exit=1
