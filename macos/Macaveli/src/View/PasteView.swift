@@ -102,6 +102,7 @@ struct PasteView: View {
         .background(KeyboardHandler(
             isEditing:   { editingItemID != nil },
             isPreviewing: { previewItem != nil },
+            isQueryEmpty: { query.isEmpty },
             onUp:        { moveSelection(-1) },
             onDown:      { moveSelection(1)  },
             onReturn:    { activateSelected() },
@@ -275,7 +276,7 @@ struct PasteView: View {
         HStack(spacing: 10) {
             FooterHint(keys: "↑↓", label: "navigate")
             FooterHint(keys: "↵", label: "paste")
-            FooterHint(keys: "⌘1–9", label: "quick")
+            FooterHint(keys: "1–9", label: "quick")
             FooterHint(keys: "⌘L", label: "label")
             FooterHint(keys: "⌘⌫", label: "delete")
             Spacer(minLength: 0)
@@ -985,6 +986,7 @@ private struct KeyboardHandler: NSViewRepresentable {
 
     var isEditing:         () -> Bool
     var isPreviewing:      () -> Bool = { false }
+    var isQueryEmpty:      () -> Bool = { false }
     var onUp:              () -> Void
     var onDown:            () -> Void
     var onReturn:          () -> Void
@@ -1084,11 +1086,16 @@ private struct KeyboardHandler: NSViewRepresentable {
                 h.onEscape()
                 return nil
             }
-            // ⌘1–⌘9
-            if cmd && !shift {
+            // ⌘1–⌘9, or a plain 1–9 (main row & keypad) while the search box is
+            // empty — once the user has typed a query, digits belong to the field.
+            let mods = event.modifierFlags.intersection([.command, .shift, .option, .control])
+            let plain = mods.isEmpty && h.isQueryEmpty()
+            if (cmd && !shift) || plain {
                 let numMap: [UInt16: Int] = [
                     18: 1, 19: 2, 20: 3, 21: 4, 23: 5,
-                    22: 6, 26: 7, 28: 8, 25: 9
+                    22: 6, 26: 7, 28: 8, 25: 9,
+                    83: 1, 84: 2, 85: 3, 86: 4, 87: 5,
+                    88: 6, 89: 7, 91: 8, 92: 9
                 ]
                 if let n = numMap[keyCode] {
                     h.onCmdNumber(n)
