@@ -22,6 +22,10 @@ class MouseTracker {
     private var currentAction: MouseAction = .none
     private var trackingTimer: Timer?
     private let trackingTimeout: TimeInterval = 4 // seconds without mouse movement before auto-stop
+    // Hard backstop for a missed hotkey release (e.g. under Secure Input), where
+    // ordinary .mouseMoved events would otherwise keep pushing the idle timeout back.
+    private let maxTrackingDuration: TimeInterval = 60
+    private var trackingStartedAt: Date?
     private var shouldUseQuadrants: Bool = false
     private var quadrant: Quadrant?
     private var windowSize: CGSize?
@@ -141,6 +145,7 @@ class MouseTracker {
 
     private func startTrackingTimer() {
         trackingTimer?.invalidate()
+        trackingStartedAt = Date()
         trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in
             self?.tearDownTracking()
         }
@@ -149,7 +154,9 @@ class MouseTracker {
     /// The timer is a safety net for a stuck tracker, not a cap on drag length:
     /// push it back on every handled mouse event so it only fires once idle.
     private func extendTrackingTimer() {
-        trackingTimer?.fireDate = Date().addingTimeInterval(trackingTimeout)
+        guard let trackingStartedAt = trackingStartedAt else { return }
+        let idleDeadline = Date().addingTimeInterval(trackingTimeout)
+        trackingTimer?.fireDate = min(idleDeadline, trackingStartedAt.addingTimeInterval(maxTrackingDuration))
     }
 
     private func handleMouseMoved(_ event: NSEvent) {
@@ -263,6 +270,7 @@ class MouseTracker {
     private func invalidateTrackingTimer() {
         trackingTimer?.invalidate()
         trackingTimer = nil
+        trackingStartedAt = nil
     }
 
     private func removeMouseEventMonitor() {
