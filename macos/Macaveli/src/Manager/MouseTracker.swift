@@ -21,7 +21,7 @@ class MouseTracker {
     private var shouldFocusWindow: Bool = false
     private var currentAction: MouseAction = .none
     private var trackingTimer: Timer?
-    private let trackingTimeout: TimeInterval = 4 // in seconds
+    private let trackingTimeout: TimeInterval = 4 // seconds without mouse movement before auto-stop
     private var shouldUseQuadrants: Bool = false
     private var quadrant: Quadrant?
     private var windowSize: CGSize?
@@ -29,16 +29,20 @@ class MouseTracker {
     private init() {}
 
     func startTracking(for action: MouseAction, button: MouseButton) {
+        // Starting over a running tracker (overlapping move/resize modifiers, or a
+        // re-press before the timer fired) must not orphan its monitor.
+        tearDownTracking()
         prepareTracking(for: action)
+        // No target window (desktop, ignored app): register nothing, so no monitor
+        // can outlive a tracker whose currentAction is still .none.
+        guard trackedWindow != nil else { return }
         registerMouseEventMonitor(button: button)
         startTrackingTimer()
     }
 
     func stopTracking(for action: MouseAction) {
         guard currentAction == action else { return }
-        invalidateTrackingTimer()
-        removeMouseEventMonitor()
-        resetTrackingVariables()
+        tearDownTracking()
     }
 
     /// Hard-stop any in-flight tracking regardless of which action started it.
@@ -46,7 +50,10 @@ class MouseTracker {
     /// immediately overwritten by a tracker that was started on the same
     /// modifier-down event (e.g. ⌃⌘ for move + ⌃⌘↑ for maximize).
     func forceStopTracking() {
-        guard currentAction != .none else { return }
+        tearDownTracking()
+    }
+
+    private func tearDownTracking() {
         invalidateTrackingTimer()
         removeMouseEventMonitor()
         resetTrackingVariables()
@@ -135,8 +142,14 @@ class MouseTracker {
     private func startTrackingTimer() {
         trackingTimer?.invalidate()
         trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingTimeout, repeats: false) { [weak self] _ in
-            self?.stopTracking(for: self!.currentAction)
+            self?.tearDownTracking()
         }
+    }
+
+    /// The timer is a safety net for a stuck tracker, not a cap on drag length:
+    /// push it back on every handled mouse event so it only fires once idle.
+    private func extendTrackingTimer() {
+        trackingTimer?.fireDate = Date().addingTimeInterval(trackingTimeout)
     }
 
     private func handleMouseMoved(_ event: NSEvent) {
@@ -145,6 +158,8 @@ class MouseTracker {
               let _ = trackedWindow else {
             return
         }
+
+        extendTrackingTimer()
 
         if shouldFocusWindow && !trackedWindowIsFocused {
             WindowManager.focus(window: trackedWindow!)

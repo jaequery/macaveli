@@ -1,0 +1,8 @@
+PASS  desktop→window cycles x20 — max live monitors 1, live after final stop 0
+PASS  AX writes per mouse event — 1 writes for 1 event (live monitors 1)
+PASS  forceStopTracking clears everything — live monitors after forceStop 0
+PASS  overlapping move→resize — live monitors during overlap 1, after resize stop 0
+PASS  drag > 4 s keeps tracking — after 5 s of continuous movement: 1 AX write(s), live monitors 1
+PASS  idle 4.5 s auto-stops — live monitors after 4.5 s idle 0
+ALL PASS
+exit=0
